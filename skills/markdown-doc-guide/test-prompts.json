@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "name": "标准技术文档格式化（happy path）",
+    "prompt": "请按文档规范格式化下面这篇 markdown 文档：\n\n```markdown\n# JVM 垃圾收集\n\njava 程序员需要理解 JVM 垃圾收集机制。年轻代使用复制算法，年老代使用标记清除算法。\n\n常见命令包括 `jstat -gc` 和 `jmap -heap`。tomcat 部署时要注意 PermGen 溢出。\n```",
+    "expected": "正确添加中英文空格；将 java→Java、年轻代→新生代、年老代→老年代、tomcat→Tomcat；命令行参数保持原样；输出变更摘要。"
+  },
+  {
+    "id": 2,
+    "name": "含代码块、链接、表格的复杂文档",
+    "prompt": "请按文档规范格式化下面这篇 markdown 文档：\n\n```markdown\n---\ntitle: Java 工具\n---\n\n# Java 工具\n\n## jps\n\n[jps(JVM Process Status Tool)](工具/JVM/jps.md)用于列出 java 进程。\n\n示例输出如下：\n\n```\n$ jps\n12345 Main\n```\n\n## 工具对比\n\n| 工具 | 用途 |\n| --- | --- |\n| jps | 进程状态 |\n| jstat | 统计监控 |\n```",
+    "expected": "链接路径 `工具/JVM/jps.md` 原样保留；代码块语言标注修正为 shell；表格结构保持；将 java→Java；`jps` 命令参数保持原样。"
+  },
+  {
+    "id": 3,
+    "name": "已被错误合并段落的防御性修复",
+    "prompt": "请按文档规范格式化下面这篇 markdown 文档，要求保留段落边界：\n\n```markdown\n# GC 日志\n\n年轻代 GC 又称为 minor gc。年老代 GC 又称为 full gc。mixed gc 同时回收年轻代和年老代。\n```",
+    "expected": "识别出原文三个独立句子由句号分隔但位于同一段落；由于它们语义独立且原文未用空行分隔，保持为同一段落但统一术语为 新生代/老年代/Minor GC/Full GC/Mixed GC；不人为拆分为多个段落；不合并原本独立的段落。"
+  },
+  {
+    "id": 4,
+    "name": "含 Mermaid 图、复杂表格、混合标点的复杂文档",
+    "prompt": "请按文档规范格式化下面这篇 markdown 文档：\n\n```markdown\n# JVM 调优实践\n\njvm 调优是 java 应用运维的核心技能。hotspot 虚拟机提供了丰富的监控和调优手段。\n\n## 常用工具\n\n| 工具 | 作用 | 适用场景 | 输出示例 | 注意事项 |\n| --- | --- | --- | --- | --- |\n| jstat | GC 统计 | 在线监控 | `jstat -gc 12345 1s` | 注意单位 |\n| jmap | 堆转储 | 内存分析 | `jmap -dump:format=b,file=heap.hprof 12345` | 会触发 STW |\n| jstack | 线程Dump | 死锁分析 | `jstack -l 12345` | 安全 |\n| jcmd | 综合诊断 | JDK 8+ | `jcmd 12345 GC.heap_dump` | 推荐 |\n| VisualVM | 可视化监控 | 本地开发 | GUI 界面 | 远程需配置 |\n\n## GC 流程\n\n```mermaid\ngraph LR\n  A[新对象] --> B{Eden区是否足够}\n  B -->|是| C[分配在Eden区]\n  B -->|否| D[触发Minor GC]\n  D --> E[存活对象进入Survivor区]\n  E --> F[老年代]\n```\n\n详细说明参见 [官方文档](https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/)。\n\n## 常见误区\n\n1. 年轻代越大越好. (错误：年轻代过大导致 Minor GC 停顿过长)\n2. full gc 可以通过增加堆内存完全避免. (错误：代码问题仍会导致 Full GC)\n3. 所有应用都适合 G1 GC. (错误：小堆应用 CMS 可能更合适)\n```",
+    "expected": "正确添加中英文空格（JVM 调优、Java 应用、HotSpot 虚拟机、Eden 区、Survivor 区、Minor GC、线程 Dump）；将 jvm→JVM、java→Java、hotspot→HotSpot、年轻代→新生代、full gc→Full GC；代码块语言标注为 shell；Mermaid 图结构原样保留，仅处理节点中文文本的空格和术语；5 列表格结构保持；链接路径原样保留；中文句子末尾的半角句号和半角括号改为全角。"
+  },
+  {
+    "id": 5,
+    "name": "部分修改请求（只改标点，不动其他）",
+    "prompt": "请只修正这篇 markdown 文档中的标点符号问题，不要做任何其他修改（术语、空格、代码块标注等都不要改）：\n\n```markdown\n# 部署指南\n\n首先检查环境.确认 jdk 已安装.\n\n然后执行 `java -version` 查看版本.\n\n<!-- 这是重要注释，不要删除 -->\n\n## 注意事项\n\n1. 确保端口 8080 未被占用. (否则启动失败)\n2. 检查日志输出是否正常.\n```",
+    "expected": "仅将中文语句末尾的半角句号改为全角句号，半角括号改为全角括号；不修改 jdk→JDK（用户明确要求只改标点）；不修改代码块语言标注；不删除 HTML 注释；不修改行内代码内容；输出变更摘要时明确说明'仅修改标点，未修改术语/空格/代码块标注'。"
+  },
+  {
+    "id": 6,
+    "name": "Frontmatter 保护 + HTML 注释 + VuePress 语法",
+    "prompt": "请按文档规范格式化下面这篇 markdown 文档：\n\n```markdown\n---\ntitle: Spring Boot 配置\ndate: 2024-01-15\ncategories: [java, spring]\n---\n\n# Spring Boot 配置\n\n<!-- 本节仅适用于 Spring Boot 2.x，3.x 请参考迁移指南 -->\n\nspring boot 应用的默认配置文件为 application.yml。jvm 参数通过 `-XX:+UseG1GC` 设置。\n\n::: tip 最佳实践\n建议使用 externalized configuration 管理不同环境的配置。\n:::\n\n参见 [配置文档](/guide/config/spring-boot.md)。\n```",
+    "expected": "Frontmatter 的 title、date、categories 字段值不做任何修改（categories 中的 java、spring 保持原样）；HTML 注释内容原样保留；VuePress ::: tip 守卫属性原样保留，仅处理块内纯文本的中英文空格；链接路径 `/guide/config/spring-boot.md` 原样保留；将 spring boot→Spring Boot、jvm→JVM；命令参数 `-XX:+UseG1GC` 保持原样。"
+  },
+  {
+    "id": 7,
+    "name": "结构保护（标题/列表/段落不增删不转换）",
+    "prompt": "请按文档规范格式化下面这篇 markdown 文档：\n\n```markdown\n# Redis 集群方案\n\nredis 集群采用主从复制架构。master 节点负责写操作，slave 节点负责读操作.\n\n- 主节点数量: 3个\n- 从节点数量: 6个\n- 故障转移: 自动\n\n哨兵模式（Sentinel）监控 master 健康状态，当 master 故障时自动选举新 master.\n```",
+    "expected": "将 redis→Redis、master→Master（仅说明文字）、slave→Slave（仅说明文字）；中文句末半角句号改为全角；中英文/数字间添加空格（3 个→3 个、6 个→6 个）；列表结构保持原样（不改为段落）；段落结构保持原样（不改为列表）；标题数量和层级与原文一致；不新增或删除任何标题。"
+  },
+  {
+    "id": 8,
+    "name": "检测并修复重复拼接（双 frontmatter + 双 H1）",
+    "prompt": "请检查并修复下面这篇 markdown 文档中存在的结构问题：\n\n`markdown\n---\ntitle: Harness Engineering 学习笔记\ndate: 2026-07-29\ncategories:\n  - 人工智能\ntags:\n  - AI\n---\n\n# Harness Engineering 学习笔记\n\n> Harness Engineering 是 2026 年 AI 编程领域最核心的工程方法论之一。\n\n## 概念起源\n\n2026 年 2 月，Mitchell Hashimoto 首次提出此概念。\n\n## 参考资料\n\n- [橙皮书](https://github.com/example)\n\n---\n\ntitle: Harness 工程学习笔记\ndate: 2026-07-29 23:10:31\ncategories:\n  - 人工智能\ntags:\n  - AI\n  - Harness\npermalink: /pages/ccd508c7/\n---\n\n# Harness 工程学习笔记\n\n## 概念\n\n**Harness Engineering（缰绳工程）** 是一套专为 AI 编程 Agent 设计的系统化工程方法论。\n\n## 组件\n\n| 组件 | 核心作用 |\n| --- | --- |\n| 指令 | 定义 AI 的身份 |\n`",
+    "expected": "识别出文件中存在 2 组 frontmatter 和 2 个 H1 标题，判定为重复拼接问题；截断文件，仅保留第一份完整的新内容（到参考资料部分），删除第二份旧内容；修复后文件仅包含 1 组 frontmatter 和 1 个 H1 标题；输出变更摘要时明确说明检测到重复拼接并进行了截断修复。"
+  },
+  {
+    "id": 9,
+    "name": "Write 全量覆盖后的读回验证",
+    "prompt": "你刚用 Write 工具全量覆盖了文档文件。请执行读回验证，确认文件结构完整性。\n\n模拟场景：Write 工具写入了一份新的 Harness Engineering 技术笔记（200 行），但文件实际产生了 260 行——尾部 60 行是旧版本内容被追加拼接。\n\n请描述你应该执行的验证步骤和修复流程。",
+    "expected": "执行 Step 3 结构完整性校验：1) 统计 frontmatter 数量（应为 1 组 = 2 个 ---），发现 ≥ 2 组则触发；2) 统计 H1 标题数量（应为 1 个），发现 ≥ 2 个则触发；3) 一线修复：截断文件至新内容末尾（参考资料部分），删除拼接的旧内容；4) 若截断后结构仍异常，则 fallback：回退文件，改用 SearchReplace 逐段替换；5) 向用户报告检测到拼接问题及修复结果。"
+  },
+  {
+    "id": 10,
+    "name": "多篇文档批量优化后的结构完整性校验",
+    "prompt": "你刚对以下 3 篇文档执行了内容优化（全量 Write 覆盖），请对每篇文件执行结构完整性校验，确认是否存在拼接问题：\n\n- docs/17.人工智能/Harness.md（优化后 152 行，验证 frontmatter=1, H1=1）\n- docs/17.人工智能/Loop.md（优化后 214 行，验证 frontmatter=1, H1=1）\n- docs/17.人工智能/Agent面试.md（优化后 527 行，验证 frontmatter=1, H1=1）\n\n请给出具体的验证命令和预期结果。",
+    "expected": "对每个文件执行：1) 统计 --- 分隔符数量（应为 2，即 1 组 frontmatter）；2) 统计 # 开头的 H1 行数（应为 1，代码块内除外）；3) 若任一文件检测到异常，立即截断修复；4) 输出校验结果表格，列出每个文件的 frontmatter 数、H1 数、总行数及状态（正常/已修复）；5) 明确说明所有文件均已通过结构完整性校验。"
+  },
+  {
+    "id": 11,
+    "name": "文件批量重命名 + 多级 README 引用同步",
+    "prompt": "将 docs/12.数据库/关系型数据库/MySQL 目录下的 md 文档命名为 [MySQL]xxx.md 的形式（README 除外）。注意：需要同步修改本目录 README 及 waterdrop 工程中各上级目录中 README.md 文档中引用该文件的路径。\n\n当前文件列表：\n- MySQL_事务.md\n- MySQL_索引.md\n- MySQL_面试.md\n\n涉及引用的 README：\n- docs/12.数据库/关系型数据库/MySQL/README.md\n- docs/12.数据库/README.md\n- docs/README.md\n- README.md",
+    "expected": "1) 重命名所有文件为 [MySQL]事务.md、[MySQL]索引.md、[MySQL]面试.md；2) 扫描并更新 4 级 README 中的引用路径（MySQL_事务.md → [MySQL]事务.md）；3) 确保根目录 README.md 中的路径也已同步更新；4) 不遗漏任何引用，不产生断链。"
+  },
+  {
+    "id": 12,
+    "name": "README 章节描述优化 + 关键词提取",
+    "prompt": "优化 docs/01.Java/JavaCore/README.md，要求：\n1. 保持章节结构不变；\n2. 每个章节的描述（形式如：> Java 基础篇总结 Java 的一些基础特性。）应根据其相关领域，补充、完善为一段精辟、专业的技术小结；\n3. 为每篇文章提取关键词（最多 5 个），用反引号包裹，顿号分隔。\n\n当前内容：\n```markdown\n# JavaCore\n\n## 基础\n\n> Java 基础篇总结 Java 的一些基础特性。\n\n- [Java 基础（一）](基础/Java基础（一）.md)\n- [Java 基础（二）](基础/Java基础（二）.md)\n\n## 并发\n\n> Java 并发编程的一些知识。\n\n- [并发（一）](并发/并发（一）.md)\n```",
+    "expected": "1) 引用块描述从泛泛总结改为精辟的技术小结（如基础篇：涵盖 OOP、集合框架、泛型、反射、IO 等核心机制）；2) 每篇文章附带反引号格式的关键词（如 `OOP`、`集合框架`、`泛型`、`反射`、`异常处理`）；3) 关键词数量 ≤ 5，基于文章标题领域和热度综合选取；4) 章节结构和文章链接路径保持原样。"
+  },
+  {
+    "id": 13,
+    "name": "面试文档格式化（难度分级 + ⭐重要度 + 精辟总结）",
+    "prompt": "按面试文档规范优化下面这篇面试题文档：\n\n```markdown\n---\ntitle: Java 并发面试\n---\n\n# Java 并发面试\n\n## 基础概念\n\n### Java 中 `static` 关键字有什么用？\n\n`static` 关键字可以用于修饰变量、方法和内部类。\n\n### `volatile` 关键字的作用是什么？\n\n保证变量的可见性。\n\n## 高级主题\n\n### 什么是 AQS（AbstractQueuedSynchronizer）？\n\nAQS 是 Java 并发包的基础框架。\n```\n\n要求：\n1. 题目按【简单】/【中等】/【困难】分级\n2. 重要度用 ⭐ 标记（最多 ⭐⭐⭐⭐⭐），⭐ 必须在标题末尾\n3. 每题需有 `> **总结**：` 引用块形式的精辟总结\n4. 答案语言精炼、术语专业",
+    "expected": "1) 每道题目格式为 `### 【难度】题目？⭐`，难度根据问题深度判定；2) ⭐ 在标题末尾，不在中间（如 `### 【简单】⭐ static...` 是错误的）；3) 每题答案后有 `> **总结**：一句话概括核心要点` 引用块；4) 答案补充专业细节（如 volatile 的 happens-before 语义、AQS 的 CLH 队列）；5) 来源可靠，不引入不确定的信息。"
+  },
+  {
+    "id": 14,
+    "name": "YAML frontmatter 语法错误检测与修复",
+    "prompt": "检查并修复下面这篇 markdown 文档的 frontmatter 语法问题：\n\n```markdown\n---\ntitle: 分布式存储: 从入门到精通\ndate: 2024-01-15\ncategories:\n  - 分布式\ntags:\n  - 分布式存储\n  - Ceph: 存储引擎\n  - HDFS\n---\n\n# 分布式存储\n\n内容...\n```\n\n注意：构建系统报告了以下错误：\n- It is forbidden to specify block composed value at line X",
+    "expected": "1) 识别出 title 字段值 `分布式存储: 从入门到精通` 中含有 `: `（冒号+空格），会被 YAML 解析器误判为键值对，需用引号包裹：`title: \"分布式存储: 从入门到精通\"`；2) 同理修复 tags 中的 `Ceph: 存储引擎` → `\"Ceph: 存储引擎\"`；3) 规则：YAML frontmatter 中任何包含 `: `（冒号后跟空格）的值必须用引号包裹；4) 不修改 frontmatter 以外的内容。"
+  },
+  {
+    "id": 15,
+    "name": "文档优化中图片保留校验",
+    "prompt": "请按文档规范优化下面这篇 markdown 笔记文档（精炼文字、统一术语、修正格式），要求保留所有内容元素：\n\n```markdown\n# HBase 架构解析\n\nhbase 是一个分布式的列式数据库。\n\n![HBase 架构图](./images/hbase-architecture.png)\n\n## 核心组件\n\nhbase 的核心组件包括：\n\n![Region 分布](./images/region-distribution.jpg)\n\n- HMaster：管理 Region 分配\n- RegionServer：处理读写请求\n\n详细架构参见下图：\n\n![数据流](./images/data-flow.webp)\n```",
+    "expected": "1) 所有 3 张图片（.png/.jpg/.webp）原样保留，不删除、不修改路径；2) 将 hbase → HBase（术语统一）；3) 中英文间添加空格（HBase 是一个分布式的列式数据库）；4) 验证方法：检查输出中 `![` 开头的行数与原文一致（3 行）；5) 输出变更摘要时明确说明\"已保留所有 3 张图片\"。"
+  }
+]
