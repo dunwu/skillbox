@@ -9,6 +9,7 @@
 - 引用块（> 和 ::: tip）：转为彩色提示框
 - 加粗文字：浅色强调
 - 段落间距：自适应间距，避免拥挤
+- 背面内容：仅保留 关键结论、记忆卡片、核心知识 三模块
 """
 
 import re
@@ -323,6 +324,32 @@ def build_front(cat, title, diff, stars):
     )
 
 
+# === 背面内容模块截取 ===
+
+# 卡片背面仅保留这三个模块（按模板标题中的中文名匹配，避免 emoji 编码差异）
+KEEP_MODULES = ('关键结论', '记忆卡片', '核心知识')
+
+
+def filter_answer_modules(body):
+    """只保留 关键结论/记忆卡片/核心知识 三个模块，返回 (filtered_body, missing_names)"""
+    parts = re.split(r'(?m)^(#### .+)$', body)
+    if len(parts) < 3:
+        # 旧格式答案无模块标题：回退为全文导出，不报缺失
+        return body.strip(), []
+    kept = []
+    found = set()
+    for i in range(1, len(parts), 2):
+        heading = parts[i]
+        section = parts[i + 1] if i + 1 < len(parts) else ''
+        for name in KEEP_MODULES:
+            if name in heading:
+                kept.append(heading + section)
+                found.add(name)
+                break
+    missing = [name for name in KEEP_MODULES if name not in found]
+    return ''.join(kept).strip(), missing
+
+
 # === 题库处理 ===
 
 def extract_questions(index_path):
@@ -406,10 +433,14 @@ def main():
     print('\n步骤 3：匹配答案并生成卡片...')
     cards = []
     unmatched = []
+    missing_modules = []
     for q in filtered:
         title = q['title']
         if title in qa_map:
-            answer_html = md_to_html(qa_map[title])
+            body, missing = filter_answer_modules(qa_map[title])
+            if missing:
+                missing_modules.append(title + '（缺：' + '、'.join(missing) + '）')
+            answer_html = md_to_html(body)
             front = build_front(q['cat'], title, q['diff'], q['stars'])
             back = f'<div style="text-align:left;line-height:1.6;font-size:0.95em">{answer_html}</div>'
             cards.append((front, back))
@@ -420,6 +451,10 @@ def main():
     if unmatched:
         print(f'  未匹配：{len(unmatched)} 道')
         for t in unmatched:
+            print(f'    - {t}')
+    if missing_modules:
+        print(f'  模块缺失：{len(missing_modules)} 道（背面仅导出存在的模块）')
+        for t in missing_modules:
             print(f'    - {t}')
 
     with open(output_path, 'w', encoding='utf-8-sig') as f:
