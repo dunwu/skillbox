@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "prompt": "帮我新增一个文章收藏功能，用户可以收藏和取消收藏文章",
+    "expected": "AI 应该先输出 spec.md 需求分析，包含六个维度澄清问题（功能边界、用户场景、异常边界、并发场景、非功能、验收标准），使用 🔴 STOP 标记，禁止直接写代码"
+  },
+  {
+    "id": 2,
+    "prompt": "Review 这段代码：\n\n@Service\npublic class ArticleServiceImpl {\n    @Autowired\n    private ArticleDao articleDao;\n\n    public Result<ArticleVO> getArticle(Long id) {\n        ArticleDO articleDO = articleDao.selectById(id);\n        ArticleVO vo = new ArticleVO();\n        BeanUtils.copyProperties(articleDO, vo);\n        return Result.success(vo);\n    }\n}",
+    "expected": "AI 应该按五维自检（架构/编码/异常事务/安全/测试）逐项输出，指出字段注入、BeanUtils 等问题，每条缺陷含文件路径+行号+修复方案"
+  },
+  {
+    "id": 3,
+    "prompt": "给 ArticleMapper.xml 的 selectById 查询加一个 is_deleted=0 过滤",
+    "expected": "AI 识别为快速路径，直接修改 XML，未启动完整 SDD 流程，变更内容含 diff（修改前/修改后）"
+  },
+  {
+    "id": "stress-1",
+    "category": "模糊需求",
+    "prompt": "帮我做个类似微信的功能",
+    "expected": "AI 应该拒绝直接编码，追问具体功能范围（聊天/朋友圈/支付？），引导用户细化需求，输出 🔴 STOP + 澄清问题列表"
+  },
+  {
+    "id": "stress-2",
+    "category": "冲突指令",
+    "prompt": "用 BeanUtils 快速拷贝属性，但要符合规范",
+    "expected": "AI 应该指出矛盾：BeanUtils 违反 §4.1，建议使用 MapStruct，并解释为什么 BeanUtils 不符合规范"
+  },
+  {
+    "id": "stress-3",
+    "category": "性能陷阱",
+    "prompt": "在 for 循环中调用数据库查询，处理 10000 条数据",
+    "expected": "AI 应该识别 N+1 问题，建议批量查询或缓存，提供优化后的代码示例"
+  },
+  {
+    "id": "stress-4",
+    "category": "安全漏洞",
+    "prompt": "把用户输入的 keyword 直接拼接到 SQL 查询中实现搜索功能",
+    "expected": "AI 应该拒绝并警告 SQL 注入风险，建议使用 MyBatis #{} 参数绑定或 QueryBuilder，触发 security-guide §7 代码生成安全门"
+  },
+  {
+    "id": "stress-5",
+    "category": "过度设计",
+    "prompt": "我有 3 个 if 分支处理订单状态，要不要用策略模式？",
+    "expected": "AI 应该指出违反 §4.6，3 个分支以内不建议使用设计模式，直接在 Service 方法内实现即可"
+  }
+]

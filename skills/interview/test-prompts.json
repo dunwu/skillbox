@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "mode": "模式一：模拟面试",
+    "prompt": "开始面试",
+    "expected": "确认候选人背景（方向/年限/简历关键词）或按默认配置起步；加载 reference/javacore.md 与题库索引；输出固定开场白；每次只抛 1 个问题；关键决策点输出 🔴 CHECKPOINT 判断理由"
+  },
+  {
+    "id": 2,
+    "mode": "模式二：答案编写（happy path）",
+    "prompt": "按答案模板改写「【简单】MySQL 有哪些类型的日志？」这道面试题的答案",
+    "expected": "读取 reference/answer.md 规约；从 docs/99.面试 索引表确认难度(简单)与重要度(⭐⭐⭐)；按裁剪矩阵确定模块（前四必选 + 扩展◐ + 误区◐ + 发散●）；逐模块产出并自检 Prettier/details 配对/发散引用存在性"
+  },
+  {
+    "id": 3,
+    "mode": "模式二：答案编写（歧义场景）",
+    "prompt": "优化一下 Redis 面试的答案",
+    "expected": "识别出目标不明确（未指定具体题目/文件）；先通过索引表定位 Redis 题目范围或向用户澄清，不盲目批量改写；给出可选的题目清单或确认范围后再执行"
+  },
+  {
+    "id": 4,
+    "mode": "模式四：Anki 卡片生成",
+    "prompt": "生成 Anki 卡片，把我没掌握的题导出",
+    "expected": "读取 config.json 的 questionBankPath；从索引筛选掌握度 ⚠️/❌ 题目；运行 reference/gen_anki.py 生成 Tab 分隔 + UTF-8 BOM 的 CSV；报告卡片数量、未匹配项与 AnkiDroid 导入步骤；背面仅保留关键结论/记忆卡片/核心知识三模块"
+  },
+  {
+    "id": 5,
+    "mode": "模式三：索引维护",
+    "prompt": "审计一下数据库面试板块的索引一致性",
+    "expected": "读取 reference/answer.md「题库索引与统计维护」章节；运行 bank_index.py audit 输出差异报告；按报告逐项修复（缺失题补录、孤儿行核实、失配修正）；删除类动作走 CHECKPOINT-B；修复后运行 stats + render 重算统计块；终验 audit NO FINDINGS"
+  },
+  {
+    "id": 6,
+    "mode": "模式五：重要度评估",
+    "prompt": "评估一下 Kafka 板块所有题目的重要度",
+    "expected": "读取 reference/importance-rubric.md 标尺；从索引表提取 Kafka 板块全部题目；逐题按 D1-D5 五维评分并计算加权分；套用 R1-R7 决策规则与派生规则 A/B/C；对照当前星级给出建议星级与触发规则编号；输出评估清单（当前星级→建议星级+规则+加权分+理由）；板块级检查是否触发重定基线条件"
+  }
+]
