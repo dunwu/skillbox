@@ -21,13 +21,13 @@
     "id": 4,
     "mode": "模式四：Anki 卡片生成",
     "prompt": "生成 Anki 卡片，把我没掌握的题导出",
-    "expected": "读取 config.json 的 questionBankPath；从索引筛选掌握度 ⚠️/❌ 题目；运行 reference/gen_anki.py 生成 Tab 分隔 + UTF-8 BOM 的 CSV；报告卡片数量、未匹配项与 AnkiDroid 导入步骤；背面仅保留关键结论/记忆卡片/核心知识三模块"
+    "expected": "读取 config.json 的 questionBankPath；从索引筛选掌握度 ⚠️/❌ 题目；运行 script/gen_anki.py 生成 Tab 分隔 + UTF-8 BOM 的 CSV；报告卡片数量、未匹配项与 AnkiDroid 导入步骤；背面仅保留关键结论/记忆卡片/核心知识三模块"
   },
   {
     "id": 5,
     "mode": "模式三：索引维护",
     "prompt": "审计一下数据库面试板块的索引一致性",
-    "expected": "读取 reference/answer.md「题库索引与统计维护」章节；运行 bank_index.py audit 输出差异报告；按报告逐项修复（缺失题补录、孤儿行核实、失配修正）；删除类动作走 CHECKPOINT-B；修复后运行 stats + render 重算统计块；终验 audit NO FINDINGS"
+    "expected": "读取 reference/answer.md「题库索引与统计维护」章节；运行 script/bank_index.py audit 输出差异报告；按报告逐项修复（缺失题补录、孤儿行核实、失配修正）；删除类动作走 CHECKPOINT-B；修复后运行 stats + render 重算统计块；终验 audit NO FINDINGS"
   },
   {
     "id": 6,

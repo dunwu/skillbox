@@ -17,7 +17,8 @@ description: 以一线大厂资深技术面试官（P8/3-2/T10 级）身份进�
 
 ## 全局路径约定（跨机器可移植性）
 
-- 本 skill 及全部子模块文档（reference/、template/ 下）一律使用相对路径：skill 内部文件以 skill 根目录为基准（如 `reference/gen_anki.py`），题库等业务文件以用户工作区根目录为基准（如 `docs/99.面试/README.md`）
+- 本 skill 及全部子模块文档（reference/、script/、template/ 下）一律使用相对路径：skill 内部文件以 skill 根目录为基准（如 `script/gen_anki.py`），题库等业务文件以用户工作区根目录为基准（如 `docs/99.面试/README.md`）
+- 目录职责固定：`reference/` 只放规约与知识维度文档（.md），`script/` 只放可执行脚本（.py），`template/` 只放模板文档（.md）。新增文件按此归类，禁止把脚本放进 reference/
 - 执行命令前由 agent 按当前运行环境将相对路径拼接为实际路径；禁止在文档与示例中硬编码绝对路径（如 `D:\...`）
 - `config.json` 默认不随 Skill 分发：首次安装后由引导流程询问用户生成（见 [reference/interview-deep.md](reference/interview-deep.md) 第零步），属机器环境配置，允许存储绝对路径。关键配置项：`questionBankDir`（题库根目录，如 `docs/99.面试`）、`questionBankPath`（题库索引文件）——文档与流程中引用题库位置时一律以这两个配置项为准，禁止硬编码具体目录
 
@@ -29,8 +30,8 @@ description: 以一线大厂资深技术面试官（P8/3-2/T10 级）身份进�
 | --------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 模式一：模拟面试      | 开始面试、面试官、mock interview、快速评测、深度评测、批量评测、出题评测、开始评测          | 提问测试与评估；区分**深度评测**与**快速评测**两种评测模式，规约见「评测模式」章节；深度评测细则见 [reference/interview-deep.md](reference/interview-deep.md)，快速评测细则见 [reference/interview-quick.md](reference/interview-quick.md) |
 | 模式二：答案编写      | 面试答案、改写/编写/优化面试题、答案模板                                                    | 按统一模板生产面试题答案，规约见 [template/answer.md](template/answer.md)；题库去重、重复题识别合并规约见 [reference/answer.md](reference/answer.md)「题目去重与合并」                                                                     |
-| 模式三：索引维护      | 更新题库索引、题库统计、索引审计、统计重算、同步索引                                        | 题库索引一致性审计、统计重算与统计块渲染，规约见 [reference/answer.md](reference/answer.md)「题库索引与统计维护」，工具脚本见 [reference/bank_index.py](reference/bank_index.py)                                                           |
-| 模式四：Anki 卡片生成 | 生成 Anki、导出 Anki、anki 卡片、做成 anki、把没掌握的题导出、generate anki、export to anki | 筛选题库中掌握度 ⚠️/❌ 的题目生成 AnkiDroid 可导入 CSV，流程见 [reference/anki-export.md](reference/anki-export.md)，工具脚本见 [reference/gen_anki.py](reference/gen_anki.py)                                                             |
+| 模式三：索引维护      | 更新题库索引、题库统计、索引审计、统计重算、同步索引                                        | 题库索引一致性审计、统计重算与统计块渲染，规约见 [reference/answer.md](reference/answer.md)「题库索引与统计维护」，工具脚本见 [script/bank_index.py](script/bank_index.py)                                                           |
+| 模式四：Anki 卡片生成 | 生成 Anki、导出 Anki、anki 卡片、做成 anki、把没掌握的题导出、generate anki、export to anki | 筛选题库中掌握度 ⚠️/❌ 的题目生成 AnkiDroid 可导入 CSV，流程见 [reference/anki-export.md](reference/anki-export.md)，工具脚本见 [script/gen_anki.py](script/gen_anki.py)                                                             |
 | 模式五：重要度评估    | 重要度评估、星级评估、评估重要度                                                            | 按五维加权标尺评估面试题重要度（星级），标尺见 [reference/importance-rubric.md](reference/importance-rubric.md)                                                                                                                            |
 
 ### 文件速查
@@ -43,8 +44,8 @@ description: 以一线大厂资深技术面试官（P8/3-2/T10 级）身份进�
 | reference/answer.md | 答案编写规约、索引维护规约、去重合并规约 | 模式二/三激活时 |
 | reference/anki-export.md | Anki 导出细则、CHECKPOINT-C、配色方案 | 模式四激活时 |
 | reference/importance-rubric.md | 重要度评估标尺：五维模型、R1–R7、派生规则 A/B/C | 模式五激活时 |
-| reference/bank_index.py | 索引审计/统计/渲染脚本（Python 3.7+，零依赖） | 模式三审计或统计时 |
-| reference/gen_anki.py | Anki CSV 生成脚本（Catppuccin Mocha 主题） | 模式四导出时 |
+| script/bank_index.py | 索引审计/统计/渲染脚本（Python 3.7+，零依赖） | 模式三审计或统计时 |
+| script/gen_anki.py | Anki CSV 生成脚本（Catppuccin Mocha 主题） | 模式四导出时 |
 | reference/javacore.md | Java 核心知识维度文件（8 维度 L1-L4 标准） | 模式一 Java 方向深度评测时 |
 | config.json | 机器环境配置（题库路径），首次安装时生成 | 模式一/四启动时读取 |
 
@@ -53,7 +54,7 @@ description: 以一线大厂资深技术面试官（P8/3-2/T10 级）身份进�
 1. 读取 [template/answer.md](template/answer.md) 获取模板规约（模块结构、裁剪矩阵、质量红线）。
 2. 定位目标题目：从 `questionBankDir`（config.json 配置的题库根目录）索引表确认难度、重要度与所属专题文档。领域→索引映射示例：Java 基础/容器/并发/JVM → JavaCore面试.md，MySQL/Redis/MongoDB 等 → 数据库面试.md，其余见 `questionBankDir` 下 README.md 收录清单。
 3. 按裁剪矩阵确定启用模块；先校验既有内容的事实准确性，再逐模块编写。
-4. 完成后自检：Prettier 零告警、details 容器配对、发散问题引用存在、索引表一致（可用 `reference/bank_index.py audit` 校验）、信息点无丢失（对照既有答案知识点清单逐条核对）。
+4. 完成后自检：Prettier 零告警、details 容器配对、发散问题引用存在、索引表一致（可用 `script/bank_index.py audit` 校验）、信息点无丢失（对照既有答案知识点清单逐条核对）、🔬 扩展知识与 🏭 实战场景的容器内排版符合 `reference/answer.md` 第 4/5 节（这两节专用；问句独占首行、正文分行分段）。
 
 ### 模式二失败分支（任一触发即按表处理，不得静默跳过）
 
@@ -78,7 +79,7 @@ description: 以一线大厂资深技术面试官（P8/3-2/T10 级）身份进�
 ### 模式三：题库索引与统计维护流程
 
 1. 读取 [reference/answer.md](reference/answer.md)「题库索引与统计维护」章节获取格式规约与执行红线。
-2. 运行 `python <skill根目录>/reference/bank_index.py audit --index <索引文件> --src <源文档目录>` 输出差异报告。本文所有相对路径（reference/、template/、config.json）均以 skill 根目录为基准，执行前先拼为绝对路径；索引与源文档的对应关系从索引文件各板块的 `::: tip **题库**` 块中的源文档链接获取。
+2. 运行 `python <skill根目录>/script/bank_index.py audit --index <索引文件> --src <源文档目录>` 输出差异报告。本文所有相对路径（reference/、script/、template/、config.json）均以 skill 根目录为基准，执行前先拼为绝对路径；索引与源文档的对应关系从索引文件各板块的 `::: tip **题库**` 块中的源文档链接获取。
 3. 按报告逐项修复索引（缺失题补录、孤儿行核实、失配修正、格式清理）；涉及删除的动作遵守 CHECKPOINT-B，先输出清单待用户确认。
 4. 运行 `stats` / `render` 重算统计，更新顶部总统计、各板块 `::: note` 统计块与 mermaid 饼图。
 5. 终验：重跑 `audit` 须 NO FINDINGS，且各板块统计之和等于全局总数。
@@ -88,7 +89,7 @@ description: 以一线大厂资深技术面试官（P8/3-2/T10 级）身份进�
 | 触发条件                              | 一线修复                                                                 | 仍失败兜底                                          |
 | ------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------- |
 | `python` 命令不存在                   | 改用 `python3` 或 `py` 重试                                              | 告知用户需安装 Python 3.7+，暂停维护流程            |
-| 脚本路径找不到                        | 以 skill 根目录为基准拼绝对路径：`<skill根目录>/reference/bank_index.py` | 向用户报告实际尝试过的路径，请求确认 skill 安装位置 |
+| 脚本路径找不到                        | 以 skill 根目录为基准拼绝对路径：`<skill根目录>/script/bank_index.py` | 向用户报告实际尝试过的路径，请求确认 skill 安装位置 |
 | `--index` / `--src` 路径无效          | 脚本退出码 2 + 报错；核对用户意图后修正路径重跑                          | 请用户提供索引文件与源文档目录的准确路径            |
 | audit 报告删除类差异（孤儿行/重复题） | 遵守 CHECKPOINT-B，先输出清单待用户确认再删                              | 用户不确认则仅修复非删除类差异，删除项挂起并标注    |
 | 统计重算后板块之和 ≠ 全局总数         | 重跑 `stats` 逐板块比对，定位计数错误板块                                | 定位不出则输出全量统计报告请用户裁决，不手改数字    |
@@ -105,6 +106,7 @@ description: 以一线大厂资深技术面试官（P8/3-2/T10 级）身份进�
 - ❌ 删除题目前未通读全文，丢失图片或独有精华内容
 - ❌ 删除后未修复指向已删题的引用，留下死链
 - ❌ 索引维护时手工估算统计数字而不运行 `bank_index.py`
+- ❌ 把「扩展知识」「实战场景」的整段论证压在一条列表项里连续写完（须问句独占首行、正文空行分段）
 
 ### 模式三执行反例（不要做）
 

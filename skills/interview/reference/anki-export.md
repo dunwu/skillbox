@@ -34,10 +34,10 @@
 运行脚本（路径执行前先拼为绝对路径，输出文件一律用 `.csv` 扩展名）：
 
 ```
-python <skill根目录>/reference/gen_anki.py <题库索引文件> <源文档目录> <输出路径.csv>
+python <skill根目录>/script/gen_anki.py <题库索引文件> <源文档目录> <输出路径.csv>
 ```
 
-例：`python <skill根目录>/reference/gen_anki.py docs/99.面试/JavaCore面试.md docs/01.Java/JavaCore/面试 anki_cards.csv`（索引文件来自 `config.json` 的 `questionBankPath`/`questionBankDir` 配置，执行前按实际环境拼接为可访问路径）。脚本自动完成筛选、答案匹配与 CSV 生成；默认筛选掌握度 ⚠️/❌，可用环境变量 `ANKI_MASTERY` 覆盖——脚本只认英文关键词：`failed`=仅 ❌、`warning`=仅 ⚠️、`empty`=仅未标记，可逗号组合（如 `failed,empty`）；PowerShell 写法：`$env:ANKI_MASTERY='failed'; python ...`（禁止直传 ❌ 符号，会导致筛选为 0 条）。
+例：`python <skill根目录>/script/gen_anki.py docs/99.面试/JavaCore面试.md docs/01.Java/JavaCore/面试 anki_cards.csv`（索引文件来自 `config.json` 的 `questionBankPath`/`questionBankDir` 配置，执行前按实际环境拼接为可访问路径）。脚本自动完成筛选、答案匹配与 CSV 生成；默认筛选掌握度 ⚠️/❌，可用环境变量 `ANKI_MASTERY` 覆盖——脚本只认英文关键词：`failed`=仅 ❌、`warning`=仅 ⚠️、`empty`=仅未标记，可逗号组合（如 `failed,empty`）；PowerShell 写法：`$env:ANKI_MASTERY='failed'; python ...`（禁止直传 ❌ 符号，会导致筛选为 0 条）。
 
 输出格式要求：
 
@@ -114,4 +114,4 @@ python <skill根目录>/reference/gen_anki.py <题库索引文件> <源文档目
 
 ## 参考脚本
 
-- [reference/gen_anki.py](reference/gen_anki.py) — 通用 Anki 卡片生成脚本，Catppuccin Mocha 深色主题，支持自定义题库路径和输出文件
+- [script/gen_anki.py](../script/gen_anki.py) — 通用 Anki 卡片生成脚本，Catppuccin Mocha 深色主题，支持自定义题库路径和输出文件
