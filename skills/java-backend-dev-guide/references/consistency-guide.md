@@ -1,49 +1,47 @@
-# 跨存储数据一致性模式指南
+# Cross-Storage Data Consistency Pattern Guide
 
-> **摘要**
+> **Summary**
 >
-> - **核心约束**：多存储写入 MUST 采用"先 MySQL 后异步入步"模式；MySQL → ES 同步 MUST 通过 Canal/MQ 异步，MUST NOT 同步双写；缓存更新遵循 Cache Aside（先更库再删缓存）；多步写入部分失败 MUST 有补偿机制
-> - **关键阈值**：异步同步延迟容忍 ≤5s；补偿重试最多 3 次；最终一致性收敛时间 ≤30s
-> - **常见违规**：同步双写 MySQL+ES、先删缓存再更库、事务内发 MQ、忽略 Canal 断流后的数据缺口
-
-> **版本**：v1.0 | 最后更新：2026-06-09 | 适用 SKILL 版本：≥ v1.0.0
+> - **Core constraint**: Multi-storage writes MUST adopt "MySQL first, then async writes to other stores" pattern; MySQL → ES sync MUST use Canal/MQ async, MUST NOT use synchronous dual-write; cache updates follow Cache Aside (update DB first, then delete cache); partial failure in multi-step writes MUST have compensation mechanism
+> - **Key thresholds**: Async sync latency tolerance ≤5s; compensation retries max 3; eventual consistency convergence time ≤30s
+> - **Common violations**: Synchronous dual-write MySQL+ES, delete cache before updating DB, send MQ inside transaction, ignore data gaps after Canal stream interruption
 
 ---
 
-## 1. 一致性模型选型
+## 1. Consistency Model Selection
 
-| 一致性级别           | 适用场景           | 实现方式                         | 典型存储组合         |
-| -------------------- | ------------------ | -------------------------------- | -------------------- |
-| 强一致性             | 资金、库存扣减     | 分布式事务 / 本地事务 + 同步调用 | MySQL 单库 / 分库    |
-| 最终一致性           | 内容发布、索引同步 | 异步消息 + 补偿                  | MySQL → ES / MongoDB |
-| 弱一致性（容忍丢失） | 计数器、PV 统计    | 尽力写入 + 定期对账              | MySQL → Redis        |
+| Consistency level | Applicable scenarios | Implementation | Typical storage combinations |
+|------------------|---------------------|---------------|----------------------------|
+| Strong consistency | Funds, inventory deduction | Distributed transaction / local transaction + synchronous call | MySQL single database / sharded database |
+| Eventual consistency | Content publishing, index sync | Async message + compensation | MySQL → ES / MongoDB |
+| Weak consistency (tolerate loss) | Counters, PV statistics | Best-effort write + periodic reconciliation | MySQL → Redis |
 
-**选型原则**：
+**Selection principles**:
 
-- **MUST** 优先选择最终一致性，避免引入分布式事务
-- 仅当业务语义要求"要么全成功要么全失败"时使用强一致性
-- 弱一致性场景 MUST 有定期对账机制
+- **MUST** prefer eventual consistency, avoid introducing distributed transactions
+- Only use strong consistency when business semantics require "all succeed or all fail"
+- Weak consistency scenarios MUST have periodic reconciliation mechanism
 
 ---
 
-## 2. MySQL → ES 同步模式
+## 2. MySQL → ES Sync Pattern
 
-### 2.1. 推荐模式：Canal 监听 Binlog
+### 2.1. Recommended Pattern: Canal Listening to Binlog
 
 ```
 MySQL ──Binlog──→ Canal ──→ MQ ──→ 消费者 ──→ ES
 ```
 
-**优势**：解耦业务代码、保证 Binlog 顺序、断流可回溯。
+**Advantages**: Decouples business code, guarantees Binlog ordering, interrupted streams can be replayed from the break point.
 
-**MUST**：
+**MUST**:
 
-- Canal 实例 MUST 监控延迟，延迟 > 5s 触发告警
-- 消费者 MUST 实现幂等（以 `binlog position + row primary key` 去重）
-- Canal 断流恢复后 MUST 从断点续读，MUST NOT 丢弃断流期间的变更
-- ES 批量写入使用 BulkProcessor（→ es-guide.md §2）
+- Canal instances MUST monitor latency, latency > 5s triggers alert
+- Consumers MUST implement idempotency (deduplicate by `binlog position + row primary key`)
+- After Canal stream interruption recovery, MUST resume from breakpoint, MUST NOT discard changes during interruption
+- ES batch writes use BulkProcessor (→ es-guide.md §1.4)
 
-### 2.2. 备选模式：事务提交后发 MQ
+### 2.2. Alternative Pattern: Send MQ After Transaction Commit
 
 ```java
 // ✅ 事务提交后再发 MQ
@@ -61,30 +59,30 @@ public void createArticle(CreateArticleCMD cmd) {
 }
 ```
 
-**MUST NOT** 在事务内发 MQ（事务回滚但消息已发，造成数据不一致）。
+**MUST NOT** send MQ inside transaction (transaction rolls back but message already sent, causing data inconsistency).
 
-### 2.3. 同步模式选择
+### 2.3. Sync Pattern Selection
 
-| 场景             | 推荐模式                 | 原因           |
-| ---------------- | ------------------------ | -------------- |
-| 全量索引同步     | Canal                    | 解耦、顺序保证 |
-| 单条记录索引更新 | 事务后 MQ                | 简单、延迟低   |
-| 索引重建         | 全量导出 + BulkProcessor | 批量高效       |
+| Scenario | Recommended pattern | Reason |
+|----------|-------------------|--------|
+| Full index sync | Canal | Decoupled, ordering guaranteed |
+| Single record index update | Post-transaction MQ | Simple, low latency |
+| Index rebuild | Full export + BulkProcessor | Batch efficient |
 
 ---
 
-## 3. MySQL → Redis 缓存一致性
+## 3. MySQL → Redis Cache Consistency
 
-### 3.1. Cache Aside Pattern（推荐）
+### 3.1. Cache Aside Pattern (Recommended)
 
 ```
 读：先读缓存 → 未命中则读库 → 写入缓存（设 TTL）
 写：先更库 → 再删缓存
 ```
 
-**MUST NOT** 使用"先删缓存再更库"（并发读会将旧值回写缓存）。
+**MUST NOT** use "delete cache first, then update DB" (concurrent reads will write stale values back to cache).
 
-### 3.2. 延迟双删（极高一致性场景）
+### 3.2. Delayed Double Delete (Extremely High Consistency Scenarios)
 
 ```java
 public void updateArticle(Article article) {
@@ -94,40 +92,40 @@ public void updateArticle(Article article) {
 }
 ```
 
-### 3.3. Canal 异步删缓存
+### 3.3. Canal Async Cache Deletion
 
-适用于对一致性要求极高且写频率低的场景：
+Applicable to scenarios with extremely high consistency requirements and low write frequency:
 
 ```
 MySQL ──Binlog──→ Canal ──→ 消费者 ──→ 删除 Redis 缓存
 ```
 
-### 3.4. 缓存一致性策略选择
+### 3.4. Cache Consistency Strategy Selection
 
-| 一致性要求             | 推荐策略         | 说明                       |
-| ---------------------- | ---------------- | -------------------------- |
-| 一般（容忍短暂不一致） | Cache Aside      | 先更库再删缓存，实现简单   |
-| 较高                   | 延迟双删         | 额外延迟删除，覆盖并发回写 |
-| 极高                   | Canal 异步删缓存 | 基于 Binlog 保证最终一致   |
+| Consistency requirement | Recommended strategy | Notes |
+|------------------------|---------------------|-------|
+| General (tolerate brief inconsistency) | Cache Aside | Update DB first then delete cache, simple implementation |
+| Relatively high | Delayed double delete | Additional delayed deletion, covers concurrent write-back |
+| Extremely high | Canal async cache deletion | Binlog-based to guarantee eventual consistency |
 
 ---
 
-## 4. MySQL → MongoDB 同步模式
+## 4. MySQL → MongoDB Sync Pattern
 
-### 4.1. 异步消息模式
+### 4.1. Async Message Pattern
 
 ```
 MySQL ──事务后 MQ──→ 消费者 ──→ MongoDB
 ```
 
-**适用场景**：MySQL 存结构化元数据，MongoDB 存半结构化内容文档。
+**Applicable scenarios**: MySQL stores structured metadata, MongoDB stores semi-structured content documents.
 
-**MUST**：
+**MUST**:
 
-- 消费者 MUST 实现幂等（以业务 ID 去重）
-- MongoDB 写入 MUST 处理 `DuplicateKeyException`
+- Consumers MUST implement idempotency (deduplicate by business ID)
+- MongoDB writes MUST handle `DuplicateKeyException`
 
-### 4.2. 双写 + 补偿模式
+### 4.2. Dual-write + Compensation Pattern
 
 ```java
 @Transactional(rollbackFor = Exception.class)
@@ -137,41 +135,41 @@ public void createArticle(CreateArticleCMD cmd) {
 }
 ```
 
-**注意**：此模式依赖 MongoDB 参与分布式事务（需 MongoDB 4.0+ 副本集），低版本不支持多文档事务时，**MUST 使用异步消息模式**。
+**Note**: This pattern relies on MongoDB participating in distributed transactions (requires MongoDB 4.0+ replica set). When lower versions do not support multi-document transactions, **MUST use async message pattern**.
 
 ---
 
-## 5. MySQL → HBase 同步模式
+## 5. MySQL → HBase Sync Pattern
 
-### 5.1. 异步归档模式
+### 5.1. Async Archive Pattern
 
 ```
 MySQL ──Binlog──→ Canal/MQ ──→ 消费者 ──→ HBase
 ```
 
-**适用场景**：热数据存 MySQL，冷数据归档 HBase。
+**Applicable scenarios**: Hot data in MySQL, cold data archived to HBase.
 
-**MUST**：
+**MUST**:
 
-- HBase RowKey MUST 包含散列前缀（→ hbase-guide.md §2）
-- 批量写入使用 `batchPut`，每批 ≤ 1000 条
-- 归档任务 MUST 有数据校验（对比 MySQL 源数据与 HBase 归档数据的一致性）
+- HBase RowKey MUST contain hash prefix (→ hbase-guide.md §1.1.1)
+- Batch writes use `batchPut`, each batch ≤ 1000 records
+- Archive tasks MUST have data verification (compare MySQL source data with HBase archived data consistency)
 
 ---
 
-## 6. 多存储部分失败补偿
+## 6. Multi-Storage Partial Failure Compensation
 
-### 6.1. 补偿模式
+### 6.1. Compensation Pattern
 
-当多步写入中某一步失败时，**MUST** 按以下优先级处理：
+When one step in multi-step writes fails, **MUST** handle according to the following priority:
 
-| 策略     | 适用场景                     | 实现方式                           |
-| -------- | ---------------------------- | ---------------------------------- |
-| 自动重试 | 临时性故障（网络抖动、超时） | 指数退避，最多 3 次，间隔 1s/2s/4s |
-| 补偿回滚 | 永久性失败且已有部分写入成功 | 记录补偿日志，异步执行反向操作     |
-| 人工介入 | 补偿失败或数据已暴露         | 告警 + 运维工单                    |
+| Strategy | Applicable scenarios | Implementation |
+|----------|---------------------|---------------|
+| Auto retry | Transient failures (network jitter, timeout) | Exponential backoff, max 3 times, intervals 1s/2s/4s |
+| Compensation rollback | Permanent failure with partial writes already succeeded | Record compensation log, async execute reverse operation |
+| Manual intervention | Compensation failed or data already exposed | Alert + operations ticket |
 
-### 6.2. 补偿日志规范
+### 6.2. Compensation Log Specification
 
 ```sql
 -- ✅ 补偿日志表结构
@@ -193,27 +191,27 @@ CREATE TABLE t_compensation_log (
 ) COMMENT '补偿日志表';
 ```
 
-### 6.3. 禁止行为
+### 6.3. Prohibited Behaviors
 
-- **MUST NOT** 忽略异步写入失败（必须记录补偿日志）
-- **MUST NOT** 在补偿重试中使用固定间隔（必须指数退避）
-- **MUST NOT** 补偿重试超过 3 次后仍静默（必须告警 + 升级为人工处理）
+- **MUST NOT** ignore async write failures (must record compensation log)
+- **MUST NOT** use fixed intervals in compensation retries (must use exponential backoff)
+- **MUST NOT** remain silent after compensation retries exceed 3 times (must alert + escalate to manual handling)
 
 ---
 
-## 7. 数据对账机制
+## 7. Data Reconciliation Mechanism
 
-### 7.1. 定期对账
+### 7.1. Periodic Reconciliation
 
-对于最终一致性场景，**MUST** 建立定期对账机制：
+For eventual consistency scenarios, **MUST** establish periodic reconciliation mechanism:
 
-| 对账类型      | 频率   | 实现方式                                 |
-| ------------- | ------ | ---------------------------------------- |
-| MySQL ↔ ES    | 每日   | 对比文档数和最新更新时间，差异超阈值告警 |
-| MySQL ↔ Redis | 每小时 | 抽样热 Key 验证缓存与库数据一致性        |
-| MySQL ↔ HBase | 每日   | 对比归档数据行数与 MySQL 已归档记录数    |
+| Reconciliation type | Frequency | Implementation |
+|--------------------|-----------|---------------|
+| MySQL ↔ ES | Daily | Compare document count and latest update time, alert when difference exceeds threshold |
+| MySQL ↔ Redis | Hourly | Sample hot keys to verify cache and DB data consistency |
+| MySQL ↔ HBase | Daily | Compare archived data row count with MySQL archived record count |
 
-### 7.2. 对账差异处理
+### 7.2. Reconciliation Difference Handling
 
 ```
 发现差异
@@ -227,21 +225,21 @@ CREATE TABLE t_compensation_log (
 
 ---
 
-## Checklist 与反模式
+## Checklist and Anti-Patterns
 
 ### Checklist
 
-新增跨存储操作时：
+When adding cross-storage operations:
 
-- [ ] 明确一致性要求（强一致 / 最终一致 / 弱一致）
-- [ ] 选择对应的同步模式（Canal / MQ / Cache Aside）
-- [ ] 异步写入失败有补偿机制（补偿日志 + 重试）
-- [ ] 消费者已实现幂等
-- [ ] 缓存更新遵循 Cache Aside（先更库再删缓存）
-- [ ] 已建立对账机制（频率 + 告警阈值）
-- [ ] 事务内未发 MQ（MUST 在事务提交后发送）
+- [ ] Consistency requirements clarified (strong / eventual / weak)
+- [ ] Corresponding sync pattern selected (Canal / MQ / Cache Aside)
+- [ ] Async write failure has compensation mechanism (compensation log + retry)
+- [ ] Consumer has implemented idempotency
+- [ ] Cache updates follow Cache Aside (update DB first then delete cache)
+- [ ] Reconciliation mechanism established (frequency + alert threshold)
+- [ ] No MQ sent inside transaction (MUST send after transaction commits)
 
-### 常见反模式（禁止）
+### Common Anti-Patterns (Prohibited)
 
 ```
 ❌ 同步双写 MySQL + ES（性能差 + 部分失败无补偿）
@@ -252,11 +250,3 @@ CREATE TABLE t_compensation_log (
 ❌ 补偿重试使用固定间隔（应指数退避）
 ❌ 无对账机制（数据漂移无法发现）
 ```
-
----
-
-## 变更记录
-
-| 版本 | 日期       | 变更     | Review |
-| ---- | ---------- | -------- | ------ |
-| v1.0 | 2026-06-09 | 初始版本 | —      |

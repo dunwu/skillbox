@@ -1,28 +1,26 @@
-# Git 规范
+# Git Standards
 
-> **摘要**
+> **Summary**
 >
-> - **核心约束**：分支策略采用 Git Flow（main / develop / feature / release / hotfix）；Commit Message 采用 Angular 规范（`<type>(<scope>): <subject>`）
-> - **关键阈值**：feature 从 develop 创建、release 从 develop 创建合并回 main + develop、hotfix 从 main 创建合并回 main + develop
-> - **常见违规**：直接在 main 上开发、commit message 无 type 前缀、一次提交包含多个不相关改动、feature 未合并就长期搁置
-
-> **版本**：v1.0 | 最后更新：2026-06-09 | 适用 SKILL 版本：≥ v1.0.0
+> - **Core constraint**: Branch strategy uses Git Flow (main / develop / feature / release / hotfix); Commit Message uses Angular convention (`<type>(<scope>): <subject>`)
+> - **Key thresholds**: feature branches from develop, release branches from develop merged back to main + develop, hotfix branches from main merged back to main + develop
+> - **Common violations**: Direct development on main, commit message without type prefix, single commit containing multiple unrelated changes, feature branches shelved long-term without merging
 
 ---
 
-## 1. 分支策略（Git Flow）
+## 1. Branch Strategy (Git Flow)
 
-### 1.1. 分支类型
+### 1.1. Branch Types
 
-| 分支      | 命名格式                           | 用途                               | 生命周期   |
-| --------- | ---------------------------------- | ---------------------------------- | ---------- |
-| `main`    | `main`                             | 生产环境代码，每个版本节点可追溯   | 永久       |
-| `develop` | `develop`                          | 开发集成分支，集成最新开发成果     | 永久       |
-| `feature` | `feature/{issuePrefix}-<简述>`     | 单个功能或需求开发                 | 合并后删除 |
-| `release` | `release/<version>`                | 版本发布准备（测试、修复、元数据） | 合并后删除 |
-| `hotfix`  | `hotfix/{issuePrefix}-<简述>`      | 生产环境紧急修复                   | 合并后删除 |
+| Branch | Naming format | Purpose | Lifecycle |
+|--------|--------------|---------|-----------|
+| `main` | `main` | Production environment code, each version node traceable | Permanent |
+| `develop` | `develop` | Development integration branch, integrates latest development results | Permanent |
+| `feature` | `feature/{issuePrefix}--<description>` | Single feature or requirement development | Deleted after merge |
+| `release` | `release/<version>` | Release preparation (testing, fixes, metadata) | Deleted after merge |
+| `hotfix` | `hotfix/{issuePrefix}--<description>` | Production environment urgent fix | Deleted after merge |
 
-### 1.2. 分支流转
+### 1.2. Branch Flow
 
 ```
 main ──────────────────────────────────── hotfix ──→ main
@@ -34,29 +32,31 @@ develop ──┤── feature/* ──→ develop
           └── feature/* ──→ develop
 ```
 
-### 1.3. 规则
+### 1.3. Rules
 
-- **MUST NOT** 直接在 `main` 上提交代码（`main` 仅接受 release 和 hotfix 合并）
-- **MUST NOT** 直接在 `develop` 上开发功能（从 `develop` 创建 feature 分支）
-- feature 分支 **MUST** 从最新的 `develop` 创建，开发完成后合并回 `develop`
-- release 分支 **MUST** 从 `develop` 创建，测试通过后合并回 `main`（打 tag）和 `develop`
-- hotfix 分支 **MUST** 从 `main` 创建，修复完成后合并回 `main`（打 tag）和 `develop`
-- feature / release / hotfix 合并后 **MUST** 删除远程分支
+- **MUST NOT** commit code directly on `main` (`main` only accepts release and hotfix merges)
+- **MUST NOT** develop features directly on `develop` (create feature branches from `develop`)
+- feature branches **MUST** be created from the latest `develop`, merged back to `develop` after development is complete
+- release branches **MUST** be created from `develop`, merged back to `main` (create a tag on `main`) and `develop` after testing passes
+- hotfix branches **MUST** be created from `main`, merged back to `main` (create a tag on `main`) and `develop` after fix is complete
+- the remote branch **MUST** be deleted after a feature / release / hotfix branch is merged
 
-### 1.4. 命名示例
+### 1.4. Naming Examples
+
+> Use `--` (double hyphen) to separate requirement ID from feature description, to avoid confusion with `-` inside the ID.
 
 ```
-feature/JIRA-1234-article-publish
-feature/JIRA-5678-author-crud
+feature/VR260810-020--data-preview
+feature/VR260810-035--article-publish
 release/1.5.0
-hotfix/JIRA-9999-fix-null-pointer
+hotfix/VR260810-020--fix-null-pointer
 ```
 
 ---
 
-## 2. Commit Message 规范（Angular）
+## 2. Commit Message Convention (Angular)
 
-### 2.1. 格式
+### 2.1. Format
 
 ```
 <type>(<scope>): <subject>
@@ -66,79 +66,177 @@ hotfix/JIRA-9999-fix-null-pointer
 <footer>
 ```
 
-| 部分      | 规则                                                     |
-| --------- | -------------------------------------------------------- |
-| `type`    | **MUST**，见下方类型表                                   |
-| `scope`   | 可选，影响范围（模块名或组件名）                         |
-| `subject` | **MUST**，简述改动，不超过 50 字符，首字母小写，不加句号 |
-| `body`    | 可选，详细说明改动原因与影响面                           |
-| `footer`  | 可选，Breaking Change 标记或关联 Issue                   |
+| Section | Rules |
+|---------|-------|
+| `type` | **MUST**, see §2.2 type table |
+| `scope` | Optional, impact scope (module name or component name), see §2.3 |
+| `subject` | **MUST**, use Chinese, imperative mood, no period, ≤50 characters |
+| `body` | Optional, explains **why** not what (the diff itself explains what), each line ≤72 characters |
+| `footer` | Optional, `BREAKING CHANGE:` description / related Issue (`Fixes #123`) / related requirement ID (`Refs: VR260810-020`), see Refs rules below |
 
-### 2.2. Type 取值
-
-| type       | 用途                           | 示例                                            |
-| ---------- | ------------------------------ | ----------------------------------------------- |
-| `feat`     | 新功能                         | `feat(biz-author): add article publish workflow`|
-| `fix`      | 修复 Bug                       | `fix(dal): resolve NPE when Redis timeout`      |
-| `refactor` | 重构（不新增功能、不修复 Bug） | `refactor(core): extract ResultCode to enum`    |
-| `docs`     | 文档变更                       | `docs: update README for local setup`           |
-| `chore`    | 构建/工具/依赖变更             | `chore: upgrade mybatis-plus to 3.5.9`          |
-| `test`     | 测试相关                       | `test(biz-author): add unit tests for service`  |
-| `ci`       | CI/CD 配置                     | `ci: add PMD check to pipeline`                 |
-| `build`    | 构建系统                       | `build: update flatten-maven-plugin config`     |
-| `perf`     | 性能优化                       | `perf(redis): use pipeline for batch queries`   |
-| `revert`   | 回退提交                       | `revert: revert feat(biz-author): add publish`  |
-
-### 2.3. Scope 取值
-
-> Scope 应反映实际模块名，由项目级 Skill 定义具体取值范围。通用示例：
-
-| scope          | 含义           |
-| -------------- | -------------- |
-| `biz-{domain}` | 业务领域模块   |
-| `{coreModule}` | 公共契约层     |
-| `{dalModule}`  | 存储适配层     |
-| `{bootModule}` | 启动自动配置   |
-| `{bomModule}`  | 版本管理       |
-
-### 2.4. 正确示例
+**Breaking Change marker** (choose one of two):
 
 ```
-feat(biz-author): add article publish workflow
+# 方式一：type 后加 !
+feat(api)!: 移除废弃的用户搜索接口
+
+# 方式二：footer 中声明
+feat(biz-order): 重构订单创建逻辑
+
+BREAKING CHANGE: OrderDTO.status 字段类型从 String 变更为 OrderStatusEnum。
+所有调用方须同步修改。
+
+Fixes #1234
+```
+
+### 2.2. Type Values
+
+| type | Purpose | Example |
+|------|---------|---------|
+| `feat` | New feature | `feat(biz-author): 新增文章发布流程` |
+| `fix` | Bug fix | `fix(dal): 修复 Redis 超时导致的空指针异常` |
+| `refactor` | Refactoring (no new feature, no bug fix) | `refactor(core): 提取 ResultCode 为枚举类` |
+| `docs` | Documentation changes | `docs: 更新本地部署说明` |
+| `chore` | Build/tools/dependency changes | `chore: 升级 mybatis-plus 至 3.5.9` |
+| `test` | Test related | `test(biz-author): 补充业务层单元测试` |
+| `ci` | CI/CD configuration | `ci: 新增 PMD 检查到流水线` |
+| `build` | Build system | `build: 调整 flatten-maven-plugin 配置` |
+| `perf` | Performance optimization | `perf(redis): 使用 pipeline 批量查询优化` |
+| `revert` | Revert commit | `revert: 回退 feat(biz-author): 新增文章发布流程` |
+
+### 2.3. Scope Values
+
+> Scope should reflect actual module names, specific values defined by project-level Skill. General examples:
+
+| scope | Meaning |
+|-------|---------|
+| `biz-{domain}` | Business domain module |
+| `{coreModule}` | Public contract layer |
+| `{dalModule}` | Storage adaptation layer |
+| `{bootModule}` | Startup auto-configuration |
+| `{bomModule}` | Version management |
+
+### 2.4. Refs Rules (Requirement Linking)
+
+> Feature development (`feat`) and bug fixes (`fix`) **MUST** link requirement IDs in footer, for code traceability and Review.
+
+**Format**: `Refs: <requirement ID>`, multiple requirements on separate lines.
+
+```
+Refs: VR260810-020
+Refs: VR260810-021
+```
+
+**Applicable scope**:
+- `feat` / `fix` → **MUST** link requirement ID
+- `refactor` / `perf` → **SHOULD** link (if corresponding requirement exists)
+- `docs` / `chore` / `ci` / `build` / `test` → Optional
+
+### 2.5. Correct Examples
+
+```
+feat(biz-author): 新增文章发布流程
 
 实现文章发布功能，包含状态机流转和消息通知。
 - 新增 ArticlePublishService 领域服务
 - 新增 ARTICLE_PUBLISH ResultCode
 
-feat(biz-article): support scroll pagination for article list
+Refs: VR260810-020
 
-fix(dal): resolve connection leak in HBase pool
+feat(biz-article): 文章列表支持滚动分页
 
-chore: upgrade redis to 4.0.12 in bom
+Refs: VR260810-021
+
+fix(dal): 修复 HBase 连接池连接泄漏
+
+Refs: VR260810-015
+
+chore: 升级 bom 中 Redis 版本至 4.0.12
+
+feat(api)!: 移除废弃的用户搜索接口
+
+旧版 /api/v1/users/search 接口自 v2.0 起已由
+/api/v2/users/search 替代，移除以减少维护负担。
+
+BREAKING CHANGE: /api/v1/users/search 已移除，请使用 /api/v2/users/search。
+
+Refs: VR260810-030
+
+fix(biz-order): 修复优惠券为空时的空指针异常
+
+根因：未使用优惠券时 getCoupon() 返回 null，
+但折扣计算逻辑未做空值判断。
+
+Fixes #2345
+Refs: VR260810-025
 ```
 
-### 2.5. 错误示例
+### 2.6. Incorrect Examples
 
 ```
 # ❌ 无 type 前缀
-update article service
+更新文章服务
 
-# ❌ subject 首字母大写
-feat(Biz-Author): Add article publish workflow
+# ❌ subject 使用英文
+feat(biz-author): add article publish workflow
 
-# ❌ subject 太长且含句号
-feat(biz-author): implement the article publish workflow feature with state machine and notification.
+# ❌ subject 太长
+feat(biz-author): 实现文章发布流程并集成状态机流转与消息通知功能
 
 # ❌ 一次提交包含多个不相关改动
-feat: add article publish and fix redis timeout and update readme
+feat: 新增文章发布并修复 Redis 超时和更新文档
+
+# ❌ Breaking Change 未标记（仅改 subject，无 ! 也无 footer）
+feat(api): 移除废弃的用户搜索接口
+
+# ❌ footer 格式错误（应使用 Fixes/Closes 而非 fix/close）
+fix(dal): 修复缓存层空指针异常
+fix: #1234
+
+# ❌ feat 缺少 Refs（功能提交 MUST 关联需求 ID）
+feat(biz-author): 新增文章发布流程
+
+实现文章发布功能，包含状态机流转和消息通知。
 ```
+
+### 2.7. Commit Template and Enforcement (Team Shared)
+
+> Two hooks work together: `prepare-commit-msg` injects template + `commit-msg` enforces format validation.
+> **MUST** execute setup script once after clone.
+
+```bash
+# 新人 clone 后执行一次（仅一次）
+python3 scripts/setup-git.py
+```
+
+**Hook Mechanism**:
+
+| Hook | Trigger timing | Purpose |
+|------|---------------|---------|
+| `prepare-commit-msg` | During interactive `git commit` | Auto-fill template comments (including Refs prompt) |
+| `commit-msg` | After commit message written, before commit | **Validate format, reject non-conforming commits** |
+
+**commit-msg validation rules**:
+- First line must match `<type>(<scope>): <subject>` format
+- type must be: `feat | fix | refactor | docs | chore | test | perf | ci | build | revert`
+- scope optional, subject required
+- subject first letter lowercase, no period, ≤50 characters
+- Exemptions: merge commits, revert commits, initial commits
+
+**Files involved**:
+
+| File | Purpose |
+|------|---------|
+| `scripts/hooks/prepare-commit-msg` | hook: auto-inject template (Python 3) |
+| `scripts/hooks/commit-msg` | hook: enforce Angular format validation (Python 3) |
+| `scripts/setup-git.py` | One-time configuration script (Python 3) |
 
 ---
 
-## 3. 提交纪律
+## 3. Commit Discipline
 
-- **MUST** 一次提交只包含一个逻辑改动（单一职责）
-- **MUST NOT** 提交编译失败或测试未通过的代码
-- **MUST NOT** 提交包含敏感信息（密钥、密码、Token）的文件
-- **MUST NOT** 使用 `git push --force` 到 `main` / `develop` 分支
-- **MUST** 在合并 PR 前确保 CI 流水线全部通过
+- **MUST** one commit contains only one logical change (single responsibility)
+- **MUST NOT** commit code that fails to compile or pass tests
+- **MUST NOT** commit files containing sensitive information (keys, passwords, Tokens)
+- **MUST NOT** use `git push --force` to `main` / `develop` branches
+- **MUST** ensure CI pipeline all passes before merging PR

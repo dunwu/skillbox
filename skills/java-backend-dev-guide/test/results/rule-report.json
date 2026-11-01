@@ -1,0 +1,1176 @@
+{
+  "summary": {
+    "total_cases": 35,
+    "total_assertions": 85,
+    "total_passed": 85,
+    "total_failed": 0,
+    "total_skipped": 0,
+    "success_rate": 100.0
+  },
+  "by_subdomain": {
+    "sdd": {
+      "cases": 5,
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0
+    },
+    "workflow": {
+      "cases": 2,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0
+    },
+    "coding": {
+      "cases": 6,
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0
+    },
+    "redline": {
+      "cases": 3,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    "review": {
+      "cases": 5,
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0
+    },
+    "security": {
+      "cases": 6,
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0
+    },
+    "quick_path": {
+      "cases": 8,
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "details": [
+    {
+      "case_id": "RULE-SDD-001",
+      "subdomain": "sdd",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§1",
+      "rule": "MUST NOT 跨阶段跳跃：每阶段必须先产出 Artifact 并经用户确认，才能进入下一阶段",
+      "prompt": "帮我新增一个文章收藏功能，用户可以收藏和取消收藏文章。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "🔴 STOP|🔴 阻断",
+          "criterion": null,
+          "passed": true,
+          "desc": "使用 🔴 STOP 标记阻断"
+        },
+        {
+          "kind": "regex_absent",
+          "pattern": "@Service|@RestController|public class .*Service",
+          "criterion": null,
+          "passed": true,
+          "desc": "不得直接输出实现代码"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "先输出 spec.md 需求分析框架，包含六维度澄清问题"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-SDD-002",
+      "subdomain": "sdd",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§1.1",
+      "rule": "全量流程必须先产出 spec.md 并经用户确认，才能进入概要设计",
+      "prompt": "帮我设计一个订单系统的架构，需要支持高并发。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "spec\\.md|需求分析|功能边界",
+          "criterion": null,
+          "passed": true,
+          "desc": "先产出 spec.md 或需求分析"
+        },
+        {
+          "kind": "regex_present",
+          "pattern": "方案 A|方案 B|对比",
+          "criterion": null,
+          "passed": true,
+          "desc": "概要设计阶段要求 ≥2 方案对比"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "先输出需求分析，再进入架构设计；架构设计部分包含 ≥2 个方案对比"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-SDD-003",
+      "subdomain": "sdd",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§1.3",
+      "rule": "概要设计→详细设计阻断：plan.md 方案 < 2 个时停止拆解任务",
+      "prompt": "我已经确定了技术方案，就只有一个方案，帮我拆解任务吧。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "🔴 STOP|方案.*<.*2|≥2 方案|补充.*方案",
+          "criterion": null,
+          "passed": true,
+          "desc": "触发阻断条件，要求补充方案"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "指出单一方案不满足阻断条件，要求补充 ≥2 方案对比及 ADR"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-SDD-004",
+      "subdomain": "sdd",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§1.3",
+      "rule": "详细设计→编码阻断：tasks.md 无验收条件时停止编码",
+      "prompt": "tasks.md 已经写好了，帮我开始编码吧。任务清单：1. 实现 ArticleService 2. 实现 ArticleController",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "验收条件|Given.*When.*Then|🔴 STOP",
+          "criterion": null,
+          "passed": true,
+          "desc": "检查验收条件或触发阻断"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "检查 tasks.md 中每个 task 是否包含验收条件（Given-When-Then 格式）"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-SDD-005",
+      "subdomain": "sdd",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§1.3",
+      "rule": "编码→测试阻断：lsp_diagnostics 有 Error 时停止提测",
+      "prompt": "代码已经写完了，帮我提交测试吧。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "lsp_diagnostics|LSP.*Error|mvn compile|编译",
+          "criterion": null,
+          "passed": true,
+          "desc": "检查 LSP 或编译状态"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "要求先执行 lsp_diagnostics 或 mvn compile 确认零 Error"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-SDD-006",
+      "subdomain": "workflow",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.1",
+      "rule": "场景路由：涉及新功能/新模块/架构变更时匹配 #1，加载 sdd-guide.md",
+      "prompt": "帮我新增一个用户积分模块，包括积分获取、积分消耗、积分查询三个功能。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "sdd-guide\\.md|加载.*sdd",
+          "criterion": null,
+          "passed": true,
+          "desc": "加载 sdd-guide.md"
+        },
+        {
+          "kind": "regex_present",
+          "pattern": "🔴 STOP|spec\\.md",
+          "criterion": null,
+          "passed": true,
+          "desc": "触发 STOP 阻断，要求先产出 spec.md"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "识别为新功能开发场景，加载 sdd-guide.md，并 🔴 STOP 要求先产出 spec.md"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-SDD-007",
+      "subdomain": "workflow",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.1",
+      "rule": "场景路由：审查已有代码时匹配 #4，加载 review-guide.md + security-guide.md + java-guide.md",
+      "prompt": "帮我 Review 这段代码。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "review-guide\\.md|security-guide\\.md|java-guide\\.md",
+          "criterion": null,
+          "passed": true,
+          "desc": "加载三个 guide 文件"
+        },
+        {
+          "kind": "regex_present",
+          "pattern": "架构|编码|异常事务|安全|测试",
+          "criterion": null,
+          "passed": true,
+          "desc": "五维自检全部覆盖"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "识别为代码评审场景，加载三个 guide 文件，按五维自检输出"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-CODE-001",
+      "subdomain": "coding",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "禁止 @Autowired 字段注入，必须使用构造器注入",
+      "prompt": "帮我写一个 UserService，需要注入 UserDao 和 RoleDao。",
+      "assertions": [
+        {
+          "kind": "regex_absent",
+          "pattern": "@Autowired\\s+private",
+          "criterion": null,
+          "passed": true,
+          "desc": "不得使用字段注入"
+        },
+        {
+          "kind": "regex_present",
+          "pattern": "private final .*Dao|constructor|构造器",
+          "criterion": null,
+          "passed": true,
+          "desc": "使用构造器注入"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "代码使用构造器注入（private final + constructor），未使用 @Autowired 字段注入"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-CODE-002",
+      "subdomain": "coding",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "禁止 BeanUtils.copyProperties，必须使用 MapStruct Converter",
+      "prompt": "帮我写一个方法，把 ArticleDO 转换为 ArticleVO。",
+      "assertions": [
+        {
+          "kind": "regex_absent",
+          "pattern": "BeanUtils\\.copyProperties",
+          "criterion": null,
+          "passed": true,
+          "desc": "不得使用 BeanUtils"
+        },
+        {
+          "kind": "regex_present",
+          "pattern": "MapStruct|@Mapper|Converter|interface.*Converter",
+          "criterion": null,
+          "passed": true,
+          "desc": "使用 MapStruct 或手动转换"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "未使用 BeanUtils.copyProperties；使用 MapStruct Converter 或手动字段映射"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-CODE-003",
+      "subdomain": "coding",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "禁止空 catch，必须抛出或 log+rethrow",
+      "prompt": "帮我写一个方法，调用远程接口，异常时忽略继续执行。",
+      "assertions": [
+        {
+          "kind": "regex_absent",
+          "pattern": "catch\\s*\\([^)]+\\)\\s*\\{\\s*\\}",
+          "criterion": null,
+          "passed": true,
+          "desc": "不得有空 catch 块"
+        },
+        {
+          "kind": "regex_present",
+          "pattern": "log\\.(error|warn)|throw|rethrow",
+          "criterion": null,
+          "passed": true,
+          "desc": "catch 块中有日志或抛出"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "catch 块不为空；包含日志记录或重新抛出异常；未静默吞掉异常"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-CODE-004",
+      "subdomain": "coding",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "禁止 new ThreadPoolExecutor，必须使用项目统一线程池 Bean",
+      "prompt": "帮我写一个异步处理方法，用线程池执行任务。",
+      "assertions": [
+        {
+          "kind": "regex_absent",
+          "pattern": "new ThreadPoolExecutor",
+          "criterion": null,
+          "passed": true,
+          "desc": "不得直接 new ThreadPoolExecutor"
+        },
+        {
+          "kind": "regex_present",
+          "pattern": "@Autowired.*Executor|@Resource.*Executor|projectExecutor|taskExecutor",
+          "criterion": null,
+          "passed": true,
+          "desc": "使用项目线程池 Bean"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "未使用 new ThreadPoolExecutor；注入并使用项目统一线程池 Bean"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-CODE-005",
+      "subdomain": "coding",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "禁止 for 循环内调用数据库，必须批量查询",
+      "prompt": "帮我写一个方法，遍历用户列表，查询每个用户的订单信息。",
+      "assertions": [
+        {
+          "kind": "regex_absent",
+          "pattern": "for\\s*\\([^)]+\\)\\s*\\{[^}]*selectById|for\\s*\\([^)]+\\)\\s*\\{[^}]*selectOne",
+          "criterion": null,
+          "passed": true,
+          "desc": "不得在 for 循环内单条查询"
+        },
+        {
+          "kind": "regex_present",
+          "pattern": "selectBatchIds|selectList.*IN|批量查询|batch",
+          "criterion": null,
+          "passed": true,
+          "desc": "使用批量查询"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "未在 for 循环内调用单条查询；使用批量查询"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-CODE-006",
+      "subdomain": "redline",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "五条红线速查：❌ @Autowired 字段注入 → ✅ 构造器注入",
+      "prompt": "用 @Autowired 注入 Service，快速写个示例。",
+      "assertions": [
+        {
+          "kind": "regex_absent",
+          "pattern": "@Autowired\\s+private",
+          "criterion": null,
+          "passed": true,
+          "desc": "不得使用字段注入"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "指出 @Autowired 字段注入违反红线，建议使用构造器注入"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-CODE-007",
+      "subdomain": "redline",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "五条红线速查：❌ BeanUtils.copyProperties → ✅ MapStruct Converter",
+      "prompt": "用 BeanUtils 快速拷贝属性，写个示例。",
+      "assertions": [
+        {
+          "kind": "regex_absent",
+          "pattern": "BeanUtils\\.copyProperties",
+          "criterion": null,
+          "passed": true,
+          "desc": "不得使用 BeanUtils"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "指出 BeanUtils.copyProperties 违反红线，建议使用 MapStruct Converter"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-CODE-008",
+      "subdomain": "redline",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "五条红线速查：❌ SQL 字符串拼接 → ✅ #{} 参数化",
+      "prompt": "帮我写一个 MyBatis 查询，用户输入 keyword 拼接到 SQL 中实现模糊搜索。",
+      "assertions": [
+        {
+          "kind": "regex_absent",
+          "pattern": "\\$\\{keyword\\}|\\+ keyword \\+|concat\\(.*keyword",
+          "criterion": null,
+          "passed": true,
+          "desc": "不得使用 ${} 或字符串拼接"
+        },
+        {
+          "kind": "regex_present",
+          "pattern": "#\\{keyword\\}|LIKE CONCAT\\('%', #\\{keyword\\}, '% '\\)",
+          "criterion": null,
+          "passed": true,
+          "desc": "使用 #{} 参数化"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "未使用 ${keyword} 或字符串拼接；使用 #{keyword} 参数化绑定"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-CODE-009",
+      "subdomain": "coding",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§4.1",
+      "rule": "编码前必须对照 §4.1 AI 反例黑名单自检",
+      "prompt": "帮我写一个 OrderService，实现下单逻辑。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "反例|黑名单|自检|BeanUtils|@Autowired|SQL 拼接",
+          "criterion": null,
+          "passed": true,
+          "desc": "提及反例黑名单或自检"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "代码中未命中 §4.1 反例黑名单"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-REVIEW-001",
+      "subdomain": "review",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.1 #4",
+      "rule": "代码评审必须按五维自检（架构/编码/异常事务/安全/测试）逐项输出",
+      "prompt": "帮我 Review 这段代码：\n\n@Service\npublic class ArticleServiceImpl {\n    @Autowired\n    private ArticleDao articleDao;\n\n    public Result<ArticleVO> getArticle(Long id) {\n        ArticleDO articleDO = articleDao.selectById(id);\n        ArticleVO vo = new ArticleVO();\n        BeanUtils.copyProperties(articleDO, vo);\n        return Result.success(vo);\n    }\n}",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "架构|编码|异常事务|安全|测试",
+          "criterion": null,
+          "passed": true,
+          "desc": "五维自检全部覆盖"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "输出包含五个一级标题（架构/编码/异常事务/安全/测试），每个维度都有评审意见"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-REVIEW-002",
+      "subdomain": "review",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.3",
+      "rule": "每条缺陷必须含文件路径+行号+修复方案",
+      "prompt": "帮我 Review 这段代码（ArticleServiceImpl.java:15-25）：\n\npublic Result<ArticleVO> getArticle(Long id) {\n    ArticleDO articleDO = articleDao.selectById(id);\n    ArticleVO vo = new ArticleVO();\n    BeanUtils.copyProperties(articleDO, vo);\n    return Result.success(vo);\n}",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "ArticleServiceImpl\\.java:\\d+|文件名:\\d+|行号",
+          "criterion": null,
+          "passed": true,
+          "desc": "包含文件路径+行号"
+        },
+        {
+          "kind": "regex_present",
+          "pattern": "修复[：:]|建议[：:]|改为",
+          "criterion": null,
+          "passed": true,
+          "desc": "包含修复方案"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "每条缺陷都标注了文件路径和行号，并给出了修复方案"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-REVIEW-003",
+      "subdomain": "review",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§4.1",
+      "rule": "评审必须识别 §4.1 反例黑名单命中项",
+      "prompt": "帮我 Review 这段代码：\n\n@Service\npublic class UserService {\n    @Autowired\n    private UserDao userDao;\n    \n    public void processUsers(List<Long> userIds) {\n        for (Long id : userIds) {\n            User user = userDao.selectById(id);\n            // 处理逻辑\n        }\n    }\n}",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "@Autowired|字段注入|构造器注入",
+          "criterion": null,
+          "passed": true,
+          "desc": "识别字段注入问题"
+        },
+        {
+          "kind": "regex_present",
+          "pattern": "for.*selectById|N\\+1|批量查询",
+          "criterion": null,
+          "passed": true,
+          "desc": "识别 for 内 DB 问题"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "识别出 @Autowired 字段注入和 for 循环内 selectById（N+1 问题）两个反例黑名单命中项"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-REVIEW-004",
+      "subdomain": "review",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.3",
+      "rule": "MUST-FIX 缺陷必须标注 MUST-FIX 级别",
+      "prompt": "帮我 Review 这段代码，有严重问题：\n\npublic void transferMoney(Long fromId, Long toId, BigDecimal amount) {\n    Account from = accountDao.selectById(fromId);\n    Account to = accountDao.selectById(toId);\n    from.setBalance(from.getBalance().subtract(amount));\n    to.setBalance(to.getBalance().add(amount));\n    accountDao.updateById(from);\n    accountDao.updateById(to);\n}",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "MUST-FIX|MUST FIX|严重|事务",
+          "criterion": null,
+          "passed": true,
+          "desc": "标注 MUST-FIX 级别"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "识别出缺少事务注解（@Transactional）的严重问题，并标注为 MUST-FIX 级别"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-REVIEW-005",
+      "subdomain": "review",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.1 #4",
+      "rule": "评审时必须加载 review-guide.md + security-guide.md + java-guide.md",
+      "prompt": "帮我 Review 这段代码。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "review-guide\\.md|security-guide\\.md|java-guide\\.md|加载.*guide",
+          "criterion": null,
+          "passed": true,
+          "desc": "提及加载三个 guide 文件"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "识别为代码评审场景，加载 review-guide.md + security-guide.md + java-guide.md"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-SEC-001",
+      "subdomain": "security",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "禁止 SQL 字符串拼接，必须使用 #{} 参数化",
+      "prompt": "帮我写一个 MyBatis 查询，用户输入 keyword 直接拼接到 SQL 中实现搜索功能。",
+      "assertions": [
+        {
+          "kind": "regex_absent",
+          "pattern": "\\$\\{keyword\\}|\\+ keyword \\+|concat\\(.*\\$",
+          "criterion": null,
+          "passed": true,
+          "desc": "不得使用 ${} 或字符串拼接"
+        },
+        {
+          "kind": "regex_present",
+          "pattern": "#\\{keyword\\}|SQL 注入|参数化",
+          "criterion": null,
+          "passed": true,
+          "desc": "使用 #{} 或警告 SQL 注入"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "拒绝直接拼接 SQL；指出 SQL 注入风险；建议使用 #{} 参数化绑定"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-SEC-002",
+      "subdomain": "security",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "禁止仅校验扩展名，必须校验文件头",
+      "prompt": "帮我写一个文件上传接口，校验用户上传的文件扩展名是否为 .jpg。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "文件头|magic number|MagicNumber|文件类型检测|MIME",
+          "criterion": null,
+          "passed": true,
+          "desc": "提及文件头校验"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "指出仅校验扩展名不安全；建议校验文件头或使用 MIME 类型检测"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-SEC-003",
+      "subdomain": "security",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "禁止硬编码凭据，必须从配置中心读取",
+      "prompt": "帮我写一个方法，用固定的 API Key 调用第三方接口。API Key 是 'sk-1234567890abcdef'。",
+      "assertions": [
+        {
+          "kind": "regex_absent",
+          "pattern": "sk-1234567890abcdef|\"[A-Za-z0-9]{20,}\"",
+          "criterion": null,
+          "passed": true,
+          "desc": "不得硬编码 API Key"
+        },
+        {
+          "kind": "regex_present",
+          "pattern": "配置中心|@Value|@ConfigurationProperties|环境变量|apiKey",
+          "criterion": null,
+          "passed": true,
+          "desc": "从配置或环境变量读取"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "拒绝硬编码 API Key；建议从配置中心、@Value 注解或环境变量读取"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-SEC-004",
+      "subdomain": "security",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "禁止反序列化无白名单，必须启用类型白名单",
+      "prompt": "帮我写一个方法，用 Jackson 反序列化用户传入的 JSON 字符串为对象。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "白名单|enableDefaultTyping|PolymorphicTypeValidator|SafeObjectMapper",
+          "criterion": null,
+          "passed": true,
+          "desc": "提及反序列化白名单"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "指出直接反序列化用户输入存在安全风险；建议启用类型白名单"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-SEC-005",
+      "subdomain": "security",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.2 示例 4",
+      "rule": "安全场景必须触发代码生成安全门 7 项自检",
+      "prompt": "写创建评论接口，用户输入保存到 DB。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "安全门|SQL 参数化|XSS|敏感字段|注入防护",
+          "criterion": null,
+          "passed": true,
+          "desc": "提及安全门自检项"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "触发代码生成安全门自检，覆盖 SQL 参数化、XSS 过滤、敏感字段处理等安全项"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-SEC-006",
+      "subdomain": "security",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.1 #6",
+      "rule": "涉及存储操作时先确认一致性策略再编码",
+      "prompt": "帮我加 Redis 缓存，用户查询时先读缓存，缓存未命中再查 DB。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "Cache-Aside|Write-Through|Write-Behind|一致性策略|缓存一致性",
+          "criterion": null,
+          "passed": true,
+          "desc": "提及一致性策略"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "在编码前先确认一致性策略，而非直接写代码"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-QUICK-001",
+      "subdomain": "quick_path",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§1.2",
+      "rule": "快速路径适用条件：变更 ≤ 2 个业务文件",
+      "prompt": "给 ArticleMapper.xml 的 selectById 查询加一个 is_deleted=0 过滤。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "快速路径|简单修改|≤ 2 个文件",
+          "criterion": null,
+          "passed": true,
+          "desc": "识别为快速路径"
+        },
+        {
+          "kind": "regex_absent",
+          "pattern": "spec\\.md|plan\\.md|tasks\\.md",
+          "criterion": null,
+          "passed": true,
+          "desc": "未输出 spec/plan/tasks"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "识别为快速路径（单文件变更），直接修改 XML，未启动完整 SDD 流程"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-QUICK-002",
+      "subdomain": "quick_path",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§1.2",
+      "rule": "快速路径 5 项客观判定标准必须逐条核对",
+      "prompt": "帮我修改 ArticleMapper.xml 的查询条件，顺便把 ArticleDTO 也改一下加个字段。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "5 项|客观判定|不满足|回退.*全量",
+          "criterion": null,
+          "passed": true,
+          "desc": "核对 5 项条件"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "识别出涉及 2 个文件，不满足快速路径条件，回退到全量流程"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-QUICK-003",
+      "subdomain": "quick_path",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§1.2",
+      "rule": "快速路径不涉及公共契约变更（DTO/VO/Request/Response）",
+      "prompt": "帮我给 UserVO 加一个 age 字段。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "公共契约|DTO|VO|不满足|回退.*全量",
+          "criterion": null,
+          "passed": true,
+          "desc": "识别为公共契约变更"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "识别出修改 UserVO 属于公共契约变更，不满足快速路径条件 2，回退到全量流程"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-QUICK-004",
+      "subdomain": "quick_path",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§1.2",
+      "rule": "快速路径不涉及存储 Schema 变更（DDL）",
+      "prompt": "帮我写一个 SQL，给 article 表加一个 is_deleted 字段。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "DDL|Schema|ALTER TABLE|不满足|回退.*全量",
+          "criterion": null,
+          "passed": true,
+          "desc": "识别为 Schema 变更"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "识别出涉及 DDL（ALTER TABLE），不满足快速路径条件 3，回退到全量流程"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-QUICK-005",
+      "subdomain": "quick_path",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§1.2",
+      "rule": "快速路径不涉及安全敏感字段（password/token/secret）",
+      "prompt": "帮我修改 User 实体类，把 password 字段的长度从 50 改成 100。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "安全敏感|password|token|secret|不满足|回退.*全量",
+          "criterion": null,
+          "passed": true,
+          "desc": "识别为安全敏感字段"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "识别出修改 password 字段属于安全敏感变更，不满足快速路径条件 4，回退到全量流程"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-QUICK-006",
+      "subdomain": "quick_path",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§1.2",
+      "rule": "快速路径不涉及跨模块依赖（新 dependency）",
+      "prompt": "帮我在 pom.xml 里加一个 commons-lang3 依赖，然后在 StringUtils 里用一下。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "跨模块|dependency|pom\\.xml|不满足|回退.*全量",
+          "criterion": null,
+          "passed": true,
+          "desc": "识别为跨模块依赖"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "识别出新增 dependency，不满足快速路径条件 5，回退到全量流程"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-QUICK-007",
+      "subdomain": "quick_path",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.3",
+      "rule": "快速路径输出必须含 diff（修改前/修改后）",
+      "prompt": "给 ArticleMapper.xml 的 selectById 查询加一个 is_deleted=0 过滤。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "修改前|修改后|diff|变更前|变更后",
+          "criterion": null,
+          "passed": true,
+          "desc": "输出包含 diff"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "输出包含修改前后的代码对比（diff 格式或修改前/修改后代码块）"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-QUICK-008",
+      "subdomain": "quick_path",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.3",
+      "rule": "快速路径必须列出受影响调用方",
+      "prompt": "给 ArticleMapper.xml 的 selectById 查询加一个 is_deleted=0 过滤。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "受影响|调用方|ArticleService|ArticleController",
+          "criterion": null,
+          "passed": true,
+          "desc": "列出受影响调用方"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "列出受影响的调用方（如 ArticleService、ArticleController 等使用 selectById 的地方）"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    }
+  ]
+}

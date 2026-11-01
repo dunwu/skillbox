@@ -1,20 +1,10 @@
-# 并发编程规约
-
-> **摘要**
->
-> - **核心约束**：线程池 MUST 使用自定义 ThreadPoolTaskExecutor；CompletableFuture 异步链 MUST 指定自定义线程池 + 捕获异常；分布式锁 MUST 使用 Redisson 禁自行实现
-> - **关键阈值**：有界队列容量 500-2000、锁超时 10-30s
-> - **常见违规**：使用 Executors.newFixedThreadPool（无界队列导致 OOM）、CompletableFuture 忽略异常处理导致静默失败、自旋等待实现分布式锁
-
-> **版本**：v1.0 | 最后更新：2026-06-09 | 适用 SKILL 版本：≥ v1.0.0
+# Concurrent Programming Standards
 
 ---
 
-## 1. 线程池规约
+## 1. Thread Pool Standards
 
-> 禁止 Executors 工厂方法、有界队列、参数公式等规约遵循《阿里巴巴 Java 开发手册（黄山版）》§一 编程规约 — 并发处理。
-
-MUST 使用 Spring `ThreadPoolTaskExecutor` 或 JDK `ThreadPoolExecutor`，配置模板：
+MUST use Spring `ThreadPoolTaskExecutor` or JDK `ThreadPoolExecutor`, configuration template:
 
 ```java
 @Configuration
@@ -39,11 +29,9 @@ public class ThreadPoolConfig {
 
 ---
 
-## 2. CompletableFuture 规约
+## 2. CompletableFuture Standards
 
-> 线程池指定、异常处理等通用规约遵循《阿里巴巴 Java 开发手册（黄山版）》§一 编程规约 — 并发处理。
-
-异步链 MUST 指定自定义线程池（禁 ForkJoinPool.commonPool），MUST 定义异常兜底：
+Async chains MUST specify a custom thread pool (prohibit ForkJoinPool.commonPool), MUST define exception fallback:
 
 ```java
 @Async("bizExecutor")
@@ -59,7 +47,7 @@ public CompletableFuture<ArticleVO> getArticleAsync(Long articleId) {
 }
 ```
 
-### 2.1. 多任务编排
+### 2.1. Multi-task Orchestration
 
 ```java
 // 并行执行多个独立任务，等待全部完成
@@ -75,27 +63,27 @@ CompletableFuture<ArticleVO> result = CompletableFuture.anyOf(
 ).thenApply(obj -> (ArticleVO) obj);
 ```
 
-### 2.2. 禁止行为
+### 2.2. Prohibited Behaviors
 
-- **MUST NOT** 使用 `ForkJoinPool.commonPool()`（共享池线程数有限，高并发下阻塞）
-- **MUST NOT** 不处理异常（`exceptionally` / `handle` / `whenComplete` 至少选一个）
-- **MUST NOT** 在 `CompletableFuture` 链中执行长时间阻塞操作
-- **MUST NOT** 在 Servlet 线程中 `.join()` 等待异步结果（应使用异步 Servlet 或响应式返回）
+- **MUST NOT** use `ForkJoinPool.commonPool()`
+- **MUST NOT** skip exception handling (at least one of `exceptionally` / `handle` / `whenComplete`)
+- **MUST NOT** execute long-blocking operations in `CompletableFuture` chains
+- **MUST NOT** `.join()` in Servlet threads to wait for async results (should use async Servlet or reactive return)
 
 ---
 
-## 3. 分布式锁规约
+## 3. Distributed Lock Standards
 
-### 3.1. 工具选择
+### 3.1. Tool Selection
 
-| 场景              | 推荐方案                         | 说明                                   |
-| ----------------- | -------------------------------- | -------------------------------------- |
-| 跨 JVM 进程互斥   | **Redisson**                     | 首选，支持可重入、看门狗自动续期、红锁 |
-| 单 JVM 内线程互斥 | `synchronized` / `ReentrantLock` | 轻量，无需网络开销                     |
+| Scenario | Recommended solution | Notes |
+|----------|---------------------|-------|
+| Cross-JVM process mutual exclusion | **Redisson** | Preferred, supports reentrant, watchdog auto-renewal, red lock |
+| Single-JVM thread mutual exclusion | `synchronized` / `ReentrantLock` | Lightweight, no network overhead |
 
-**MUST NOT** 自行实现分布式锁（缺乏续期与重入机制）。
+**MUST NOT** implement distributed locks yourself (lacks renewal and reentry mechanisms).
 
-### 3.2. Redisson 编码模式
+### 3.2. Redisson Coding Pattern
 
 ```java
 public void deductStock(Long articleId, int count) {
@@ -119,9 +107,9 @@ public void deductStock(Long articleId, int count) {
 }
 ```
 
-### 3.3. 禁止行为
+### 3.3. Prohibited Behaviors
 
-- **MUST NOT** 自行基于 `SET NX EX` 实现分布式锁（无看门狗续期、无重入检测）
-- **MUST NOT** 锁的持有时间远大于业务执行时间（浪费资源）
-- **MUST NOT** 忘记在 `finally` 中释放锁
-- **MUST NOT** 在持有分布式锁期间执行 RPC / HTTP 调用（锁粒度应尽量小）
+- **MUST NOT** implement distributed locks yourself based on `SET NX EX`
+- **MUST NOT** have lock hold time far exceed business execution time (wastes resources)
+- **MUST NOT** forget to release locks in `finally`
+- **MUST NOT** execute RPC / HTTP calls while holding distributed locks (lock granularity should be as small as possible)

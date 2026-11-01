@@ -1,43 +1,41 @@
-# SDD 开发工作流规范
+# SDD Development Workflow Standards
 
-> **摘要**
+> **Summary**
 >
-> - **核心约束**：AI 是参谋不是决策者；spec.md 需含验收标准+非功能需求+开放问题（全部解决才算完成）；plan.md 需 ≥2 方案对比+ADR；tasks.md 单 task ≤半天且必须含验收条件
-> - **关键阈值**：单 task 预计 ≤4h、方案对比 ≥2 个、spec 验收标准每条可独立测试
-> - **常见违规**：跨阶段跳跃、spec.md 缺非功能需求、plan.md 只列一个方案、tasks.md 无验收条件
+> - **Core constraint**: AI is advisor not decision-maker; spec.md must contain acceptance criteria + non-functional requirements + open questions (all resolved before considered complete); plan.md must have ≥ 2 solution comparisons + ADR; tasks.md single task ≤ half day and must contain acceptance criteria
+> - **Key thresholds**: Single task estimated ≤ 4h, solution comparisons ≥ 2, spec acceptance criteria each independently testable
+> - **Common violations**: Cross-stage jumping, spec.md missing non-functional requirements, plan.md listing only one solution, tasks.md without acceptance criteria
 
-> **版本**：v1.0 | 最后更新：2026-06-09 | 适用 SKILL 版本：≥ v1.0.0
-
-本文档为 SKILL.md §1 SDD 工作流各阶段的详细规范。
+This document provides detailed specifications for each stage of SKILL.md §1 SDD workflow.
 
 ---
 
-## 1. 需求分析
+## 1. Requirements Analysis
 
-### 1.1. AI 角色定位
+### 1.1. AI Role Positioning
 
-AI 是**参谋，不是决策者**。职责：枚举边界条件、澄清模糊需求、识别技术风险；所有方向性判断必须由人确认。
+AI is an **advisor, not decision-maker**. Responsibilities: enumerate boundary conditions, clarify ambiguous requirements, identify technical risks; all directional judgments must be confirmed by a human.
 
-### 1.2. 触发方式
+### 1.2. Trigger Method
 
 ```
 加载 brainstorming Skill，向 AI 描述需求背景与初步想法。
 ```
 
-### 1.3. AI MUST 主动澄清的问题
+### 1.3. Questions AI MUST Proactively Clarify
 
-产出 `spec.md` 前，AI 必须确认以下维度，缺失则主动提问：
+Before producing `spec.md`, AI must confirm the following dimensions, proactively ask if missing; open questions are recorded separately in the "Open questions" section of spec.md:
 
-| 维度       | 澄清要点                            |
-| ---------- | ----------------------------------- |
-| 功能边界   | 哪些功能在本次范围内，哪些明确排除  |
-| 用户与场景 | 谁在什么场景下使用，核心诉求是什么  |
-| 异常与边界 | 入参为空 / 超限 / 并发时的预期行为  |
-| 非功能需求 | 性能目标、数据量级、兼容性要求、SLA |
-| 验收标准   | 如何判断"做完了"且"做对了"          |
-| 开放问题   | 当前无法确认、需要决策的事项        |
+| Dimension | Clarification points |
+|-----------|---------------------|
+| Feature scope | Which features are in scope for this round, which explicitly excluded |
+| User scenarios | Who uses it in what scenario, what is the core need |
+| Exception boundaries | Expected behavior when input is null or empty / exceeds limits |
+| Concurrency scenarios | Expected behavior under concurrency / peak load / duplicate submission |
+| Non-functional requirements | Performance targets, data scale (order of magnitude), compatibility requirements, SLA |
+| Acceptance criteria | How to judge "done" and "done correctly" |
 
-### 1.4. spec.md 模板
+### 1.4. spec.md Template
 
 ```markdown
 ## 背景与目标
@@ -71,34 +69,34 @@ AI 是**参谋，不是决策者**。职责：枚举边界条件、澄清模糊�
 <!-- 尚未确认、需要决策的事项，确认后删除对应条目 -->
 ```
 
-### 1.5. 阶段约束
+### 1.5. Stage Constraints
 
-- **MUST NOT** 在 `spec.md` 经用户确认前，输出任何技术方案或代码
-- **MUST NOT** 跳过非功能需求（性能、安全是常见遗漏）
-- **MUST** 开放问题全部解决后才标记需求分析完成（"解决"定义：用户在对话中明确回复决策，或 AI 已收到明确需求说明使该问题不再成立；**MUST NOT** 由 AI 自行标记开放问题为已解决）
-- **MUST** 在写 `spec.md` 前读取 `GLOSSARY.md` 和 `ARCHITECTURE.md`
-- **MUST NOT** 未读上述文档直接输出 `spec.md`
+- **MUST NOT** output any technical solution or code before `spec.md` is confirmed by user
+- **MUST NOT** skip non-functional requirements (performance, security are commonly omitted)
+- **MUST** all open questions resolved before marking requirements analysis complete ("resolved" defined as: user explicitly replies with decision in conversation, or AI has received clear requirement description making the question no longer applicable; **MUST NOT** have AI mark open questions as resolved on its own)
+- **MUST** read `GLOSSARY.md` and `ARCHITECTURE.md` before writing `spec.md`
+- **MUST NOT** directly output `spec.md` without reading above documents
 
 ---
 
-## 2. 概要设计（HLD）
+## 2. High-Level Design (HLD)
 
-### 2.1. 目标
+### 2.1. Objective
 
-明确模块划分与接口契约，为 tasks.md 拆解提供依据。
+Clarify module division and API contracts, provide basis for tasks.md decomposition.
 
-### 2.2. plan.md 必须包含
+### 2.2. plan.md Must Include
 
-| 章节       | 内容要求                                    |
-| ---------- | ------------------------------------------- |
-| 方案对比   | ≥ 2 个可行方案，列出各自优缺点与适用条件    |
-| 架构决策   | 选定方案及理由，记录被否决方案的原因（ADR） |
-| 模块划分   | 涉及的模块 / 服务，职责边界说明             |
-| 接口契约   | 关键接口的方法签名、入参、出参、错误码      |
-| 数据模型   | 核心表结构 / 文档结构 / 缓存 Key 设计       |
-| 风险与依赖 | 外部依赖、技术风险、降级策略                |
+| Section | Content requirements |
+|---------|---------------------|
+| Solution comparison | ≥ 2 feasible solutions, list respective pros/cons and applicable conditions |
+| Architecture decision | Selected solution and reasons, record reasons for rejected solutions (ADR) |
+| Module division | Involved modules / services, responsibility boundary description |
+| API contracts | Key API method signatures, parameters, return values, error codes |
+| Data model | Core table structures / document structures / cache key designs |
+| Risks and dependencies | External dependencies, technical risks, degradation strategies |
 
-### 2.3. plan.md Markdown 模板
+### 2.3. plan.md Markdown Template
 
 ```markdown
 ## 一、方案对比
@@ -145,38 +143,38 @@ AI 是**参谋，不是决策者**。职责：枚举边界条件、澄清模糊�
 | ...  | ...  | ...      |
 ```
 
-### 2.4. 技术选型评估维度
+### 2.4. Technology Selection Evaluation Dimensions
 
-做技术选型时，AI 必须从以下维度给出分析，不得仅凭惯性选择：
+When doing technology selection, AI must analyze from the following dimensions, must not select based on inertia alone:
 
-1. **复用优先**：现有组件是否已满足需求
-2. **团队熟悉度**：引入新技术的学习与维护成本
-3. **性能与容量**：数据量级、QPS 是否匹配
-4. **运维成本**：监控、告警、故障排查的复杂度
-5. **长期演进**：技术选型是否锁定、未来扩展性
+1. **Reuse first**: Whether existing components satisfy requirements
+2. **Team familiarity**: Learning and maintenance cost of introducing new technology
+3. **Performance and capacity**: Whether data volume, QPS match
+4. **Operations cost**: Complexity of monitoring, alerting, troubleshooting
+5. **Long-term evolution**: Whether technology selection is locked in, future extensibility
 
-### 2.5. 阶段约束
+### 2.5. Stage Constraints
 
-- **MUST NOT** 在方案对比中只列一个方案
-- **MUST NOT** 在接口契约未定义前进入详细设计
-- **MUST** 等待架构评审通过后才进入下一阶段
-- **MUST** 在输出 `plan.md` 前读取 `ARCHITECTURE.md` 和 `API-CONTRACTS.md`
-- **SHOULD** 在涉及可配置逻辑时读取 `CONFIGURATION.md`
-- **MUST** 在详细设计时按需加载对应 Skill refs（如 `java-guide.md`、`api-guide.md` 等）
+- **MUST NOT** list only one solution in comparison
+- **MUST NOT** enter detailed design before API contracts defined
+- **MUST** wait for architecture review to pass before entering next stage
+- **MUST** read `ARCHITECTURE.md` and `API-CONTRACTS.md` before outputting `plan.md`
+- **SHOULD** read `CONFIGURATION.md` when configurable logic is involved
+- **MUST** load corresponding Skill refs as needed during detailed design (such as `java-guide.md`, `api-guide.md` etc.)
 
 ---
 
-## 3. 详细设计（LLD）
+## 3. Detailed Design (LLD)
 
-### 3.1. 目标
+### 3.1. Objective
 
-将 `plan.md` 拆解为 AI 可逐条执行的原子任务，每条任务独立、可验证。
+Decompose `plan.md` into atomic tasks that AI can execute one by one, each task independent and verifiable.
 
-### 3.2. tasks.md 规范
+### 3.2. tasks.md Standards
 
-**任务粒度**：每个 task 预计工时 ≤ 半天（4h），可独立实现与测试。
+**Task granularity**: Each task estimated effort ≤ half day (4h), independently implementable and testable.
 
-**每个 task 必须包含：**
+**Each task must include:**
 
 ```markdown
 ### Task N：{动词 + 名词，描述做什么}
@@ -194,7 +192,7 @@ AI 是**参谋，不是决策者**。职责：枚举边界条件、澄清模糊�
 - [ ] ...
 ```
 
-**任务关系标注**：
+**Task relationship annotation**:
 
 ```markdown
 <!-- 串行（必须按序）-->
@@ -208,21 +206,21 @@ Task 1 ┬→ Task 2
 → Task 4（合并后）
 ```
 
-### 3.3. 阶段约束
+### 3.3. Stage Constraints
 
-- **MUST NOT** 存在无验收条件的 task
-- **MUST NOT** 任务粒度过大（单 task 超过半天需强制拆分）
-- **MUST** 等待用户确认 `tasks.md` 后才开始编码
-- **MUST** 拆解 task 前读取对应模块的 `docs/{module}.md`，理解职责边界
-- **MUST** 涉及公共 API 的 task 必须对照 `API-CONTRACTS.md` 拆解
+- **MUST NOT** have tasks without acceptance criteria
+- **MUST NOT** task granularity too large (single task exceeding half day must be forcibly split)
+- **MUST** wait for user to confirm `tasks.md` before starting coding
+- **MUST** read corresponding module's `docs/{module}.md` before decomposing tasks, understand responsibility boundaries
+- **MUST** decompose tasks involving public APIs against `API-CONTRACTS.md`
 
 ---
 
-## 4. 端到端示例
+## 4. End-to-End Example
 
-### 4.1. 场景：文章发布功能
+### 4.1. Scenario: Article Publishing Feature
 
-#### 4.1.1. spec.md（需求分析产出）
+#### 4.1.1. spec.md (Requirements Analysis Output)
 
 ```markdown
 ## 背景与目标
@@ -249,7 +247,7 @@ As a 内容作者，I want 发布文章后文章立即对外可见，So that 读
 （已全部解决）
 ```
 
-#### 4.1.2. plan.md（概要设计产出，节选）
+#### 4.1.2. plan.md (HLD Output, excerpt)
 
 ```markdown
 ## 一、方案对比
@@ -273,7 +271,7 @@ As a 内容作者，I want 发布文章后文章立即对外可见，So that 读
 **错误码**：`ARTICLE_NOT_FOUND` / `PARAM_INVALID`
 ```
 
-#### 4.1.3. tasks.md（详细设计产出）
+#### 4.1.3. tasks.md (LLD Output)
 
 ```markdown
 ### Task 1：创建 Article 实体与 Repository
@@ -314,16 +312,34 @@ As a 内容作者，I want 发布文章后文章立即对外可见，So that 读
 
 ---
 
-## 5. 各阶段知识库引用约束
+## 5. Knowledge Base Reference Constraints by Stage
 
-> 与 `knowledge-base-guide.md` §4 保持一致。
+> This chapter constrains "referencing existing knowledge"; "producing new knowledge" (scenario identification, draft standards, disk location and gates for the knowledge generation stage) is defined by project-level extension Skill, see §6.
 
-### 5.1. 引用约束速查表
+### 5.1. Reference Constraint Quick Reference Table
 
-| SDD 阶段 | 必读文档                                | 按需加载 Skill                       | 禁止行为                 |
-| -------- | --------------------------------------- | ------------------------------------ | ------------------------ |
-| 需求分析 | `GLOSSARY.md` + `ARCHITECTURE.md`       | `brainstorming`                      | 未读文档直接写 `spec.md` |
-| 概要设计 | `ARCHITECTURE.md` + `API-CONTRACTS.md`  | 设计模式相关 refs                    | 只列一个方案             |
-| 详细设计 | `docs/{module}.md` + `API-CONTRACTS.md` | 技术栈相关 refs                      | task 无验收条件          |
-| 编码     | `docs/{module}.md` + `API-CONTRACTS.md` | `java-guide` / `middleware-guide` 等 | 引用未验证的符号         |
-| 测试     | `spec.md` + `API-CONTRACTS.md`          | `test-guide.md`                      | 测试不覆盖验收标准       |
+| SDD Stage | Must-read documents | Load on demand Skills | Prohibited behavior |
+|-----------|-------------------|---------------------|-------------------|
+| Requirements analysis | `GLOSSARY.md` + `ARCHITECTURE.md` | `brainstorming` | Writing `spec.md` without reading documents |
+| HLD | `ARCHITECTURE.md` + `API-CONTRACTS.md` | Design pattern related refs | Listing only one solution |
+| LLD | `docs/{module}.md` + `API-CONTRACTS.md` | Tech stack related refs | Tasks without acceptance criteria |
+| Knowledge generation | `plan.md` + `tasks.md` (this requirement's output) | Project-level extension Skill | Silently skipping this stage without recording reason |
+| Coding | `docs/{module}.md` + `API-CONTRACTS.md` | `java-guide` / `middleware-guide` etc. | Referencing unverified symbols |
+| Testing | `spec.md` + `API-CONTRACTS.md` | `test-guide.md` | Tests not covering acceptance criteria |
+
+> "Must-read documents" in the table refers to **in-repository documents**. Team knowledge base (independent document repository) retrieval and referencing has deterministic entry points provided by the project-level extension Skill; the base does not mandate its retrieval method — knowledge base location, Schema, and timeliness criteria are all the project's own business.
+
+---
+
+## 6. Knowledge Generation (Extension Point)
+
+> This base **does not define** knowledge entry output specifications — entry Schema, naming, disk location, scenario identification rules, and validation scripts all strongly depend on specific knowledge base repositories, writing them into the base would cause other projects to copy inapplicable contracts.
+
+**What the base specifies**:
+
+- SDD workflow has a "knowledge generation" stage after `plan.md` confirmation, **MUST** explicitly handle: when scenarios hit, invoke project-level extension Skill's output command; when not hit, record "no knowledge output this time + reason" in `tasks.md`. **MUST NOT** silently skip.
+- The artifact gate for this stage belongs to "testing → acceptance" blocking conditions (SKILL.md §1.3 "Stage Blocking Rules"), validation conclusions only recognize script exit codes, not executor self-reports.
+
+**What is defined by project-level extension Skill**: Identification rules, entry Schema and templates, authoritative-source resolution, directory and numbering rules, validation commands, MR format. See the corresponding project-level extension Skill for its concrete knowledge-generation contract.
+
+**When extension Skill is unavailable**: Inform user "skipping knowledge generation stage this time" and explain reason, record in `tasks.md`, **MUST NOT** use this base's assumptions to replace extension Skill output entries.

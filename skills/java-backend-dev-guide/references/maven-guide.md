@@ -1,20 +1,18 @@
-# Maven 工程规范
+# Maven Engineering Standards
 
-> **摘要**
+> **Summary**
 >
-> - **核心约束**：依赖版本 MUST 在 BOM 统一声明、子模块禁写 `<version>`；项目版本用 `${revision}`；插件版本/配置 MUST 在根 POM pluginManagement 统一声明、子模块禁重复；APT 声明顺序 lombok → mapstruct → binding
-> - **关键阈值**：全新环境须先 `mvn install -pl {build-module}`
-> - **常见违规**：子模块硬编码依赖版本、插件配置在子模块重复声明、APT 顺序错误导致 MapStruct 编译失败
-
-> **版本**：v1.0 | 最后更新：2026-06-08 | 适用 SKILL 版本：≥ v1.0.0
+> - **Core constraint**: Dependency versions MUST be declared uniformly in BOM, sub-modules prohibited from writing `<version>`; project version uses `${revision}`; plugin versions/configuration MUST be declared uniformly in root POM pluginManagement, sub-modules prohibited from duplicating; APT declaration order: lombok → mapstruct → binding
+> - **Key threshold**: Brand new environment must first run `mvn install -pl {build-module}`
+> - **Common violations**: Sub-modules hardcoding dependency versions, plugin configuration duplicated in sub-modules, APT order errors causing MapStruct compilation failure
 
 ---
 
-## 1. 版本管理规则
+## 1. Version Management Rules
 
-### 1.1. 依赖版本统一在 BOM 中声明
+### 1.1. Dependency Versions Uniformly Declared in BOM
 
-BOM 模块（`{bomModule}/pom.xml`）是**唯一版本权威来源**。子模块引用依赖时**MUST NOT** 指定版本号：
+The BOM module (`{bomModule}/pom.xml`) is the **single source of version authority**. When sub-modules reference dependencies, they **MUST NOT** specify version numbers:
 
 ```xml
 <!-- ✅ 子模块 — 只声明坐标 -->
@@ -31,9 +29,9 @@ BOM 模块（`{bomModule}/pom.xml`）是**唯一版本权威来源**。子模块
 </dependency>
 ```
 
-### 1.2. 插件版本统一在根 POM pluginManagement 中声明
+### 1.2. Plugin Versions Uniformly Declared in Root POM pluginManagement
 
-根 POM 的 `<pluginManagement>` 是所有插件的统一配置来源。子模块**MUST NOT** 重复指定 `<version>`、`<configuration>`、`<executions>`：
+The root POM's `<pluginManagement>` is the unified configuration source for all plugins. Sub-modules **MUST NOT** repeatedly specify `<version>`, `<configuration>`, `<executions>`:
 
 ```xml
 <!-- 根 POM — 版本权威来源 -->
@@ -55,33 +53,33 @@ BOM 模块（`{bomModule}/pom.xml`）是**唯一版本权威来源**。子模块
 </plugins>
 ```
 
-### 1.3. 项目版本用 `${revision}`
+### 1.3. Project Version Uses `${revision}`
 
-所有模块版本使用 `${revision}` 占位符，由 `flatten-maven-plugin` 在打包阶段展开为实际版本号：
+All module versions use `${revision}` placeholder, expanded to actual version number by `flatten-maven-plugin` during packaging phase:
 
 ```xml
 <version>${revision}</version>
 ```
 
-升级版本时只需修改根 POM 的 `<revision>` property，无需逐一修改子模块。
+When upgrading versions, only modify the `<revision>` property in root POM, no need to modify sub-modules one by one.
 
-### 1.4. BOM import 不传播 properties
+### 1.4. BOM Import Does Not Propagate Properties
 
-Maven `<scope>import</scope>` 只影响 `dependencyManagement` 版本解析，不会将 BOM 中的 `<properties>` 注入消费方。插件配置（如 `annotationProcessorPaths`）引用的版本属性必须存在于当前 POM 或其 parent 继承链中，并与 BOM **严格保持一致**。
+Maven `<scope>import</scope>` only affects `dependencyManagement` version resolution, it does not inject `<properties>` from the BOM into consumers. Version properties referenced in plugin configurations (such as `annotationProcessorPaths`) must exist in the current POM or its parent inheritance chain, and must remain **strictly consistent** with the BOM.
 
 ---
 
-## 2. 插件继承架构
+## 2. Plugin Inheritance Architecture
 
-### 2.1. 设计原则
+### 2.1. Design Principle
 
-遵循**单一来源、继承分发**原则：
+Follow the **single source, distribution via inheritance** principle:
 
-- 根 POM 的 `<pluginManagement>` 定义完整插件配置
-- 子模块通过 Maven parent 继承链自动获得
-- 子模块只需声明 `groupId + artifactId` 即可激活
+- Root POM's `<pluginManagement>` defines complete plugin configuration
+- Sub-modules automatically obtain it through Maven parent inheritance chain
+- Sub-modules only need to declare `groupId + artifactId` to activate
 
-### 2.2. 继承链
+### 2.2. Inheritance Chain
 
 ```
 根 POM (pluginManagement 定义)
@@ -95,23 +93,23 @@ Maven `<scope>import</scope>` 只影响 `dependencyManagement` 版本解析，�
         └── 模块 B
 ```
 
-### 2.3. 子模块禁止重复声明
+### 2.3. Sub-modules Prohibited from Repeating Declarations
 
-子模块 **MUST NOT** 重复声明：
+Sub-modules **MUST NOT** repeatedly declare:
 
-- 插件版本（从 pluginManagement 继承）
-- 插件配置（annotationProcessorPaths、rulesets 等从 pluginManagement 继承）
-- 插件 executions 和 dependencies（从 pluginManagement 继承）
-- 质量门禁属性（从根 POM properties 继承）
-- `dev` profile（从根 POM profiles 继承）
+- Plugin versions (inherited from pluginManagement)
+- Plugin configurations (annotationProcessorPaths, rulesets, etc. inherited from pluginManagement)
+- Plugin executions and dependencies (inherited from pluginManagement)
+- Quality gate properties (inherited from root POM properties)
+- `dev` profile (inherited from root POM profiles)
 
 ---
 
-## 3. 注解处理器（APT）配置
+## 3. Annotation Processor (APT) Configuration
 
-### 3.1. 声明顺序（MUST 遵守）
+### 3.1. Declaration Order (MUST Follow)
 
-`lombok` MUST 排在 `mapstruct-processor` **之前**，由根 POM 的 `maven-compiler-plugin` pluginManagement 统一配置，子模块通过继承自动获得：
+`lombok` MUST be ordered **before** `mapstruct-processor`, configured uniformly in root POM's `maven-compiler-plugin` pluginManagement, sub-modules automatically obtain through inheritance:
 
 ```xml
 <annotationProcessorPaths>
@@ -136,33 +134,33 @@ Maven `<scope>import</scope>` 只影响 `dependencyManagement` 版本解析，�
 </annotationProcessorPaths>
 ```
 
-顺序错误会导致 MapStruct 生成的映射方法报"找不到属性"编译错误。
+Incorrect ordering will cause MapStruct generated mapping methods to report "cannot find attribute" compilation errors.
 
 ---
 
-## 4. dev / CI 双模式构建
+## 4. Dev / CI Dual-Mode Build
 
-根 POM 通过继承链获得 `dev` profile。**默认构建开启全部质量门禁**，传入 `-Ddev` 激活本地开发模式后关闭门禁以提速。
+Root POM defines the `dev` profile, and sub-modules obtain it through the inheritance chain. **Default build enables all quality gates**, pass `-Ddev` to activate local development mode and disable gates for speed.
 
-| 场景             | 命令                                  | 质量门禁   | sources.jar |
-| ---------------- | ------------------------------------- | ---------- | ----------- |
-| 正常构建（默认） | `mvn clean install -DskipTests`       | ✓ 全部开启 | ✓ 生成      |
-| 本地开发         | `mvn clean install -DskipTests -Ddev` | ✗ 全部关闭 | ✗ 跳过      |
+| Scenario | Command | Quality gates | sources.jar |
+|----------|---------|--------------|-------------|
+| Normal build (default) | `mvn clean install -DskipTests` | ✓ All enabled | ✓ Generated |
+| Local development | `mvn clean install -DskipTests -Ddev` | ✗ All disabled | ✗ Skipped |
 
-### 4.1. dev profile 关闭的任务
+### 4.1. Tasks Disabled by dev Profile
 
-| 任务                | 对应配置                            | 原因               |
-| ------------------- | ----------------------------------- | ------------------ |
-| 依赖收敛检查        | `enforce.enabled=false`             | 大依赖树时耗时明显 |
-| Checkstyle 风格检查 | `checkstyle.validate.disabled=true` | 本地迭代快速构建   |
-| PMD P3C 检查        | `pmd.enforce.validate=false`        | 本地迭代快速构建   |
-| sources.jar 打包    | `maven.source.skip=true`            | 本地开发无需       |
+| Task | Corresponding configuration | Reason |
+|------|---------------------------|--------|
+| Dependency convergence check | `enforce.enabled=false` | Significant time cost with large dependency trees |
+| Checkstyle style check | `checkstyle.validate.disabled=true` | Fast local iteration builds |
+| PMD P3C check | `pmd.enforce.validate=false` | Fast local iteration builds |
+| sources.jar packaging | `maven.source.skip=true` | Not needed for local development |
 
-> 质量门禁插件详情见 → quality-gate.md §2。
+> For quality gate plugin details, see → quality-gate.md §2.
 
 ---
 
-## 5. 常用构建命令
+## 5. Common Build Commands
 
 ```bash
 # ⚠️ 全新环境首次克隆后，执行一次引导安装
@@ -175,7 +173,7 @@ mvn clean install -DskipTests
 mvn clean install -DskipTests -Ddev
 ```
 
-### 5.1. 质量门禁相关命令
+### 5.1. Quality Gate Related Commands
 
 ```bash
 # 仅运行 checkstyle 检查
@@ -193,4 +191,3 @@ mvn clean install -DskipTests -Dcheckstyle.validate.disabled=true
 # 单独跳过 PMD（仅调试期临时使用）
 mvn clean install -DskipTests -Dpmd.enforce.validate=false
 ```
-

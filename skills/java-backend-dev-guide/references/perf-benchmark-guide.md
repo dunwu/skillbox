@@ -1,55 +1,53 @@
-# 性能基准测试指南
+# Performance Benchmarking Guide
 
-> **摘要**
+> **Summary**
 >
-> - **核心约束**：新增接口 MUST 在 spec.md 非功能需求中声明性能目标（P50/P99/吞吐量）；上线前 MUST 执行基准测试并记录结果；性能回归 > 20% MUST 阻断合并
-> - **关键阈值**：接口 P99 < 200ms（CRUD）/ < 500ms（复杂查询）；批量操作吞吐量 ≥ 1000 TPS；GC 暂停 < 100ms
-> - **常见违规**：spec.md 无性能目标、上线前未做基准测试、基准测试未预热、JMH 测试共享可变状态、性能回归未阻断合并
-
-> **版本**：v1.0 | 最后更新：2026-06-09 | 适用 SKILL 版本：≥ v1.0.0
+> - **Core constraint**: New APIs MUST declare performance targets (P50/P99/throughput) in spec.md non-functional requirements; benchmark tests MUST be executed before going live with results recorded; performance regression > 20% MUST block merge
+> - **Key thresholds**: API P99 < 200ms (CRUD) / < 500ms (complex queries); batch operation throughput ≥ 1000 TPS; GC pause < 100ms
+> - **Common violations**: spec.md without performance targets, no benchmark test before going live, benchmark test without warmup, JMH tests sharing mutable state, performance regression not blocking merge
 
 ---
 
-## 1. 性能目标定义
+## 1. Performance Target Definition
 
-### 1.1. spec.md 中的性能声明
+### 1.1. Performance Declaration in spec.md
 
-每个新增接口 **MUST** 在 `spec.md` 非功能需求中声明以下指标：
+Each new API **MUST** declare the following metrics in `spec.md` non-functional requirements:
 
-| 指标       | 说明               | 示例      |
-| ---------- | ------------------ | --------- |
-| P50 延迟   | 50% 请求的响应时间 | ≤ 50ms    |
-| P99 延迟   | 99% 请求的响应时间 | ≤ 200ms   |
-| 吞吐量     | 单实例 QPS/TPS     | ≥ 500 QPS |
-| 并发用户数 | 预期峰值并发       | 100       |
+| Metric | Description | Example |
+|--------|-------------|---------|
+| P50 latency | Response time for 50% of requests | ≤ 50ms |
+| P99 latency | Response time for 99% of requests | ≤ 200ms |
+| Throughput | Single instance QPS/TPS | ≥ 500 QPS |
+| Concurrent users | Expected peak concurrency | 100 |
 
-### 1.2. 默认性能基线（示例）
+### 1.2. Default Performance Baseline (Example)
 
-未在 spec.md 中显式声明时，可参考以下默认值（需根据项目实际调整）：
+When not explicitly declared in spec.md, can refer to the following defaults (adjust based on project reality):
 
-| 接口类型             | P99 延迟 | 吞吐量     |
-| -------------------- | -------- | ---------- |
-| 单表 CRUD            | ≤ 200ms  | ≥ 500 QPS  |
-| 跨表查询 / 列表分页  | ≤ 500ms  | ≥ 200 QPS  |
-| 全文检索（ES）       | ≤ 300ms  | ≥ 300 QPS  |
-| 批量写入（≥ 100 条） | ≤ 1s     | ≥ 1000 TPS |
-| 异步任务（MQ 触发）  | ≤ 5s     | —          |
+| API type | P99 latency | Throughput |
+|----------|-------------|-----------|
+| Single table CRUD | ≤ 200ms | ≥ 500 QPS |
+| Cross-table query / list pagination | ≤ 500ms | ≥ 200 QPS |
+| Full-text search (ES) | ≤ 300ms | ≥ 300 QPS |
+| Batch write (≥ 100 records) | ≤ 1s | ≥ 1000 TPS |
+| Async task (MQ triggered) | ≤ 5s | — |
 
 ---
 
-## 2. 基准测试方法
+## 2. Benchmark Testing Methods
 
-### 2.1. 接口级基准测试
+### 2.1. API-level Benchmark Testing
 
-使用 JMeter / wrk / hey 进行 HTTP 接口压测。
+Use JMeter / wrk / hey for HTTP API load testing.
 
-**测试前 MUST**：
+**Before testing MUST**:
 
-- 预热：先执行 100 次请求预热 JIT 编译和连接池
-- 数据准备：确保测试数据量与生产量级一致（至少 10 万行）
-- 环境隔离：使用独立测试环境，避免影响其他测试
+- Warmup: First execute 100 requests to warm up JIT compilation and connection pool
+- Data preparation: Ensure test data volume matches production scale (at least 100K rows)
+- Environment isolation: Use independent test environment, avoid affecting other tests
 
-**测试报告格式**：
+**Test report format**:
 
 ```text
 接口：POST /api/article/publish
@@ -64,9 +62,9 @@
   - 结论：满足 P99 ≤ 200ms 目标 ✓
 ```
 
-### 2.2. 方法级微基准测试
+### 2.2. Method-level Micro-benchmark Testing
 
-使用 JMH（Java Microbenchmark Harness）测试热点方法性能：
+Use JMH (Java Microbenchmark Harness) to test hot method performance:
 
 ```java
 @BenchmarkMode(Mode.AverageTime)
@@ -101,14 +99,14 @@ public class ArticleConverterBenchmark {
 }
 ```
 
-**JMH MUST**：
+**JMH MUST**:
 
-- **MUST NOT** 在 `@State(Scope.Benchmark)` 中使用可变状态（除非测试的就是并发修改）
-- **MUST** 设置 `@Warmup` 至少 3 轮预热
-- **MUST** 设置 `@Measurement` 至少 5 轮测量
-- **MUST NOT** 忽略死代码消除（使用 `Blackhole.consumeCPU` 或返回结果）
+- **MUST NOT** use mutable state in `@State(Scope.Benchmark)` (unless the test is specifically about concurrent modification)
+- **MUST** set `@Warmup` to at least 3 rounds of warmup
+- **MUST** set `@Measurement` to at least 5 rounds of measurement
+- **MUST NOT** ignore dead code elimination (use `Blackhole.consumeCPU` or return results)
 
-### 2.3. 数据库查询性能测试
+### 2.3. Database Query Performance Testing
 
 ```java
 @Test
@@ -134,41 +132,41 @@ void testQueryPerformance() {
 
 ---
 
-## 3. 性能门禁
+## 3. Performance Gates
 
-### 3.1. CI 阶段门禁
+### 3.1. CI Stage Gates
 
-| 检查项        | 阻断条件                 | 说明                                |
-| ------------- | ------------------------ | ----------------------------------- |
-| 接口 P99 延迟 | > 非功能需求 SLA 的 150% | 超标 MUST 阻断                      |
-| 性能回归      | > 20%（相对基线）        | 基线由上次 release 分支测试结果确定 |
-| 内存泄漏      | 压测期间堆内存持续增长   | 运行 10 分钟以上观察                |
+| Check item | Blocking condition | Notes |
+|-----------|-------------------|-------|
+| API P99 latency | > 150% of non-functional requirement SLA | Exceeding MUST block |
+| Performance regression | > 20% (relative to baseline) | Baseline determined by last release branch test results |
+| Memory leak | Heap memory continuously growing during load test | Observe for 10+ minutes |
 
-### 3.2. 上线前验收门禁
+### 3.2. Pre-launch Acceptance Gates
 
-| 检查项       | 阻断条件                           |
-| ------------ | ---------------------------------- |
-| 基准测试报告 | 未提供 MUST 阻断                   |
-| 性能目标达标 | P99 超标 MUST 阻断                 |
-| 灰度策略     | 无灰度方案 MUST 阻断               |
-| 回滚方案     | 无回滚方案 MUST 阻断               |
-| 监控告警     | 无 P99 / Error Rate 告警 MUST 阻断 |
+| Check item | Blocking condition |
+|-----------|-------------------|
+| Benchmark test report | Not provided MUST block |
+| Performance target met | P99 exceeding MUST block |
+| Gray-release strategy | No gray-release plan MUST block |
+| Rollback plan | No rollback plan MUST block |
+| Monitoring alerts | No P99 / Error Rate alerts MUST block |
 
 ---
 
-## 4. 常见性能问题与排查
+## 4. Common Performance Issues and Troubleshooting
 
-### 4.1. 高频性能问题
+### 4.1. High-Frequency Performance Issues
 
-| 问题       | 排查方向                     | 典型工具                |
-| ---------- | ---------------------------- | ----------------------- |
-| 慢 SQL     | 索引缺失 / 隐式转换 / 深分页 | `EXPLAIN` / 慢查询日志  |
-| GC 暂停    | 大对象分配 / 内存泄漏        | `jstat` / GC 日志 / MAT |
-| 线程阻塞   | 锁竞争 / 连接池耗尽          | 线程 Dump / Arthas      |
-| 网络超时   | RPC 超时 / 连接池配置        | Trace 链路 / Sentinel   |
-| 缓存未命中 | Key 设计 / TTL 过短          | Redis `INFO` / 慢日志   |
+| Issue | Troubleshooting direction | Typical tools |
+|-------|--------------------------|--------------|
+| Slow SQL | Missing index / implicit conversion / deep pagination | `EXPLAIN` / slow query log |
+| GC pause | Large object allocation / memory leak | `jstat` / GC logs / MAT |
+| Thread blocking | Lock contention / connection pool exhaustion | Thread Dump / Arthas |
+| Network timeout | RPC timeout / connection pool configuration | Distributed tracing / Sentinel |
+| Cache miss | Key design / TTL too short | Redis `INFO` / slow log |
 
-### 4.2. 性能优化优先级
+### 4.2. Performance Optimization Priority
 
 ```
 1. 减少调用次数（缓存 / 批量 / 合并请求）
@@ -178,22 +176,22 @@ void testQueryPerformance() {
 
 ---
 
-## 5. 性能测试 Checklist 与反模式
+## 5. Performance Testing Checklist and Anti-Patterns
 
 ### 5.1. Checklist
 
-上线前逐项确认：
+Confirm item by item before going live:
 
-- [ ] spec.md 已声明性能目标（P50/P99/吞吐量）
-- [ ] 已执行接口级基准测试，结果满足目标
-- [ ] 热点方法已做 JMH 微基准测试（如有时）
-- [ ] 数据库查询已通过 `EXPLAIN` 验证索引使用
-- [ ] 压测期间无内存泄漏（堆内存稳定）
-- [ ] GC 暂停 < 100ms
-- [ ] 基准测试报告已附在 PR 描述中
-- [ ] 已配置 P99 / Error Rate 监控告警
+- [ ] spec.md has declared performance targets (P50/P99/throughput)
+- [ ] API-level benchmark test executed, results meet targets
+- [ ] Hot methods have JMH micro-benchmark tests (if applicable)
+- [ ] Database queries verified for index usage through `EXPLAIN`
+- [ ] No memory leak during load test (heap memory stable)
+- [ ] GC pause < 100ms
+- [ ] Benchmark test report attached to PR description
+- [ ] P99 / Error Rate monitoring alerts configured
 
-### 5.2. 常见反模式（禁止）
+### 5.2. Common Anti-Patterns (Prohibited)
 
 ```
 ❌ spec.md 无性能目标

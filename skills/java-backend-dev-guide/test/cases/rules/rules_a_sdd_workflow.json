@@ -1,0 +1,101 @@
+{
+  "meta": {
+    "subdomains": ["sdd", "workflow"],
+    "assertion_kinds": {
+      "regex_present": "输出必须匹配 pattern（确定性断言）",
+      "regex_absent": "输出禁止匹配 pattern（确定性断言）",
+      "local_judge": "本地规则引擎判断，基于关键词和模式匹配"
+    },
+    "note": "prompt 中已内联必要输入材料，保证用例自包含、可脱离会话历史独立回归"
+  },
+  "cases": [
+    {
+      "id": "RULE-SDD-001",
+      "subdomain": "sdd",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§1",
+      "rule": "MUST NOT 跨阶段跳跃：每阶段必须先产出 Artifact 并经用户确认，才能进入下一阶段",
+      "prompt": "帮我新增一个文章收藏功能，用户可以收藏和取消收藏文章。",
+      "assertions": [
+        {"kind": "regex_present", "pattern": "🔴 STOP|🔴 阻断", "desc": "使用 🔴 STOP 标记阻断"},
+        {"kind": "regex_absent", "pattern": "@Service|@RestController|public class .*Service", "desc": "不得直接输出实现代码"},
+        {"kind": "local_judge", "desc": "先输出 spec.md 需求分析框架，包含六维度澄清问题", "checks": {"must_contain": ["spec.md", "需求分析"], "must_contain_all": ["功能边界", "用户场景", "异常边界"]}}
+      ]
+    },
+    {
+      "id": "RULE-SDD-002",
+      "subdomain": "sdd",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§1.1",
+      "rule": "全量流程必须先产出 spec.md 并经用户确认，才能进入概要设计",
+      "prompt": "帮我设计一个订单系统的架构，需要支持高并发。",
+      "assertions": [
+        {"kind": "regex_present", "pattern": "spec\\.md|需求分析|功能边界", "desc": "先产出 spec.md 或需求分析"},
+        {"kind": "regex_present", "pattern": "方案 A|方案 B|对比", "desc": "概要设计阶段要求 ≥2 方案对比"},
+        {"kind": "local_judge", "desc": "先输出需求分析，再进入架构设计；架构设计部分包含 ≥2 个方案对比", "checks": {"must_contain": ["spec.md", "需求分析"], "must_contain_all": ["方案 A", "方案 B"]}}
+      ]
+    },
+    {
+      "id": "RULE-SDD-003",
+      "subdomain": "sdd",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§1.3",
+      "rule": "概要设计→详细设计阻断：plan.md 方案 < 2 个时停止拆解任务",
+      "prompt": "我已经确定了技术方案，就只有一个方案，帮我拆解任务吧。",
+      "assertions": [
+        {"kind": "regex_present", "pattern": "🔴 STOP|方案.*<.*2|≥2 方案|补充.*方案", "desc": "触发阻断条件，要求补充方案"},
+        {"kind": "local_judge", "desc": "指出单一方案不满足阻断条件，要求补充 ≥2 方案对比及 ADR", "checks": {"must_contain": ["方案", "≥2", "补充", "ADR"], "must_contain_all": ["ADR", "架构决策记录"]}}
+      ]
+    },
+    {
+      "id": "RULE-SDD-004",
+      "subdomain": "sdd",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§1.3",
+      "rule": "详细设计→编码阻断：tasks.md 无验收条件时停止编码",
+      "prompt": "tasks.md 已经写好了，帮我开始编码吧。任务清单：1. 实现 ArticleService 2. 实现 ArticleController",
+      "assertions": [
+        {"kind": "regex_present", "pattern": "验收条件|Given.*When.*Then|🔴 STOP", "desc": "检查验收条件或触发阻断"},
+        {"kind": "local_judge", "desc": "检查 tasks.md 中每个 task 是否包含验收条件（Given-When-Then 格式）", "checks": {"must_contain": ["验收条件", "Given", "When", "Then"]}}
+      ]
+    },
+    {
+      "id": "RULE-SDD-005",
+      "subdomain": "sdd",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§1.3",
+      "rule": "编码→测试阻断：lsp_diagnostics 有 Error 时停止提测",
+      "prompt": "代码已经写完了，帮我提交测试吧。",
+      "assertions": [
+        {"kind": "regex_present", "pattern": "lsp_diagnostics|LSP.*Error|mvn compile|编译", "desc": "检查 LSP 或编译状态"},
+        {"kind": "local_judge", "desc": "要求先执行 lsp_diagnostics 或 mvn compile 确认零 Error", "checks": {"must_contain": ["lsp_diagnostics", "mvn compile", "编译", "零 Error"]}}
+      ]
+    },
+    {
+      "id": "RULE-SDD-006",
+      "subdomain": "workflow",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.1",
+      "rule": "场景路由：涉及新功能/新模块/架构变更时匹配 #1，加载 sdd-guide.md",
+      "prompt": "帮我新增一个用户积分模块，包括积分获取、积分消耗、积分查询三个功能。",
+      "assertions": [
+        {"kind": "regex_present", "pattern": "sdd-guide\\.md|加载.*sdd", "desc": "加载 sdd-guide.md"},
+        {"kind": "regex_present", "pattern": "🔴 STOP|spec\\.md", "desc": "触发 STOP 阻断，要求先产出 spec.md"},
+        {"kind": "local_judge", "desc": "识别为新功能开发场景，加载 sdd-guide.md，并 🔴 STOP 要求先产出 spec.md", "checks": {"must_contain": ["新功能", "sdd-guide.md", "STOP", "spec.md"]}}
+      ]
+    },
+    {
+      "id": "RULE-SDD-007",
+      "subdomain": "workflow",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.1",
+      "rule": "场景路由：审查已有代码时匹配 #4，加载 review-guide.md + security-guide.md + java-guide.md",
+      "prompt": "帮我 Review 这段代码。",
+      "assertions": [
+        {"kind": "regex_present", "pattern": "review-guide\\.md|security-guide\\.md|java-guide\\.md", "desc": "加载三个 guide 文件"},
+        {"kind": "regex_present", "pattern": "架构|编码|异常事务|安全|测试", "desc": "五维自检全部覆盖"},
+        {"kind": "local_judge", "desc": "识别为代码评审场景，加载三个 guide 文件，按五维自检输出", "checks": {"must_contain_all": ["review-guide.md", "security-guide.md", "java-guide.md"], "must_contain": ["架构", "编码", "异常事务", "安全", "测试"]}}
+      ]
+    }
+  ]
+}

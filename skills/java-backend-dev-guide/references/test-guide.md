@@ -1,78 +1,68 @@
-# 单元测试规范
-
-> **核心约束**：TDD；DomainService 行覆盖率 100%、整体 ≥ 80%；AssertJ only；Mock 仅外部依赖
->
-> **结构约束**：`@Nested` 按被测方法分组；类名/方法名 snake_case（仅英文+数字）；全部标注 `@DisplayName`
->
-> **关键阈值**：DomainService 100%、Service/Controller/Util ≥ 80%、单 task 通过率 100%
->
-> **常见违规**：先实现后补测试、测试含 if/for、共享可变状态、@Disabled 跳过、Mock 过度
-
-> v2.4 | 2026-06-10 | SKILL ≥ v1.4.0
+# Unit Testing Standards
 
 ---
 
-## 0 技术选型
+## 0. Technology Selection
 
-> 版本来源：项目 BOM。**MUST NOT** 擅自升级。
+> Version source: Project BOM. **MUST NOT** upgrade on own initiative.
 
-| 库 | 用途 |
-|---|---|
-| Spring Boot Starter Test | 测试基础设施（JUnit 5、Mockito 等） |
-| JUnit Jupiter | 测试引擎与注解 |
-| AssertJ Core | 流式断言（唯一允许） |
-| Mockito (Core / Inline / Jupiter) | Mock 框架（含 mockStatic） |
-| JaCoCo Maven Plugin | 覆盖率采集与门禁 |
-| Maven Surefire | 测试执行引擎 |
-| Maven PMD | 静态分析 |
-| Maven Checkstyle | 代码风格检查 |
+| Library | Purpose |
+|---------|---------|
+| Spring Boot Starter Test | Test infrastructure (JUnit 5, Mockito, etc.) |
+| JUnit Jupiter | Test engine and annotations |
+| AssertJ Core | Fluent assertions (sole permitted option) |
+| Mockito (Core / Inline / Jupiter) | Mock framework (including mockStatic) |
+| JaCoCo Maven Plugin | Coverage collection and gates |
+| Maven Surefire | Test execution engine |
+| Maven PMD | Static analysis |
+| Maven Checkstyle | Code style check |
 
-> 具体版本号由项目级 Skill 或 BOM 定义。
+> Specific version numbers defined by project-level Skill or BOM.
 
 ---
 
-## 1 测试策略
+## 1. Testing Strategy
 
 ```
      ▲▲▲▲▲ 单元测试（大量，业务逻辑）
-       ▲▲▲ Service 成成测试（中等，跨层交互）
+       ▲▲▲ Service 集成测试（中等，跨层交互）
         ▲  E2E / 集成测试（少量，关键链路）
 ```
 
-**单元测试为主**：不依赖 DB/Redis/ES，快速稳定可重复。
+**Unit tests as primary**: No dependency on DB/Redis/ES, fast, stable, repeatable.
 
 ---
 
-## 2 TDD 工作流
+## 2. TDD Workflow
 
-**先写测试再写实现。** task 测试未完成前不得标记完成。
+**Write tests first, then implementation.** A task MUST NOT be marked complete before its tests pass.
 
 ```
 验收条件 → Red（失败测试） → Green（最小实现） → Refactor → 重复至全覆盖
 ```
 
-**MUST NOT** 先实现后补测试——退化为实现描述，失去验证意义。
+**MUST NOT** implement first then add tests — degrades to implementation description, loses verification significance.
 
 ---
 
-## 3 覆盖率要求
+## 3. Coverage Requirements
 
-| 层 | 重点 | 行覆盖率 |
-|---|---|---|
-| DomainService | 业务规则、分支、异常 | **100%** |
-| ApplicationService | 编排逻辑、事务边界 | ≥ 80% |
-| Controller | 参数校验、路由、响应格式 | ≥ 80% |
-| Util | 公共方法、边界、异常路径 | ≥ 80% |
-| Repository / DAO | 集成测试覆盖 | — |
-| 整体模块 | — | **≥ 80%** |
+| Layer | Focus | Line coverage |
+|-------|-------|--------------|
+| DomainService | Business rules, branches, exceptions | **100%** |
+| ApplicationService | Orchestration logic, transaction boundaries | ≥ 80% |
+| Controller | Parameter validation, routing, response format | ≥ 80% |
+| Util | Public methods, boundaries, exception paths | ≥ 80% |
+| Repository / DAO | Integration test coverage | — |
+| Overall module | — | **≥ 80%** |
 
 ---
 
-## 4 命名规范
+## 4. Naming Conventions
 
-- **类名**：`{被测类名}Test`，仅英文字母+数字
-- **方法名**：`{被测方法}_{场景}_{预期}`，snake_case，仅英文+数字+下划线
-- **@DisplayName**：类/`@Nested`/`@Test` 全部标注，中文描述意图
+- **Class name**: `{ClassUnderTest}Test`, only English letters + numbers
+- **Method name**: `{method}_{scenario}_{expected}`, snake_case, only English + numbers + underscores
+- **@DisplayName**: All class / `@Nested` / `@Test` annotated, Chinese describing intent
 
 ```java
 // ✅ 方法名
@@ -86,9 +76,9 @@ void encrypt-null-input()       // 连字符分隔
 
 ---
 
-## 5 组织结构
+## 5. Organization Structure
 
-**MUST** 按被测方法用 `@Nested` 分组，内部类名 PascalCase；重载追加参数类型区分。
+**MUST** group by tested method using `@Nested`, inner class name PascalCase; overloads distinguished by parameter type.
 
 ```java
 @DisplayName("JsonUtil 单元测试")
@@ -105,29 +95,28 @@ class JsonUtilTest {
 
 ---
 
-## 6 Mock 策略
+## 6. Mock Strategy
 
-### 原则
+### Principles
 
-- **只 Mock 外部依赖**（Repository、RPC、HTTP、配置中心），**禁 MOCK 被测对象自身**
-- Mock 越多 → 耦合越紧 → 重构成本越高
-- DomainService / ApplicationService 不得全部 Mock 掉
+- **Only Mock external dependencies** (Repository, RPC, HTTP, config center), **prohibit mocking tested object itself**
+- DomainService / ApplicationService must not have everything Mocked out
 
-### 工具选择
+### Tool Selection
 
-| 场景 | 工具 |
-|---|---|
-| 标准 Mock | `@ExtendWith(MockitoExtension.class)` + `@Mock` / `@InjectMocks` |
-| 静态方法 | `MockedStatic`（谨慎，优先重构为可注入） |
-| Spring 上下文 | `@SpringBootTest`（仅集成测试） |
+| Scenario | Tool |
+|----------|------|
+| Standard Mock | `@ExtendWith(MockitoExtension.class)` + `@Mock` / `@InjectMocks` |
+| Static methods | `MockedStatic` (use cautiously, prefer refactoring to injectable) |
+| Spring context | `@SpringBootTest` (integration tests only) |
 
 ### MockedStatic
 
-- 用 `Mockito.withSettings().lenient()` 创建，避免 `InvalidUseOfMatchers`
-- **MUST** `@AfterEach` 关闭 `mockStatic.close()`
-- 类内部分测试用 MockedStatic 时，**MUST NOT** 类级 `@ExtendWith(MockitoExtension.class)`，改为 `@Nested` 内按需管理
+- Create with `Mockito.withSettings().lenient()`, avoid `InvalidUseOfMatchers`
+- **MUST** close `mockStatic.close()` in `@AfterEach`
+- When some tests in the class use MockedStatic, **MUST NOT** use class-level `@ExtendWith(MockitoExtension.class)`, change to `@Nested` manage as needed
 
-### 反射替换 `private static final`
+### Reflection Replacement of `private static final`
 
 ```java
 @BeforeEach void setUp() throws Exception {
@@ -138,7 +127,28 @@ class JsonUtilTest {
 }
 ```
 
-### Service 测试模板
+### Converter Testing Strategy
+
+Converters use `@Mapper` + `INSTANCE` pattern (→ java-guide.md §6), in unit tests:
+
+- **MUST NOT** `@Mock` Converter, directly use real `INSTANCE` to execute mapping
+- **MUST NOT** `when(converter.xxx()).thenReturn()` to set stubs
+- If needing to simulate `dao.save()` backfilling ID and other MyBatis-Plus behaviors, use `thenAnswer`:
+
+```java
+// ✅ 正确：不 Mock Converter，模拟 DAO 回填 ID
+when(articleDao.save(any())).thenAnswer(invocation -> {
+    ArticleDO saved = invocation.getArgument(0);
+    saved.setId(1L);
+    return true;
+});
+
+// ❌ 禁止：Mock Converter
+@Mock private ArticleConverter articleConverter;
+when(articleConverter.toVO(any())).thenReturn(vo);
+```
+
+### Service Test Template
 
 ```java
 @ExtendWith(MockitoExtension.class)
@@ -163,9 +173,9 @@ class ArticleServiceTest {
 
 ---
 
-## 7 断言规范
+## 7. Assertion Standards
 
-**统一 AssertJ**，禁 `assertEquals` / `assertTrue`：
+**Unified AssertJ**, prohibit `assertEquals` / `assertTrue`:
 
 ```java
 // ✅
@@ -177,11 +187,11 @@ assertEquals("测试文章", result.getData().getTitle());
 
 ---
 
-## 8 测试数据
+## 8. Test Data
 
-> 禁止真实生产数据（《阿里巴巴 Java 开发手册》§四）
+**MUST NOT** use real production data.
 
-**语义化 Mock 数据**，字段值反映测试意图；复杂对象用 Builder / 工厂方法：
+**Semantic Mock data**, field values reflect test intent; complex objects use Builder / factory methods:
 
 ```java
 // ✅
@@ -192,18 +202,18 @@ Long authorId = 123L;
 
 ---
 
-## 9 Util 测试与 JaCoCo excludes
+## 9. Util Testing and JaCoCo Excludes
 
-### 9.1 基本规则
+### 9.1. Basic Rules
 
-- **MUST NOT** 纯工具类使用 `@SpringBootTest`
-- 行覆盖率 ≥ 80%，**MUST** 覆盖正常路径 + catch 块
+- Pure utility classes **MUST NOT** use `@SpringBootTest`
+- Line coverage ≥ 80%, **MUST** cover normal paths + catch blocks
 
-### 9.2 不可测试类与 JaCoCo excludes
+### 9.2. Untestable Classes and JaCoCo Excludes
 
-不可测试类既不编写测试，也 **MUST** 从 JaCoCo 覆盖率中排除，否则拉低覆盖率导致门禁误报。
+Untestable classes **MUST NOT** have tests written, and **MUST** be excluded from JaCoCo coverage, otherwise coverage drops causing gate false positives.
 
-**MUST** 在 BOM 覆盖率聚合模块与子模块 `pom.xml` 的 `prepare-agent` + `report` 两个 execution 中配置相同的 `<excludes>` 列表，每条附注释：
+**MUST** configure same `<excludes>` list in both BOM coverage aggregation module and sub-module `pom.xml`'s `prepare-agent` + `report` executions, each with comment:
 
 ```xml
 <!-- 示例：子模块 pom.xml -->
@@ -214,30 +224,29 @@ Long authorId = 123L;
 </excludes>
 ```
 
-**不可测试类与 exclude 速查**：
+**Untestable classes and exclude quick reference**:
 
-| 分类 | 典型类 | exclude 原因 |
-|---|---|---|
-| HTTP 依赖 | HttpUtil、ChatUtil | 需真实网络，属集成测试 |
-| Servlet 依赖 | ServletUtils、FileUtil | 依赖 Request / MultipartFile |
-| 文件系统 | ExcelUtil、WordUtil | 依赖 POI 本地读写 |
-| ZK 连接 | CuratorClient、IdMakerImpl | @Service + ZooKeeper |
-| Spring 上下文 | SpringUtils、CommonToolConfig | 依赖容器初始化 |
-| Vendored | ansi/*、SystemUtil | 非自研（Apache License） |
-| 无行为逻辑 | 常量类、DTO、VO、Enum | 纯数据载体 |
+| Category | Typical classes | Exclude reason |
+|----------|----------------|---------------|
+| HTTP dependent | HttpUtil, ChatUtil | Requires real network, belongs to integration testing |
+| Servlet dependent | ServletUtils, FileUtil | Depends on Request / MultipartFile |
+| File system | ExcelUtil, WordUtil | Depends on POI local read/write |
+| ZK connection | CuratorClient, IdMakerImpl | @Service + ZooKeeper |
+| Spring context | SpringUtils, CommonToolConfig | Depends on container initialization |
+| Vendored | ansi/*, SystemUtil | Non-original (Apache License) |
+| No behavior logic | Constant classes, DTOs, VOs, Enums | Pure data carriers |
 
 ---
 
-## 10 禁止行为
+## 10. Prohibited Behaviors
 
-| MUST NOT | 原因 |
-|---|---|
-| 注释断言或 `assertTrue(true)` 占位 | 掩盖失败 |
-| `@Disabled` 跳过（除非 FIXME + 截止日期） | 隐藏问题 |
-| 测试内含 `if` / `for` | 每分支独立方法 |
-| 测试间共享可变状态 | 必须独立可运行 |
-| 单元测试连真实 DB/Redis/ES | 用 Mock 替代 |
-| 类名/方法名含中文/空格/连字符 | 仅英文+数字+下划线 |
-| 缺少 `@DisplayName` | 类/Nested/Test 全标注 |
-| 同方法测试未 `@Nested` 分组 | 按被测方法组织 |
-
+| MUST NOT | Reason |
+|----------|--------|
+| Comment out assertions or `assertTrue(true)` placeholders | Masks failures |
+| `@Disabled` to skip (unless FIXME + deadline) | Hides problems |
+| Test contains `if` / `for` | Each branch independent method |
+| Tests share mutable state | Must be independently runnable |
+| Unit tests connect to real DB/Redis/ES | Use Mock instead |
+| Class/method names contain Chinese/spaces/hyphens | Only English + numbers + underscores |
+| Missing `@DisplayName` | Class/Nested/Test all must annotate |
+| Same method tests not `@Nested` grouped | Organize by tested method |

@@ -1,38 +1,28 @@
-# 接口设计规范
-
-> **摘要**
->
-> - **核心约束**：统一响应格式禁裸 Map；写操作接口必须加审计日志注解；所有 REST 接口必须标记 OpenAPI 3 注解（@Tag + @Operation + @Schema）
-> - **关键阈值**：游标分页用 search_after 禁 from+size 深分页
-> - **常见违规**：Controller 返回 Map 而非统一响应、@RequestBody VO 缺 @Schema、写接口漏审计日志
-
-> **版本**：v1.0 | 最后更新：2026-06-09 | 适用 SKILL 版本：≥ v1.0.0
+# API Design Standards
 
 ---
 
-## 1. RESTful 规范
+## 1. RESTful Standards
 
-> HTTP 方法语义遵循《阿里巴巴 Java 开发手册（黄山版）》§一 编程规约 — 前后端规约。
+Route prefix conventions (specific prefixes defined by project-level Skill):
 
-路由前缀约定（由项目级 Skill 定义具体前缀）：
-
-| 包路径               | 路由前缀     | 端   |
-| -------------------- | ------------ | ---- |
-| `controller.app.*`   | 可配置       | C 端 |
-| `controller.admin.*` | 可配置       | B 端 |
+| Package path | Route prefix | Endpoint |
+|-------------|-------------|----------|
+| `controller.app.*` | Configurable | C-side |
+| `controller.admin.*` | Configurable | B-side |
 
 ---
 
-## 2. 统一响应格式
+## 2. Unified Response Format
 
-所有接口统一返回框架响应模型，禁止返回裸 Map 或自定义结构：
+All APIs must return the framework response model uniformly. Returning bare Map or custom structures is prohibited:
 
-| 场景     | 响应类型                                                   |
-| -------- | ---------------------------------------------------------- |
-| 单对象   | `{ResponseWrapper}<T>`                                     |
-| 分页列表 | `{PageResponse}<T>`                                        |
-| 游标滚动 | `{ScrollResponse}<T>`（深分页用 search_after，不用 pageIndex） |
-| 无返回值 | `{ResponseWrapper}<Void>`                                  |
+| Scenario | Response type |
+|----------|--------------|
+| Single object | `{ResponseWrapper}<T>` |
+| Paginated list | `{PageResponse}<T>` |
+| Cursor scroll | `{ScrollResponse}<T>` (use search_after for deep pagination, not pageIndex) |
+| No return value | `{ResponseWrapper}<Void>` |
 
 ```java
 // ✅ 正确
@@ -45,72 +35,70 @@ return Map.of("code", 0, "data", articleVO);
 
 ---
 
-## 3. 参数校验
+## 3. Parameter Validation
 
-入参 DTO 使用 JSR-380 注解，Controller 加 `@Valid`：
+Input DTOs use JSR-380 annotations, Controller adds `@Valid`:
 
 ```java
 @PostMapping("/articles")
 public {ResponseWrapper}<Long> create(@RequestBody @Valid CreateArticleCMD cmd) { ... }
 ```
 
-`@Valid` 校验失败由全局异常处理器统一拦截，**MUST NOT** 在 Controller 方法内手动判断 `BindingResult`。
+`@Valid` validation failures are intercepted by the global exception handler uniformly. **MUST NOT** manually check `BindingResult` inside Controller methods.
 
 ---
 
-## 4. OpenAPI 3 标记规范
+## 4. OpenAPI 3 Annotation Standards
 
-**【强制】** 所有 REST 接口及其入参、出参必须添加 OpenAPI 3 注解。
+**[Mandatory]** All REST APIs and their parameters, request/response bodies must have OpenAPI 3 annotations.
 
-### 4.1. 接口级标记
+### 4.1. API-level Annotations
 
-| 标记位置      | 注解                          | 格式                                           |
-| ------------- | ----------------------------- | ---------------------------------------------- |
-| Controller 类 | `@Tag(name = "...")`          | `{端} - {业务领域}`，如"管理端 - API 访问日志" |
-| 接口方法      | `@Operation(summary = "...")` | 一句话说明接口功能                             |
+| Annotation location | Annotation | Format |
+|--------------------|-----------|--------|
+| Controller class | `@Tag(name = "...")` | `{side} - {business domain}`, e.g. "Admin - API Access Log" |
+| API method | `@Operation(summary = "...")` | One-line description of API functionality |
 
-### 4.2. 入参标记
+### 4.2. Input Parameter Annotations
 
-| 参数来源                                     | 标记方式                                                                                              |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `@RequestParam`                              | 方法参数加 `@Parameter(description = "...", required = true/false)`                                   |
-| `@RequestBody` VO                            | VO 类加 `@Schema(description = "...")`，每个字段加 `@Schema(description = "...", requiredMode = ...)` |
-| `HttpServletRequest` / `HttpServletResponse` | **不加** `@Parameter`，Swagger 自动忽略                                                               |
+| Parameter source | Annotation method |
+|-----------------|-------------------|
+| `@RequestParam` | Add `@Parameter(description = "...", required = true/false)` to method parameter |
+| `@RequestBody` VO | VO class adds `@Schema(description = "...")`, each field adds `@Schema(description = "...", requiredMode = ...)` |
+| `HttpServletRequest` / `HttpServletResponse` | **Do not add** `@Parameter`, Swagger auto-ignores |
 
-### 4.3. 出参标记
+### 4.3. Output Parameter Annotations
 
-出参 VO 类及每个字段均加 `@Schema(description = "...")`。响应包装类已内置 `@Schema`，只需标注泛型中的业务 VO。
+Output VO classes and each field must have `@Schema(description = "...")`. Response wrapper classes have built-in `@Schema`, only need to annotate the business VO in the generic type.
 
-### 4.4. 完整示例
+### 4.4. Complete Example
 
 ```java
-@Tag(name = "管理端 - API 访问日志")
+@Tag(name = "管理端 - 文章管理")
 @RestController
-@RequestMapping("/api/access-log")
-public class AccessLogController {
+@RequestMapping("/api/article")
+public class ArticleController {
 
-    @Operation(summary = "滚动查询 API 访问日志")
+    @Operation(summary = "滚动查询文章列表")
     @GetMapping("/scroll")
-    public {ScrollResponse}<ApiAccessLogVO> scroll(ApiAccessLogScrollQRY qry) {
-        return accessLogService.scroll(qry);
+    public {ScrollResponse}<ArticleVO> scroll(ArticleScrollQRY qry) {
+        return articleService.scroll(qry);
     }
 
-    @Operation(summary = "查询日志详情")
+    @Operation(summary = "查询文章详情")
     @GetMapping("/detail")
-    public {ResponseWrapper}<ApiAccessLogVO> detail(
-            @Parameter(description = "文档 ID", required = true) @RequestParam String docId,
-            @Parameter(description = "日志所属日期", required = true)
-            @RequestParam String beginTime) {
-        return accessLogService.detail(docId, beginTime);
+    public {ResponseWrapper}<ArticleVO> detail(
+            @Parameter(description = "文章 ID", required = true) @RequestParam String articleId) {
+        return articleService.detail(articleId);
     }
 }
 
 // 入参 QRY
-@Schema(description = "API 访问日志滚动查询请求")
-public class ApiAccessLogScrollQRY implements Serializable {
+@Schema(description = "文章滚动查询请求")
+public class ArticleScrollQRY implements Serializable {
 
-    @Schema(description = "开始时间（默认近 1 小时）")
-    private LocalDateTime beginTime;
+    @Schema(description = "分类 ID（可选，按分类筛选）")
+    private Long categoryId;
 
     @Schema(description = "每批条数（max 100）", example = "20")
     private Integer pageSize = 20;
@@ -120,32 +108,32 @@ public class ApiAccessLogScrollQRY implements Serializable {
 }
 
 // 出参 VO
-@Schema(description = "API 访问日志")
-public class ApiAccessLogVO implements Serializable {
+@Schema(description = "文章")
+public class ArticleVO implements Serializable {
 
-    @Schema(description = "链路追踪编号")
-    private String traceId;
+    @Schema(description = "文章 ID")
+    private String articleId;
 
-    @Schema(description = "请求 URL")
-    private String requestUrl;
+    @Schema(description = "文章标题")
+    private String title;
 
-    @Schema(description = "接口耗时（ms）")
-    private Integer duration;
+    @Schema(description = "发布时间")
+    private LocalDateTime publishTime;
 }
 ```
 
-### 4.5. 自检清单
+### 4.5. Self-Check Checklist
 
-- [ ] Controller 类有 `@Tag(name = "{端} - {业务}")`
-- [ ] 每个 HTTP 方法有 `@Operation(summary = "...")`
-- [ ] `@RequestParam` 参数有 `@Parameter(description, required)`
-- [ ] `@RequestBody` VO 类和每个字段有 `@Schema(description)`
-- [ ] 出参 VO 类和每个字段有 `@Schema(description)`
+- [ ] Controller class has `@Tag(name = "{side} - {business}")`
+- [ ] Each HTTP method has `@Operation(summary = "...")`
+- [ ] `@RequestParam` parameters have `@Parameter(description, required)`
+- [ ] `@RequestBody` VO class and each field have `@Schema(description)`
+- [ ] Output VO class and each field have `@Schema(description)`
 
 ---
 
-## 5. 审计日志
+## 5. Audit Logging
 
-> 审计日志的实现方式由项目级 Skill 定义。如使用自定义注解（如 `{AuditLogAnnotation}`），写操作接口必须添加。
+> The implementation of audit logging is defined by the project-level Skill. If using a custom annotation (such as `{AuditLogAnnotation}`), write operation APIs must add it.
 
-所有写操作接口（POST / PUT / PATCH / DELETE）**MUST** 添加审计日志注解，确保操作可追溯。
+All write operation APIs (POST / PUT / PATCH / DELETE) **MUST** add audit log annotations to ensure operations are traceable.

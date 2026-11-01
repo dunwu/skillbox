@@ -1,0 +1,75 @@
+{
+  "meta": {
+    "subdomains": ["review"],
+    "assertion_kinds": {
+      "regex_present": "输出必须匹配 pattern（确定性断言）",
+      "regex_absent": "输出禁止匹配 pattern（确定性断言）",
+      "local_judge": "本地规则引擎判断，基于关键词和模式匹配"
+    },
+    "note": "prompt 中已内联必要输入材料，保证用例自包含、可脱离会话历史独立回归"
+  },
+  "cases": [
+    {
+      "id": "RULE-REVIEW-001",
+      "subdomain": "review",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.1 #4",
+      "rule": "代码评审必须按五维自检（架构/编码/异常事务/安全/测试）逐项输出",
+      "prompt": "帮我 Review 这段代码：\n\n@Service\npublic class ArticleServiceImpl {\n    @Autowired\n    private ArticleDao articleDao;\n\n    public Result<ArticleVO> getArticle(Long id) {\n        ArticleDO articleDO = articleDao.selectById(id);\n        ArticleVO vo = new ArticleVO();\n        BeanUtils.copyProperties(articleDO, vo);\n        return Result.success(vo);\n    }\n}",
+      "assertions": [
+        {"kind": "regex_present", "pattern": "架构|编码|异常事务|安全|测试", "desc": "五维自检全部覆盖"},
+        {"kind": "local_judge", "desc": "输出包含五个一级标题（架构/编码/异常事务/安全/测试），每个维度都有评审意见", "checks": {"must_contain_all": ["架构", "编码", "异常事务", "安全", "测试"]}}
+      ]
+    },
+    {
+      "id": "RULE-REVIEW-002",
+      "subdomain": "review",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.3",
+      "rule": "每条缺陷必须含文件路径+行号+修复方案",
+      "prompt": "帮我 Review 这段代码（ArticleServiceImpl.java:15-25）：\n\npublic Result<ArticleVO> getArticle(Long id) {\n    ArticleDO articleDO = articleDao.selectById(id);\n    ArticleVO vo = new ArticleVO();\n    BeanUtils.copyProperties(articleDO, vo);\n    return Result.success(vo);\n}",
+      "assertions": [
+        {"kind": "regex_present", "pattern": "ArticleServiceImpl\\.java:\\d+|文件名:\\d+|行号", "desc": "包含文件路径+行号"},
+        {"kind": "regex_present", "pattern": "修复[：:]|建议[：:]|改为", "desc": "包含修复方案"},
+        {"kind": "local_judge", "desc": "每条缺陷都标注了文件路径和行号，并给出了修复方案", "checks": {"must_contain": ["ArticleServiceImpl.java", "行号", "修复", "建议"]}}
+      ]
+    },
+    {
+      "id": "RULE-REVIEW-003",
+      "subdomain": "review",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§4.1",
+      "rule": "评审必须识别 §4.1 反例黑名单命中项",
+      "prompt": "帮我 Review 这段代码：\n\n@Service\npublic class UserService {\n    @Autowired\n    private UserDao userDao;\n    \n    public void processUsers(List<Long> userIds) {\n        for (Long id : userIds) {\n            User user = userDao.selectById(id);\n            // 处理逻辑\n        }\n    }\n}",
+      "assertions": [
+        {"kind": "regex_present", "pattern": "@Autowired|字段注入|构造器注入", "desc": "识别字段注入问题"},
+        {"kind": "regex_present", "pattern": "for.*selectById|N\\+1|批量查询", "desc": "识别 for 内 DB 问题"},
+        {"kind": "local_judge", "desc": "识别出 @Autowired 字段注入和 for 循环内 selectById（N+1 问题）两个反例黑名单命中项", "checks": {"must_contain_all": ["@Autowired", "字段注入", "for", "selectById", "N+1"]}}
+      ]
+    },
+    {
+      "id": "RULE-REVIEW-004",
+      "subdomain": "review",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.3",
+      "rule": "MUST-FIX 缺陷必须标注 MUST-FIX 级别",
+      "prompt": "帮我 Review 这段代码，有严重问题：\n\npublic void transferMoney(Long fromId, Long toId, BigDecimal amount) {\n    Account from = accountDao.selectById(fromId);\n    Account to = accountDao.selectById(toId);\n    from.setBalance(from.getBalance().subtract(amount));\n    to.setBalance(to.getBalance().add(amount));\n    accountDao.updateById(from);\n    accountDao.updateById(to);\n}",
+      "assertions": [
+        {"kind": "regex_present", "pattern": "MUST-FIX|MUST FIX|严重|事务", "desc": "标注 MUST-FIX 级别"},
+        {"kind": "local_judge", "desc": "识别出缺少事务注解（@Transactional）的严重问题，并标注为 MUST-FIX 级别", "checks": {"must_contain": ["MUST-FIX", "事务", "@Transactional"]}}
+      ]
+    },
+    {
+      "id": "RULE-REVIEW-005",
+      "subdomain": "review",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.1 #4",
+      "rule": "评审时必须加载 review-guide.md + security-guide.md + java-guide.md",
+      "prompt": "帮我 Review 这段代码。",
+      "assertions": [
+        {"kind": "regex_present", "pattern": "review-guide\\.md|security-guide\\.md|java-guide\\.md|加载.*guide", "desc": "提及加载三个 guide 文件"},
+        {"kind": "local_judge", "desc": "识别为代码评审场景，加载 review-guide.md + security-guide.md + java-guide.md", "checks": {"must_contain_all": ["review-guide.md", "security-guide.md", "java-guide.md"]}}
+      ]
+    }
+  ]
+}

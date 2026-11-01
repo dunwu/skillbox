@@ -1,0 +1,276 @@
+{
+  "outputs_file": "D:\\Code\\Work\\ocp-ai\\ocp-ai-agent\\skills\\java-backend-dev-guide\\test\\results\\behaviour-outputs-en.json",
+  "cases_total": 35,
+  "cases_covered": [
+    "RULE-CODE-007",
+    "RULE-QUICK-001",
+    "RULE-QUICK-007",
+    "RULE-QUICK-008",
+    "RULE-REVIEW-001",
+    "RULE-REVIEW-002",
+    "RULE-SDD-001"
+  ],
+  "assertion_counts": {
+    "regex_present": 7,
+    "regex_absent": 3,
+    "local_judge": 7
+  },
+  "failures": [
+    [
+      1,
+      "RULE-SDD-001",
+      "local_judge",
+      "先输出 spec.md 需求分析框架，包含六维度澄清问题"
+    ],
+    [
+      2,
+      "RULE-REVIEW-001",
+      "local_judge",
+      "输出包含五个一级标题（架构/编码/异常事务/安全/测试），每个维度都有评审意见"
+    ],
+    [
+      3,
+      "RULE-QUICK-001",
+      "regex_absent",
+      "未输出 spec/plan/tasks"
+    ],
+    [
+      3,
+      "RULE-QUICK-001",
+      "local_judge",
+      "识别为快速路径（单文件变更），直接修改 XML，未启动完整 SDD 流程"
+    ],
+    [
+      "stress-2",
+      "RULE-CODE-007",
+      "regex_absent",
+      "不得使用 BeanUtils"
+    ]
+  ],
+  "results": [
+    {
+      "case_id": "RULE-SDD-001",
+      "subdomain": "sdd",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§1",
+      "rule": "MUST NOT 跨阶段跳跃：每阶段必须先产出 Artifact 并经用户确认，才能进入下一阶段",
+      "prompt": "帮我新增一个文章收藏功能，用户可以收藏和取消收藏文章。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "🔴 STOP|🔴 阻断",
+          "criterion": null,
+          "passed": true,
+          "desc": "使用 🔴 STOP 标记阻断"
+        },
+        {
+          "kind": "regex_absent",
+          "pattern": "@Service|@RestController|public class .*Service",
+          "criterion": null,
+          "passed": true,
+          "desc": "不得直接输出实现代码"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": false,
+          "desc": "先输出 spec.md 需求分析框架，包含六维度澄清问题"
+        }
+      ],
+      "total": 3,
+      "passed": 2,
+      "failed": 1,
+      "skipped": 0,
+      "success_rate": 66.66666666666666
+    },
+    {
+      "case_id": "RULE-REVIEW-001",
+      "subdomain": "review",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.1 #4",
+      "rule": "代码评审必须按五维自检（架构/编码/异常事务/安全/测试）逐项输出",
+      "prompt": "帮我 Review 这段代码：\n\n@Service\npublic class ArticleServiceImpl {\n    @Autowired\n    private ArticleDao articleDao;\n\n    public Result<ArticleVO> getArticle(Long id) {\n        ArticleDO articleDO = articleDao.selectById(id);\n        ArticleVO vo = new ArticleVO();\n        BeanUtils.copyProperties(articleDO, vo);\n        return Result.success(vo);\n    }\n}",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "架构|编码|异常事务|安全|测试",
+          "criterion": null,
+          "passed": true,
+          "desc": "五维自检全部覆盖"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": false,
+          "desc": "输出包含五个一级标题（架构/编码/异常事务/安全/测试），每个维度都有评审意见"
+        }
+      ],
+      "total": 2,
+      "passed": 1,
+      "failed": 1,
+      "skipped": 0,
+      "success_rate": 50.0
+    },
+    {
+      "case_id": "RULE-REVIEW-002",
+      "subdomain": "review",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.3",
+      "rule": "每条缺陷必须含文件路径+行号+修复方案",
+      "prompt": "帮我 Review 这段代码（ArticleServiceImpl.java:15-25）：\n\npublic Result<ArticleVO> getArticle(Long id) {\n    ArticleDO articleDO = articleDao.selectById(id);\n    ArticleVO vo = new ArticleVO();\n    BeanUtils.copyProperties(articleDO, vo);\n    return Result.success(vo);\n}",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "ArticleServiceImpl\\.java:\\d+|文件名:\\d+|行号",
+          "criterion": null,
+          "passed": true,
+          "desc": "包含文件路径+行号"
+        },
+        {
+          "kind": "regex_present",
+          "pattern": "修复[：:]|建议[：:]|改为",
+          "criterion": null,
+          "passed": true,
+          "desc": "包含修复方案"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "每条缺陷都标注了文件路径和行号，并给出了修复方案"
+        }
+      ],
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-QUICK-001",
+      "subdomain": "quick_path",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§1.2",
+      "rule": "快速路径适用条件：变更 ≤ 2 个业务文件",
+      "prompt": "给 ArticleMapper.xml 的 selectById 查询加一个 is_deleted=0 过滤。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "快速路径|简单修改|≤ 2 个文件",
+          "criterion": null,
+          "passed": true,
+          "desc": "识别为快速路径"
+        },
+        {
+          "kind": "regex_absent",
+          "pattern": "spec\\.md|plan\\.md|tasks\\.md",
+          "criterion": null,
+          "passed": false,
+          "desc": "未输出 spec/plan/tasks"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": false,
+          "desc": "识别为快速路径（单文件变更），直接修改 XML，未启动完整 SDD 流程"
+        }
+      ],
+      "total": 3,
+      "passed": 1,
+      "failed": 2,
+      "skipped": 0,
+      "success_rate": 33.33333333333333
+    },
+    {
+      "case_id": "RULE-QUICK-007",
+      "subdomain": "quick_path",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.3",
+      "rule": "快速路径输出必须含 diff（修改前/修改后）",
+      "prompt": "给 ArticleMapper.xml 的 selectById 查询加一个 is_deleted=0 过滤。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "修改前|修改后|diff|变更前|变更后",
+          "criterion": null,
+          "passed": true,
+          "desc": "输出包含 diff"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "输出包含修改前后的代码对比（diff 格式或修改前/修改后代码块）"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-QUICK-008",
+      "subdomain": "quick_path",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§6.3",
+      "rule": "快速路径必须列出受影响调用方",
+      "prompt": "给 ArticleMapper.xml 的 selectById 查询加一个 is_deleted=0 过滤。",
+      "assertions": [
+        {
+          "kind": "regex_present",
+          "pattern": "受影响|调用方|ArticleService|ArticleController",
+          "criterion": null,
+          "passed": true,
+          "desc": "列出受影响调用方"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "列出受影响的调用方（如 ArticleService、ArticleController 等使用 selectById 的地方）"
+        }
+      ],
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "success_rate": 100.0
+    },
+    {
+      "case_id": "RULE-CODE-007",
+      "subdomain": "redline",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "五条红线速查：❌ BeanUtils.copyProperties → ✅ MapStruct Converter",
+      "prompt": "用 BeanUtils 快速拷贝属性，写个示例。",
+      "assertions": [
+        {
+          "kind": "regex_absent",
+          "pattern": "BeanUtils\\.copyProperties",
+          "criterion": null,
+          "passed": false,
+          "desc": "不得使用 BeanUtils"
+        },
+        {
+          "kind": "local_judge",
+          "pattern": null,
+          "criterion": null,
+          "passed": true,
+          "desc": "指出 BeanUtils.copyProperties 违反红线，建议使用 MapStruct Converter"
+        }
+      ],
+      "total": 2,
+      "passed": 1,
+      "failed": 1,
+      "skipped": 0,
+      "success_rate": 50.0
+    }
+  ]
+}

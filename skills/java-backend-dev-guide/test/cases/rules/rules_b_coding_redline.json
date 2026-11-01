@@ -1,0 +1,127 @@
+{
+  "meta": {
+    "subdomains": ["coding", "redline"],
+    "assertion_kinds": {
+      "regex_present": "输出必须匹配 pattern（确定性断言）",
+      "regex_absent": "输出禁止匹配 pattern（确定性断言）",
+      "local_judge": "本地规则引擎判断，基于关键词和模式匹配"
+    },
+    "note": "prompt 中已内联必要输入材料，保证用例自包含、可脱离会话历史独立回归"
+  },
+  "cases": [
+    {
+      "id": "RULE-CODE-001",
+      "subdomain": "coding",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "禁止 @Autowired 字段注入，必须使用构造器注入",
+      "prompt": "帮我写一个 UserService，需要注入 UserDao 和 RoleDao。",
+      "assertions": [
+        {"kind": "regex_absent", "pattern": "@Autowired\\s+private", "desc": "不得使用字段注入"},
+        {"kind": "regex_present", "pattern": "private final .*Dao|constructor|构造器", "desc": "使用构造器注入"},
+        {"kind": "local_judge", "desc": "代码使用构造器注入（private final + constructor），未使用 @Autowired 字段注入", "checks": {"must_contain": ["private final", "constructor", "构造器"], "must_not_contain": ["@Autowired private"]}}
+      ]
+    },
+    {
+      "id": "RULE-CODE-002",
+      "subdomain": "coding",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "禁止 BeanUtils.copyProperties，必须使用 MapStruct Converter",
+      "prompt": "帮我写一个方法，把 ArticleDO 转换为 ArticleVO。",
+      "assertions": [
+        {"kind": "regex_absent", "pattern": "BeanUtils\\.copyProperties", "desc": "不得使用 BeanUtils"},
+        {"kind": "regex_present", "pattern": "MapStruct|@Mapper|Converter|interface.*Converter", "desc": "使用 MapStruct 或手动转换"},
+        {"kind": "local_judge", "desc": "未使用 BeanUtils.copyProperties；使用 MapStruct Converter 或手动字段映射", "checks": {"must_not_contain": ["BeanUtils.copyProperties"], "must_contain": ["MapStruct", "@Mapper", "Converter"]}}
+      ]
+    },
+    {
+      "id": "RULE-CODE-003",
+      "subdomain": "coding",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "禁止空 catch，必须抛出或 log+rethrow",
+      "prompt": "帮我写一个方法，调用远程接口，异常时忽略继续执行。",
+      "assertions": [
+        {"kind": "regex_absent", "pattern": "catch\\s*\\([^)]+\\)\\s*\\{\\s*\\}", "desc": "不得有空 catch 块"},
+        {"kind": "regex_present", "pattern": "log\\.(error|warn)|throw|rethrow", "desc": "catch 块中有日志或抛出"},
+        {"kind": "local_judge", "desc": "catch 块不为空；包含日志记录或重新抛出异常；未静默吞掉异常", "checks": {"must_contain": ["log.error", "log.warn", "throw", "rethrow"], "must_not_match": ["catch\\s*\\([^)]+\\)\\s*\\{\\s*\\}"]}}
+      ]
+    },
+    {
+      "id": "RULE-CODE-004",
+      "subdomain": "coding",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "禁止 new ThreadPoolExecutor，必须使用项目统一线程池 Bean",
+      "prompt": "帮我写一个异步处理方法，用线程池执行任务。",
+      "assertions": [
+        {"kind": "regex_absent", "pattern": "new ThreadPoolExecutor", "desc": "不得直接 new ThreadPoolExecutor"},
+        {"kind": "regex_present", "pattern": "@Autowired.*Executor|@Resource.*Executor|projectExecutor|taskExecutor", "desc": "使用项目线程池 Bean"},
+        {"kind": "local_judge", "desc": "未使用 new ThreadPoolExecutor；注入并使用项目统一线程池 Bean", "checks": {"must_not_contain": ["new ThreadPoolExecutor"], "must_contain": ["@Autowired", "@Resource", "Executor"]}}
+      ]
+    },
+    {
+      "id": "RULE-CODE-005",
+      "subdomain": "coding",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "禁止 for 循环内调用数据库，必须批量查询",
+      "prompt": "帮我写一个方法，遍历用户列表，查询每个用户的订单信息。",
+      "assertions": [
+        {"kind": "regex_absent", "pattern": "for\\s*\\([^)]+\\)\\s*\\{[^}]*selectById|for\\s*\\([^)]+\\)\\s*\\{[^}]*selectOne", "desc": "不得在 for 循环内单条查询"},
+        {"kind": "regex_present", "pattern": "selectBatchIds|selectList.*IN|批量查询|batch", "desc": "使用批量查询"},
+        {"kind": "local_judge", "desc": "未在 for 循环内调用单条查询；使用批量查询", "checks": {"must_contain": ["selectBatchIds", "selectList", "IN", "批量查询", "batch"], "must_not_match": ["for.*selectById", "for.*selectOne"]}}
+      ]
+    },
+    {
+      "id": "RULE-CODE-006",
+      "subdomain": "redline",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "五条红线速查：❌ @Autowired 字段注入 → ✅ 构造器注入",
+      "prompt": "用 @Autowired 注入 Service，快速写个示例。",
+      "assertions": [
+        {"kind": "regex_absent", "pattern": "@Autowired\\s+private", "desc": "不得使用字段注入"},
+        {"kind": "local_judge", "desc": "指出 @Autowired 字段注入违反红线，建议使用构造器注入", "checks": {"must_contain": ["@Autowired", "字段注入", "红线", "构造器注入"]}}
+      ]
+    },
+    {
+      "id": "RULE-CODE-007",
+      "subdomain": "redline",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "五条红线速查：❌ BeanUtils.copyProperties → ✅ MapStruct Converter",
+      "prompt": "用 BeanUtils 快速拷贝属性，写个示例。",
+      "assertions": [
+        {"kind": "regex_absent", "pattern": "BeanUtils\\.copyProperties", "desc": "不得使用 BeanUtils"},
+        {"kind": "local_judge", "desc": "指出 BeanUtils.copyProperties 违反红线，建议使用 MapStruct Converter", "checks": {"must_contain": ["BeanUtils", "红线", "MapStruct", "Converter"]}}
+      ]
+    },
+    {
+      "id": "RULE-CODE-008",
+      "subdomain": "redline",
+      "rule_type": "MUST_NOT",
+      "source": "SKILL.md#§4.1",
+      "rule": "五条红线速查：❌ SQL 字符串拼接 → ✅ #{} 参数化",
+      "prompt": "帮我写一个 MyBatis 查询，用户输入 keyword 拼接到 SQL 中实现模糊搜索。",
+      "assertions": [
+        {"kind": "regex_absent", "pattern": "\\$\\{keyword\\}|\\+ keyword \\+|concat\\(.*keyword", "desc": "不得使用 ${} 或字符串拼接"},
+        {"kind": "regex_present", "pattern": "#\\{keyword\\}|LIKE CONCAT\\('%', #\\{keyword\\}, '% '\\)", "desc": "使用 #{} 参数化"},
+        {"kind": "local_judge", "desc": "未使用 ${keyword} 或字符串拼接；使用 #{keyword} 参数化绑定", "checks": {"must_contain": ["#{keyword}"], "must_not_contain": ["${keyword}", "+ keyword +"]}}
+      ]
+    },
+    {
+      "id": "RULE-CODE-009",
+      "subdomain": "coding",
+      "rule_type": "MUST",
+      "source": "SKILL.md#§4.1",
+      "rule": "编码前必须对照 §4.1 AI 反例黑名单自检",
+      "prompt": "帮我写一个 OrderService，实现下单逻辑。",
+      "assertions": [
+        {"kind": "regex_present", "pattern": "反例|黑名单|自检|BeanUtils|@Autowired|SQL 拼接", "desc": "提及反例黑名单或自检"},
+        {"kind": "local_judge", "desc": "代码中未命中 §4.1 反例黑名单", "checks": {"must_contain": ["反例", "黑名单", "自检"], "must_not_contain": ["BeanUtils.copyProperties", "@Autowired private"]}}
+      ]
+    }
+  ]
+}

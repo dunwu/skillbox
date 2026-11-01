@@ -1,18 +1,10 @@
-# 中间件开发规范
-
-> **摘要**
->
-> - **核心约束**：Dubbo 禁事务内调用、Domain 层禁直接依赖 Dubbo 接口（经 gateway 防腐）；RabbitMQ 消费者必须幂等 + 死信队列、禁事务内发 MQ；定时任务禁超 30s + 禁全表扫描 + 禁忽略异常
-> - **关键阈值**：定时任务单次 ≤30s
-> - **常见违规**：事务内发 MQ 导致消息不一致、消费者未实现幂等、定时任务全表 Scan 无 WHERE
-
-> **版本**：v1.0 | 最后更新：2026-06-09 | 适用 SKILL 版本：≥ v1.0.0
+# Middleware Development Standards
 
 ---
 
 ## 1. Dubbo RPC
 
-### 1.1. 服务提供方
+### 1.1. Service Provider
 
 ```java
 // api 模块：声明接口
@@ -27,7 +19,7 @@ public class AuthorServiceImpl implements AuthorService {
 }
 ```
 
-### 1.2. 服务消费方
+### 1.2. Service Consumer
 
 ```java
 // @DubboReference 是 Dubbo 框架特例，允许字段注入
@@ -35,19 +27,19 @@ public class AuthorServiceImpl implements AuthorService {
 private AuthorService authorService;
 ```
 
-> 常规 Spring Bean 仍须使用构造器注入；`@DubboReference` 是唯一允许字段注入的例外。
+> Standard Spring Beans must still use constructor injection; `@DubboReference` is the sole exception allowing field injection.
 
-### 1.3. 禁止行为
+### 1.3. Prohibited Behaviors
 
-- **MUST NOT** 在事务内发起 Dubbo 调用（事务回滚但 RPC 已执行）
-- **MUST NOT** 在 DomainService 层直接依赖 Dubbo 接口（应通过 `infrastructure/gateway/` 防腐层适配）
-- **MUST NOT** 将 Dubbo DTO 直接传入 Domain 层（需转换为 BO / Command）
+- **MUST NOT** initiate Dubbo calls inside transactions
+- **MUST NOT** directly depend on Dubbo interfaces in DomainService layer (should adapt through `infrastructure/gateway/` anti-corruption layer)
+- **MUST NOT** pass Dubbo DTOs directly into Domain layer (must convert to BO / Command)
 
 ---
 
-## 2. RabbitMQ 消息
+## 2. RabbitMQ Messages
 
-### 2.1. 生产者
+### 2.1. Producer
 
 ```java
 @Component
@@ -69,9 +61,9 @@ public class ArticleEventPublisher {
 }
 ```
 
-> **MUST NOT** 在事务内发送 MQ（事务回滚但消息已发出，造成数据不一致）。应在事务提交后发送，或采用事务消息方案。
+> **MUST NOT** send MQ inside transactions. Should send after transaction commits, or adopt transactional message solution.
 
-### 2.2. 消费者
+### 2.2. Consumer
 
 ```java
 @Component
@@ -92,19 +84,19 @@ public class ArticleCreatedConsumer {
 }
 ```
 
-### 2.3. 关键原则
+### 2.3. Key Principles
 
-- **消费者必须实现幂等**（消息可能重复投递，以消息唯一键做去重）
-- 死信队列（DLQ）必须配置并接入监控告警
-- **MUST NOT** 在消费者中嵌套数据库事务后再发 MQ
+- **Consumers must implement idempotency** (messages may be delivered repeatedly, deduplicate by message unique key)
+- Dead letter queue (DLQ) must be configured and connected to monitoring alerts
+- **MUST NOT** nest database transactions in consumers then send MQ
 
 ---
 
-## 3. 定时任务
+## 3. Scheduled Tasks
 
-> 定时任务框架由项目级 Skill 定义具体集成方式（如 Spring @Scheduled、XXL-Job 等）。
+> The specific integration approach of the scheduled-task framework is defined by the project-level Skill (e.g. Spring @Scheduled, XXL-Job, etc.).
 
-### 3.1. 任务实现原则
+### 3.1. Task Implementation Principles
 
 ```java
 @Scheduled(cron = "0 0 2 * * ?")
@@ -118,19 +110,19 @@ public void processExpired() {
 }
 ```
 
-### 3.2. 禁止行为
+### 3.2. Prohibited Behaviors
 
-- **MUST NOT** 单次执行超过 30s（应分批处理，每批加分页游标）
-- **MUST NOT** 忽略异常（必须捕获并记录，根据框架决定是否重试）
-- **MUST NOT** 在任务内做全表扫描（必须有 `WHERE` 过滤条件 + 游标分批）
+- **MUST NOT** let a single execution exceed 30s (should process in batches, each batch with pagination cursor)
+- **MUST NOT** ignore exceptions (must catch and log, decide whether to retry based on framework)
+- **MUST NOT** perform a full table scan inside a task (must have `WHERE` filter conditions + cursor-based batching)
 
 ---
 
-## 4. 日志规范
+## 4. Logging Standards
 
-> 安全脱敏见 → security-guide.md §4。编码中关键操作入口/出口 MUST 有日志（见 → java-guide.md §9）。
+> For security masking, see → security-guide.md §4. Key operation entry/exit points in coding MUST have logs (see → observability-guide.md §1).
 
-### 4.1. 使用规范
+### 4.1. Usage Standards
 
 ```java
 // MUST：Lombok @Slf4j，禁止 System.out.println
@@ -145,56 +137,54 @@ public class ArticleApplicationService {
 }
 ```
 
-### 4.2. 日志级别与禁止行为
+### 4.2. Log Levels and Prohibited Behaviors
 
-> 日志级别（ERROR/WARN/INFO/DEBUG）语义遵循《阿里巴巴 Java 开发手册（黄山版）》§2 异常日志。
-
-- **MUST NOT** 日志记录明文密码、Token、身份证号等敏感数据
-- **MUST NOT** 在 `for` 循环内打 `INFO` 日志
-- **MUST NOT** 使用 `e.printStackTrace()`（替代：`log.error("描述", e)`）
+- **MUST NOT** log plaintext passwords, Tokens, ID card numbers, and other sensitive data
+- **MUST NOT** log `INFO` level inside `for` loops
+- **MUST NOT** use `e.printStackTrace()` (alternative: `log.error("description", e)`)
 
 ---
 
 ## 5. MyBatis-Plus ORM
 
-> 本节仅涵盖 ORM 基础配置。MySQL 完整规范见 → mysql-guide.md。
+> This section only covers ORM basic configuration. For complete MySQL standards, see → mysql-guide.md.
 
-### 5.1. Mapper XML 路径约定
+### 5.1. Mapper XML Path Convention
 
 ```yaml
 mybatis-plus:
   mapper-locations: classpath*:mapper/**/*.xml
 ```
 
-### 5.2. 分页查询
+### 5.2. Paginated Queries
 
 ```java
 Page<ArticleDO> page = new Page<>(pageIndex, pageSize);
 IPage<ArticleDO> result = articleMapper.selectPage(page, queryWrapper);
 ```
 
-### 5.3. 禁止行为
+### 5.3. Prohibited Behaviors
 
-- **MUST NOT** Mapper XML 中使用 `${xxx}` 字符串拼接（SQL 注入，必须用 `#{xxx}`）
-- **MUST NOT** 在 Mapper / DAO 层写业务逻辑
-- **MUST NOT** 执行无 `WHERE` 条件的 `UPDATE` / `DELETE`
-- **MUST NOT** 对大表执行 `SELECT *`
+- **MUST NOT** use `${xxx}` string concatenation in Mapper XML (SQL injection, must use `#{xxx}`)
+- **MUST NOT** write business logic in Mapper / DAO layer
+- **MUST NOT** execute `UPDATE` / `DELETE` without `WHERE` conditions
+- **MUST NOT** execute `SELECT *` on large tables
 
-> MySQL 完整规范见 → mysql-guide.md。
+> For complete MySQL standards, see → mysql-guide.md.
 
 ---
 
-## 6. 熔断降级规范
+## 6. Circuit Breaker Degradation Standards
 
-> 熔断降级框架由项目级 Skill 定义（如 Sentinel、Resilience4j 等）。以下为 Sentinel 模式示例。
+> The circuit breaker degradation framework is defined by the project-level Skill (e.g. Sentinel, Resilience4j, etc.). Below is a Sentinel pattern example.
 
-### 6.1. 核心原则
+### 6.1. Core Principles
 
-- **MUST NOT** 将熔断降级逻辑硬编码在业务代码中，**MUST** 通过规则动态配置
-- **MUST** 为所有外部依赖（RPC、HTTP、Redis、ES）配置降级兜底策略
-- **MUST** 为核心接口配置限流规则，防止下游故障引发级联雪崩
+- **MUST NOT** hardcode circuit breaker degradation logic in business code, **MUST** configure dynamically through rules
+- **MUST** configure degradation fallback strategies for all external dependencies (RPC, HTTP, Redis, ES)
+- **MUST** configure rate limiting rules for core APIs to prevent downstream failures from causing cascading avalanches
 
-### 6.2. 降级编码模式
+### 6.2. Degradation Coding Pattern
 
 ```java
 @SentinelResource(value = "getArticle", fallback = "getArticleFallback")
@@ -211,8 +201,8 @@ public ArticleVO getArticleFallback(Long articleId, BlockException ex) {
 }
 ```
 
-### 6.3. 禁止行为
+### 6.3. Prohibited Behaviors
 
-- **MUST NOT** fallback 方法返回 `null`（调用方会 NPE）
-- **MUST NOT** 在 fallback 中再次发起可能触发熔断的调用
-- **MUST NOT** 忽略 BlockException
+- **MUST NOT** have fallback method return `null` (callers will get NPE)
+- **MUST NOT** initiate calls inside fallback that could trigger circuit breaking again
+- **MUST NOT** ignore BlockException

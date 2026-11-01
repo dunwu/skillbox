@@ -1,217 +1,215 @@
-# 质量门禁规范
+# Quality Gate Standards
 
-> **摘要**
+> **Summary**
 >
-> - **核心约束**：6 阶段门禁（需求→设计→编码→测试→验收→发布）+ Maven 插件门禁（enforcer / checkstyle / PMD P3C），阻断项不满足 MUST NOT 推进下一阶段；AI 在声称阶段完成前 MUST 逐条核查对应阶段阻断项
-> - **关键阈值**：核心业务分支覆盖率 =100%、整体行覆盖率 ≥80%、无被注释断言或跳过测试；Maven 门禁默认全部启用（`-Ddev` 本地模式豁免）
-> - **常见违规**：未逐条核查门禁就宣布阶段完成、建议项未满足未说明原因、上线缺灰度/回滚/监控方案、子模块硬编码依赖版本、引入 bannedDependencies
+> - **Core constraint**: 6-stage gates (requirements → design → coding → testing → acceptance → release) + Maven plugin gates (enforcer / checkstyle / PMD P3C), blocking items not satisfied MUST NOT proceed to next stage; AI MUST check corresponding stage blocking items one by one before claiming stage completion
+> - **Key thresholds**: Core business branch coverage = 100%, overall line coverage ≥ 80%, no commented-out assertions or skipped tests; Maven gates all enabled by default (`-Ddev` local mode exempted)
+> - **Common violations**: Declaring stage complete without checking gates item by item, recommendation items not satisfied without stating reasons, launch missing gray-release/rollback/monitoring plan, sub-modules hardcoding dependency versions, introducing bannedDependencies
 
-> **版本**：v1.1 | 最后更新：2026-06-08 | 适用 SKILL 版本：≥ v1.0.0
+Each development stage has clear exit criteria. When **blocking items** are not satisfied, proceeding to the next stage is prohibited; when **recommendation items** are not satisfied, reasons must be stated and technical debt recorded.
 
-每个开发阶段设置明确的退出标准。**阻断项**不满足时禁止进入下一阶段；**建议项**不满足时需说明原因并记录技术债。
-
-> **交叉引用说明**：本文档中的 `→ {filename} §{section}` 路径均相对于 `references/` 目录。
+> **Cross-reference note**: `→ {filename} §{section}` paths in this document are all relative to the `references/` directory.
 
 ---
 
-## 1. 各阶段门禁标准
+## 1. Stage Gate Standards
 
-### 1.1. 需求分析 → 概要设计
+### 1.1. Requirements Analysis → High-Level Design
 
-| 类型    | 标准                                                               |
-| ------- | ------------------------------------------------------------------ |
-| 🔴 阻断 | `spec.md` 各章节齐全（背景、用户故事、范围、验收标准、非功能需求） |
-| 🔴 阻断 | 验收标准每条均可独立测试（无"系统正常运行"等模糊表述）             |
-| 🔴 阻断 | 开放问题列表为空（所有待确认项已决策）                             |
-| 🟡 建议 | 产品 / 业务方已签字确认 `spec.md`                                  |
-
----
-
-### 1.2. 概要设计 → 详细设计
-
-| 类型    | 标准                                               |
-| ------- | -------------------------------------------------- |
-| 🔴 阻断 | `plan.md` 包含 ≥ 2 个方案对比及选型决策            |
-| 🔴 阻断 | 关键接口契约已定义（方法签名、入参、出参、错误码） |
-| 🔴 阻断 | 核心数据模型已设计（表结构 / 缓存 Key / 文档结构） |
-| 🔴 阻断 | 架构评审已通过（涉及公共契约变更必须有评审记录）   |
-| 🟡 建议 | 架构决策已记录 ADR（含被否决方案的原因）           |
+| Type | Standard |
+|------|----------|
+| 🔴 Blocking | `spec.md` sections complete (background, user stories, scope, acceptance criteria, non-functional requirements) |
+| 🔴 Blocking | Each acceptance criterion independently testable (no vague expressions like "system runs normally") |
+| 🔴 Blocking | Open questions list is empty (all pending items decided) |
+| 🟡 Recommendation | Product / business side has signed off on `spec.md` |
 
 ---
 
-### 1.3. 详细设计 → 编码
+### 1.2. High-Level Design → Detailed Design
 
-| 类型    | 标准                                           |
-| ------- | ---------------------------------------------- |
-| 🔴 阻断 | `tasks.md` 每个 task 包含目标、步骤、验收条件  |
-| 🔴 阻断 | 单 task 预计工时 ≤ 半天（超出须拆分）          |
-| 🔴 阻断 | 任务间依赖关系（串行 / 并行）已明确标注        |
-| 🟡 建议 | 技术评审已通过（涉及存储 Schema 变更必须评审） |
-
----
-
-### 1.4. 编码 → 单元测试
-
-| 类型    | 标准                                                                                       |
-| ------- | ------------------------------------------------------------------------------------------ |
-| 🔴 阻断 | 编译通过：IDE 可用时 `lsp_diagnostics` 无 Error 级诊断；IDE 不可用时 `mvn compile -q` 通过 |
-| 🔴 阻断 | `→ review-guide.md §2` AI 自动检查项全部通过                                               |
-| 🟡 建议 | `lsp_diagnostics` 无 Warning 级诊断                                                        |
+| Type | Standard |
+|------|----------|
+| 🔴 Blocking | `plan.md` contains ≥ 2 solution comparisons and selection decision |
+| 🔴 Blocking | Key API contracts defined (method signatures, parameters, return values, error codes) |
+| 🔴 Blocking | Core data model designed (table structure / cache keys / document structure) |
+| 🔴 Blocking | Architecture review passed (changes involving public contracts must have review records) |
+| 🟡 Recommendation | Architecture decisions recorded in ADR (including reasons for rejected solutions) |
 
 ---
 
-### 1.5. 单元测试 → 验收
+### 1.3. Detailed Design → Coding
 
-| 类型    | 标准                                                   |
-| ------- | ------------------------------------------------------ |
-| 🔴 阻断 | 全部单元测试 Pass                                      |
-| 🔴 阻断 | 整体行覆盖率 ≥ 80%                                     |
-| 🔴 阻断 | 核心业务分支（DomainService / Domain 层）覆盖率 = 100% |
-| 🔴 阻断 | 无被注释掉的断言或跳过的测试用例                       |
-| 🟡 建议 | 集成测试关键链路已覆盖                                 |
-
----
-
-### 1.6. 验收 → 合并 / 发布
-
-| 类型    | 标准                                                  |
-| ------- | ----------------------------------------------------- |
-| 🔴 阻断 | `spec.md` 验收标准逐条核对，全部通过                  |
-| 🔴 阻断 | 无 P0 / P1 级缺陷未解决                               |
-| 🔴 阻断 | Code Review 所有 `MUST-FIX` 项已修复                  |
-| 🔴 阻断 | 公共契约变更已通知下游团队                            |
-| 🟡 建议 | 性能基准测试结果符合非功能需求                        |
-| 🔴 阻断 | 上线 Checklist 已完成（灰度策略、回滚方案、监控告警） |
+| Type | Standard |
+|------|----------|
+| 🔴 Blocking | `tasks.md` each task contains objectives, steps, acceptance criteria |
+| 🔴 Blocking | Single task estimated effort ≤ half day (must split if exceeding) |
+| 🔴 Blocking | Task dependencies (serial / parallel) clearly annotated |
+| 🟡 Recommendation | Technical review passed (changes involving storage Schema must be reviewed) |
 
 ---
 
-## 2. Maven 插件质量门禁
+### 1.4. Coding → Unit Testing
 
-构建流水线中集成三个静态分析插件，在合并主干前强制执行。所有插件在根 POM 的 `<pluginManagement>` 中统一声明，子模块通过继承自动获得，**无需各自重复配置**。
+| Type | Standard |
+|------|----------|
+| 🔴 Blocking | Compilation passes: when IDE available `lsp_diagnostics` has no Error-level diagnostics; when IDE unavailable `mvn compile -q` passes |
+| 🔴 Blocking | `→ review-guide.md §2` AI auto-check items all pass |
+| 🟡 Recommendation | `lsp_diagnostics` has no Warning-level diagnostics |
 
-> Maven 工程规范（BOM 规则、插件继承、dev profile）详见 → maven-guide.md。
+---
 
-### 2.1. 门禁总览
+### 1.5. Unit Testing → Acceptance
 
-| 插件                         | 阶段       | 检查范围                          | 失败行为                                        |
-| ---------------------------- | ---------- | --------------------------------- | ----------------------------------------------- |
-| `maven-enforcer-plugin`      | `validate` | 禁止引入特定依赖、依赖版本收敛    | `enforce.enabled=true` 时构建中止               |
-| `maven-checkstyle-plugin`    | `validate` | 代码风格（命名、空白、注释等）    | `checkstyle.validate.disabled=false` 时构建中止 |
-| `maven-pmd-plugin` + p3c-pmd | `verify`   | 阿里 P3C 规范（潜在 bug、坏味道） | `pmd.enforce.validate=true` 时违规中止构建      |
+| Type | Standard |
+|------|----------|
+| 🔴 Blocking | All unit tests Pass |
+| 🔴 Blocking | Overall line coverage ≥ 80% |
+| 🔴 Blocking | Core business branches (DomainService / Domain layer) coverage = 100% |
+| 🔴 Blocking | No commented-out assertions or skipped test cases |
+| 🟡 Recommendation | Integration tests cover critical paths |
 
-> **开关默认值**：三个门禁在正常构建中均处于**启用**状态。`-Ddev` 本地开发模式自动豁免（→ maven-guide.md §5）。
+---
 
-### 2.2. maven-enforcer-plugin — 依赖治理
+### 1.6. Acceptance → Merge / Release
 
-在所有 Java 代码编译之前，对依赖树执行两项硬性约束：
+| Type | Standard |
+|------|----------|
+| 🔴 Blocking | `spec.md` acceptance criteria checked item by item, all pass |
+| 🔴 Blocking | No P0 / P1 defects unresolved |
+| 🔴 Blocking | Code Review all `MUST-FIX` items fixed |
+| 🔴 Blocking | Public contract changes notified to downstream teams |
+| 🟡 Recommendation | Performance benchmark test results meet non-functional requirements |
+| 🔴 Blocking | Launch Checklist completed (gray-release strategy, rollback plan, monitoring alerts) |
 
-#### 2.2.1. 禁止引入的依赖
+---
 
-| 坐标                                | 禁止原因                                    |
-| ----------------------------------- | ------------------------------------------- |
-| `org.bouncycastle:bcprov-jdk16`     | 已停止维护的旧版密码学库，存在安全漏洞      |
-| `org.hibernate:hibernate-validator` | 与 Spring Boot 内置版本冲突，校验行为不确定 |
+## 2. Maven Plugin Quality Gates
 
-如需添加新的禁止项，在根 POM 的 `<bannedDependencies><excludes>` 中追加。
+Three static analysis plugins integrated in build pipeline, enforced before merging to main branch. All plugins declared uniformly in root POM's `<pluginManagement>`, sub-modules automatically obtain through inheritance, **no need to repeat configuration in each**.
 
-#### 2.2.2. 依赖版本收敛
+> For Maven engineering standards (BOM rules, plugin inheritance, dev profile), see → maven-guide.md.
 
-同一 `groupId:artifactId` 在依赖树中出现多个版本时，构建立即失败。**MUST** 在 BOM 的 `<dependencyManagement>` 中显式声明目标版本强制对齐。
+### 2.1. Gate Overview
 
-#### 2.2.3. 控制开关
+| Plugin | Phase | Check scope | Failure behavior |
+|--------|-------|-------------|----------------|
+| `maven-enforcer-plugin` | `validate` | Prohibit specific dependencies, dependency version convergence | Build aborts when `enforce.enabled=true` |
+| `maven-checkstyle-plugin` | `validate` | Code style (naming, whitespace, comments, etc.) | Build aborts when `checkstyle.validate.disabled=false` |
+| `maven-pmd-plugin` + p3c-pmd | `verify` | Alibaba P3C standards (potential bugs, code smells) | Violations abort build when `pmd.enforce.validate=true` |
+
+> **Switch defaults**: All three gates are **enabled** in normal builds. `-Ddev` local development mode auto-exempts (→ maven-guide.md §5).
+
+### 2.2. maven-enforcer-plugin — Dependency Governance
+
+Before any Java code compilation, enforces two hard constraints on dependency tree:
+
+#### 2.2.1. Prohibited Dependencies
+
+| Coordinates | Prohibition reason |
+|-------------|-------------------|
+| `org.bouncycastle:bcprov-jdk16` | Discontinued old cryptography library, has security vulnerabilities |
+| `org.hibernate:hibernate-validator` | Conflicts with Spring Boot built-in version, uncertain validation behavior |
+
+To add new prohibitions, append in root POM's `<bannedDependencies><excludes>`.
+
+#### 2.2.2. Dependency Version Convergence
+
+When the same `groupId:artifactId` appears with multiple versions in the dependency tree, build fails immediately. **MUST** explicitly declare target version in BOM's `<dependencyManagement>` to force alignment.
+
+#### 2.2.3. Control Switches
 
 ```properties
 enforce.enabled=true   # 启用（默认）
 enforce.enabled=false  # 豁免（-Ddev 自动设置）
 ```
 
-### 2.3. maven-checkstyle-plugin — 代码风格检查
+### 2.3. maven-checkstyle-plugin — Code Style Check
 
-校验手写 Java 源码是否符合团队统一风格规范。
+Validates whether hand-written Java source code conforms to team-unified style standards.
 
-#### 2.3.1. 规则文件分发
+#### 2.3.1. Rule File Distribution
 
-规则文件 `checkstyle.xml` 打包在构建基础模块的 jar 中，通过插件依赖加入检查插件的 classpath。修改规则只更新规则文件源码，重新 `mvn install` 后自动生效。
+Rule file `checkstyle.xml` packaged in build base module's jar, added to check plugin's classpath via plugin dependency. To modify rules, only update rule file source code, re-`mvn install` and it auto-takes effect.
 
-#### 2.3.2. 检查范围
+#### 2.3.2. Check Scope
 
-仅扫描手写源码目录（`src/main/java`），**排除** `target/generated-sources` 中 MapStruct 等生成的代码。
+Only scans hand-written source directories (`src/main/java`), **excludes** auto-generated code in `target/generated-sources` such as MapStruct.
 
-#### 2.3.3. 控制开关
+#### 2.3.3. Control Switches
 
 ```properties
 checkstyle.validate.disabled=false   # 启用检查（默认）
 checkstyle.validate.disabled=true    # 跳过检查（-Ddev 自动设置）
 ```
 
-#### 2.3.4. 新环境引导
+#### 2.3.4. New Environment Bootstrap
 
-全新环境首次克隆后，需执行一次引导安装：
+After the first clone in a brand new environment, run the bootstrap install once:
 
 ```bash
 mvn install -pl {build-module} -DskipTests   # 仅需执行一次
 ```
 
-### 2.4. maven-pmd-plugin + p3c-pmd — 阿里 P3C 规范检查
+### 2.4. maven-pmd-plugin + p3c-pmd — Alibaba P3C Standards Check
 
-对 Java 源码进行静态语义分析，发现潜在 bug、性能隐患和代码坏味道。规则集采用阿里巴巴 P3C（p3c-pmd 2.x，10 个独立 ruleset 文件）。
+Performs static semantic analysis on Java source code, discovers potential bugs, performance risks, and code smells. Rule set uses Alibaba P3C (p3c-pmd 2.x, 10 independent ruleset files).
 
-#### 2.4.1. 规则集覆盖
+#### 2.4.1. Rule Set Coverage
 
-| ruleset               | 检查范围                                 |
-| --------------------- | ---------------------------------------- |
-| `ali-comment.xml`     | 注释规范（Javadoc 格式、类必须有作者等） |
-| `ali-concurrent.xml`  | 并发安全（线程池、锁使用等）             |
-| `ali-constant.xml`    | 常量规范（魔法值、常量命名等）           |
-| `ali-exception.xml`   | 异常规范（异常捕获、返回值等）           |
-| `ali-flowcontrol.xml` | 流程控制（switch-default、循环等）       |
-| `ali-naming.xml`      | 命名规范（类名驼峰、方法名等）           |
-| `ali-oop.xml`         | OOP 规范（POJO toString、equals 等）     |
-| `ali-orm.xml`         | ORM 规范（SQL 拼接、Mapper 等）          |
-| `ali-other.xml`       | 其他规范（集合初始化容量等）             |
-| `ali-set.xml`         | 集合规范（ArrayList 初始化、subList 等） |
+| ruleset | Check scope |
+|---------|-------------|
+| `ali-comment.xml` | Comment standards (Javadoc format, classes must have author, etc.) |
+| `ali-concurrent.xml` | Concurrency safety (thread pool, lock usage, etc.) |
+| `ali-constant.xml` | Constant standards (magic values, constant naming, etc.) |
+| `ali-exception.xml` | Exception standards (exception catching, return values, etc.) |
+| `ali-flowcontrol.xml` | Flow control (switch-default, loops, etc.) |
+| `ali-naming.xml` | Naming standards (class name camelCase, method names, etc.) |
+| `ali-oop.xml` | OOP standards (POJO toString, equals, etc.) |
+| `ali-orm.xml` | ORM standards (SQL concatenation, Mapper, etc.) |
+| `ali-other.xml` | Other standards (collection initialization capacity, etc.) |
+| `ali-set.xml` | Collection standards (ArrayList initialization, subList, etc.) |
 
-#### 2.4.2. 排除范围
+#### 2.4.2. Exclusion Scope
 
-排除 `target/generated-sources` 下的自动生成代码（如 MapStruct Impl）。
+Excludes auto-generated code under `target/generated-sources` (such as MapStruct Impl).
 
-#### 2.4.3. 典型检测场景
+#### 2.4.3. Typical Detection Scenarios
 
-- 集合遍历时直接删除元素（`ConcurrentModificationException` 风险）
-- `switch` 语句缺少 `default` 分支
-- 线程池使用 `Executors` 工厂方法（规避无界队列 OOM）
-- 手动拼接 SQL 字符串（SQL 注入风险）
-- 方法过长（超过 80 行）
-- 魔法值直接使用（`if (status == 1)` → 应定义常量）
-- 类缺少 `@author` 注释
+- Directly deleting elements during collection iteration (`ConcurrentModificationException` risk)
+- `switch` statement missing `default` branch
+- Thread pool using `Executors` factory methods (detection prevents unbounded-queue OOM)
+- Manually concatenated SQL strings (SQL injection risk)
+- Methods too long (exceeding 80 lines)
+- Magic values used directly (`if (status == 1)` → should define constant)
+- Class missing `@author` comment
 
-#### 2.4.4. 控制开关
+#### 2.4.4. Control Switches
 
 ```properties
 pmd.enforce.validate=true    # PMD 运行且违规直接中止构建（默认）
 pmd.enforce.validate=false   # PMD 运行但违规仅警告（-Ddev 自动设置）
 ```
 
-### 2.5. dev profile 对质量门禁的影响
+### 2.5. dev Profile Impact on Quality Gates
 
-| 门禁                | 默认构建   | `-Ddev` 本地模式 |
-| ------------------- | ---------- | ---------------- |
-| enforcer 依赖收敛   | ✓ 强制     | ✗ 跳过           |
-| checkstyle 风格检查 | ✓ 违规中止 | ✗ 跳过           |
-| PMD P3C 检查        | ✓ 违规中止 | ✗ 仅警告         |
-| sources.jar 打包    | ✓ 生成     | ✗ 跳过           |
+| Gate | Default build | `-Ddev` local mode |
+|------|--------------|-------------------|
+| enforcer dependency convergence | ✓ Enforced | ✗ Skipped |
+| checkstyle style check | ✓ Violations abort | ✗ Skipped |
+| PMD P3C check | ✓ Violations abort | ✗ Warn only |
+| sources.jar packaging | ✓ Generated | ✗ Skipped |
 
 ---
 
-## 3. 门禁执行说明
+## 3. Gate Execution Instructions
 
-- AI 在每次声称"当前阶段完成"前，**MUST** 自行对照本文档对应阶段的阻断项逐条核查
-- 任何阻断项未满足时，**MUST NOT** 宣布完成或推进到下一阶段，**MUST** 列出具体未通过项
-- 建议项未满足时，**MUST** 向用户说明原因，由用户决策是否接受风险继续推进
+- Before AI claims "current stage complete" each time, AI **MUST** itself check against this document's corresponding stage blocking items one by one
+- When any blocking item is not satisfied, **MUST NOT** declare completion or proceed to next stage, **MUST** list specific non-passing items
+- When recommendation items are not satisfied, **MUST** explain reasons to user, user decides whether to accept risk and continue
 
-### 3.1. 门禁失败处理流程
+### 3.1. Gate Failure Handling Process
 
-当阻断项未通过时，AI **MUST** 按以下流程响应：
+When blocking items fail, AI **MUST** respond according to the following process:
 
 ```
 1. 列出具体未通过的阻断项（逐条引用本规范原文）
@@ -223,4 +221,4 @@ pmd.enforce.validate=false   # PMD 运行但违规仅警告（-Ddev 自动设置
 4. MUST NOT 在用户未明确决策的情况下自行继续推进
 ```
 
-> **回退场景**：当需求变更导致需回退到前一阶段时，**MUST** 更新对应 Artifact（spec.md / plan.md / tasks.md），标注变更原因，经用户确认后再重新走门禁。
+> **Fallback scenarios**: When requirement changes cause need to fall back to previous stage, **MUST** update corresponding Artifact (spec.md / plan.md / tasks.md), annotate change reason, re-run gates after user confirmation.
