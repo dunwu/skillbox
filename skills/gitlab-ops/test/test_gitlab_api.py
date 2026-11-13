@@ -3,7 +3,7 @@
 import unittest
 import time
 from conftest import (
-    run, run_ok, api_get, api_post, api_delete,
+    run, run_ok, api_get, api_post, api_put, api_delete, require_role,
     GITLAB_URL, GITLAB_TOKEN, GITLAB_PROJECT, PROJECT_PATH_ENCODED,
 )
 
@@ -59,7 +59,10 @@ class TestIssueAPI(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIsInstance(data, list)
 
-    def test_create_and_delete_issue(self):
+    def test_create_and_close_issue(self):
+        """创建后关闭。硬删除（DELETE /issues）需要 Admin，Developer 令牌会 403，
+        因此这里只做 close，避免在用例失败时留下 opened 的残留 issue。
+        """
         title = f"api-test-{int(time.time())}"
         status, data = api_post(
             f"/projects/{PROJECT_PATH_ENCODED}/issues",
@@ -67,8 +70,9 @@ class TestIssueAPI(unittest.TestCase):
         )
         self.assertIn(status, [200, 201])
         issue_iid = data["iid"]
-        status2, _ = api_delete(
-            f"/projects/{PROJECT_PATH_ENCODED}/issues/{issue_iid}"
+        status2, _ = api_put(
+            f"/projects/{PROJECT_PATH_ENCODED}/issues/{issue_iid}",
+            {"state_event": "close"},
         )
         self.assertIn(status2, [200, 204])
 
@@ -100,6 +104,7 @@ class TestVariableAPI(unittest.TestCase):
     VAR_KEY = "TEST_API_VAR"
 
     def setUp(self):
+        require_role(self, 40, "管理 CI/CD 变量")
         api_delete(f"/projects/{PROJECT_PATH_ENCODED}/variables/{self.VAR_KEY}")
 
     def tearDown(self):
@@ -126,6 +131,9 @@ class TestVariableAPI(unittest.TestCase):
 
 class TestWebhookAPI(unittest.TestCase):
     HOOK_URL = "https://httpbin.org/post"
+
+    def setUp(self):
+        require_role(self, 40, "管理项目 Webhook")
 
     def test_list_webhooks(self):
         status, data = api_get(f"/projects/{PROJECT_PATH_ENCODED}/hooks")

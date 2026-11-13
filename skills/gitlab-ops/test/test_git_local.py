@@ -1,8 +1,8 @@
-"""Tests for git-local.md — all local git commands."""
+"""Tests for references/git-local.md — all local git commands."""
 
 import os
 import unittest
-from conftest import run, TempRepo
+from conftest import run, TempRepo, remove_tree
 
 
 class TestGitConfig(unittest.TestCase):
@@ -26,8 +26,8 @@ class TestGitClone(unittest.TestCase):
             rc, out, _ = run(f"git clone {src.dir} {dest}", check=False)
             self.assertEqual(rc, 0)
             self.assertTrue(os.path.isdir(os.path.join(dest, ".git")))
-            import shutil
-            shutil.rmtree(dest, ignore_errors=True)
+            remove_tree(dest)
+            self.assertFalse(os.path.exists(dest), "clone 目标目录未被清掉 = 泄漏")
 
 
 class TestGitDiff(unittest.TestCase):

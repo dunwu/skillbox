@@ -1,4 +1,4 @@
-"""Tests for gitlab-repo.md — repo management commands and REST API alternatives."""
+"""Tests for references/gitlab-repo.md — repo management commands and REST API alternatives."""
 
 import unittest
 from conftest import (

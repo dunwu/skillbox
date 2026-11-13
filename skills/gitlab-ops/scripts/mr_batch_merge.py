@@ -8,7 +8,6 @@
 环境变量:
     GITLAB_URL      GitLab 实例地址（必需）
     GITLAB_TOKEN    个人访问令牌（必需）
-    GITLAB_PROJECT  项目路径，如 group/project（必需）
 """
 
 import argparse
@@ -45,12 +44,13 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true", help="List MRs without merging")
     parser.add_argument("--squash", action="store_true", help="Use squash merge")
     parser.add_argument("--remove-source", action="store_true", help="Delete source branch after merge")
+    parser.add_argument("--project", required=True,
+                        help="GitLab project path (e.g. group/project)")
     args = parser.parse_args()
 
     url = require_env("GITLAB_URL")
     token = require_env("GITLAB_TOKEN")
-    project = require_env("GITLAB_PROJECT")
-    client = GitLabClient(url, token, project)
+    client = GitLabClient(url, token, args.project)
 
     query = "/merge_requests?state=opened"
     if args.label:

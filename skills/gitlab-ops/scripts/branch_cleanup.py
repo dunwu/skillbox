@@ -9,7 +9,7 @@
 使用 ``--remote`` 时通过 GitLab API 清理远端分支。
 
 环境变量（--remote 模式必需）:
-    GITLAB_URL, GITLAB_TOKEN, GITLAB_PROJECT
+    GITLAB_URL, GITLAB_TOKEN
 """
 
 from __future__ import annotations
@@ -67,13 +67,14 @@ def main() -> None:
                         help="List branches without deleting")
     parser.add_argument("--remote", action="store_true",
                         help="Clean remote branches via GitLab API")
+    parser.add_argument("--project", required=True,
+                        help="GitLab project path (e.g. group/project)")
     args = parser.parse_args()
 
     if args.remote:
         url = require_env("GITLAB_URL")
         token = require_env("GITLAB_TOKEN")
-        project = require_env("GITLAB_PROJECT")
-        client = GitLabClient(url, token, project)
+        client = GitLabClient(url, token, args.project)
 
         status, branches = client.get(
             f"/repository/branches?merged={args.target}"

@@ -6,7 +6,7 @@
     python release_notes.py [--from REF] [--to REF] [--output FILE]
 
 环境变量:
-    GITLAB_URL, GITLAB_TOKEN, GITLAB_PROJECT（必需）
+    GITLAB_URL, GITLAB_TOKEN（必需）
 """
 
 from __future__ import annotations
@@ -61,12 +61,13 @@ def main() -> None:
     parser.add_argument("--to", dest="to_ref", default=None,
                         help="End date (YYYY-MM-DD) or tag")
     parser.add_argument("--output", help="Output file (default: stdout)")
+    parser.add_argument("--project", required=True,
+                        help="GitLab project path (e.g. group/project)")
     args = parser.parse_args()
 
     url = require_env("GITLAB_URL")
     token = require_env("GITLAB_TOKEN")
-    project = require_env("GITLAB_PROJECT")
-    client = GitLabClient(url, token, project)
+    client = GitLabClient(url, token, args.project)
 
     mrs = client.get_all(
         "/merge_requests?state=merged&order_by=merged_at&sort=desc"

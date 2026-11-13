@@ -17,7 +17,6 @@ def run_script(script_name, args=None):
     env = os.environ.copy()
     env.setdefault("GITLAB_URL", "https://placeholder.local")
     env.setdefault("GITLAB_TOKEN", "placeholder-token")
-    env.setdefault("GITLAB_PROJECT", "placeholder/project")
     result = subprocess.run(
         ["python", script_path] + args,
         capture_output=True, text=True, timeout=15,
@@ -61,6 +60,7 @@ class TestMRBatchMerge(unittest.TestCase):
         self.assertIn("--label", out)
         self.assertIn("--dry-run", out)
         self.assertIn("--squash", out)
+        self.assertIn("--project", out)
 
 
 class TestIssueTriage(unittest.TestCase):
@@ -71,6 +71,7 @@ class TestIssueTriage(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertIn("--no-label", out)
         self.assertIn("--assign", out)
+        self.assertIn("--project", out)
 
 
 class TestCIRetryFailed(unittest.TestCase):
@@ -81,6 +82,7 @@ class TestCIRetryFailed(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertIn("--ref", out)
         self.assertIn("--dry-run", out)
+        self.assertIn("--project", out)
 
 
 class TestRepoAudit(unittest.TestCase):
@@ -90,6 +92,7 @@ class TestRepoAudit(unittest.TestCase):
         rc, out, _ = run_script("repo_audit.py")
         self.assertEqual(rc, 0)
         self.assertIn("--output", out)
+        self.assertIn("--project", out)
 
 
 class TestReleaseNotes(unittest.TestCase):
@@ -99,6 +102,7 @@ class TestReleaseNotes(unittest.TestCase):
         rc, out, _ = run_script("release_notes.py")
         self.assertEqual(rc, 0)
         self.assertIn("--output", out)
+        self.assertIn("--project", out)
 
 
 class TestBranchCleanup(unittest.TestCase):
@@ -110,10 +114,11 @@ class TestBranchCleanup(unittest.TestCase):
         self.assertIn("--target", out)
         self.assertIn("--dry-run", out)
         self.assertIn("--remote", out)
+        self.assertIn("--project", out)
 
     def test_dry_run_local(self):
         """branch_cleanup.py --dry-run 应在任意 git 仓库中正常运行。"""
-        rc, out, err = run_script("branch_cleanup.py", "--dry-run")
+        rc, out, err = run_script("branch_cleanup.py", "--dry-run --target HEAD --project placeholder/project")
         self.assertEqual(rc, 0)
 
 
@@ -128,17 +133,19 @@ class TestEnvCheck(unittest.TestCase):
             if isinstance(args, str):
                 args = args.split()
             cmd.extend(args)
+        # 外层预算须大于 env_check 内层最坏耗时：4 项依赖各自 timeout=15，串行最坏 60s
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=15,
+            cmd, capture_output=True, text=True, timeout=70,
         )
         return result.returncode, result.stdout.strip(), result.stderr.strip()
 
     def test_check_mode(self):
-        """默认模式应报告 python3、git、glab 的状态。"""
+        """默认模式应报告 python3、git、glab、PyYAML 的状态。"""
         rc, out, _ = self._run_env_check()
         self.assertIn("python3", out)
         self.assertIn("git", out)
         self.assertIn("glab", out)
+        self.assertIn("PyYAML", out)
 
     def test_json_output(self):
         """--json 应生成包含预期字段的有效 JSON。"""
@@ -150,7 +157,11 @@ class TestEnvCheck(unittest.TestCase):
         self.assertIn("checks", data)
         self.assertIn("all_ok", data)
         self.assertIn("missing", data)
-        self.assertEqual(len(data["checks"]), 3)
+        # 按名称断言而非锁定数量：新增依赖项不应使本用例失败
+        self.assertEqual(
+            {c["name"] for c in data["checks"]},
+            {"python3", "git", "glab", "PyYAML"},
+        )
 
     def test_install_mode(self):
         """--install 应无错运行（工具齐全时为空操作）。"""
@@ -158,6 +169,7 @@ class TestEnvCheck(unittest.TestCase):
         self.assertIn("python3", out)
         self.assertIn("git", out)
         self.assertIn("glab", out)
+        self.assertIn("PyYAML", out)
 
 
 if __name__ == "__main__":

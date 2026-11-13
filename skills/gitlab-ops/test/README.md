@@ -1,28 +1,46 @@
-# gitlab-ops Skill 测试套件
+# gitlab-ops Skill Test Suite
 
-本目录包含 gitlab-ops Skill 的自动化测试，覆盖所有 SKILL 文档中记录的 git 命令、glab 子命令和 GitLab REST API。
+This directory contains the automated tests for the gitlab-ops Skill, covering every git command, glab subcommand, and GitLab REST API documented in the SKILL docs.
 
-## 环境要求
+## Requirements
 
 - Python 3.9+
-- git 已安装并在 PATH 中
-- [glab CLI](https://gitlab.com/gitlab-org/cli) 已安装（`glab --version` 可执行）
-- 一个可用于测试的 GitLab 项目和 Access Token
+- git installed and on PATH
+- [glab CLI](https://gitlab.com/gitlab-org/cli) installed (`glab --version` must work)
+- A GitLab project available for testing, plus an Access Token
 
-## 环境变量
+## Credentials and Test Project
 
-测试通过环境变量获取凭据，**不提供默认值**，避免凭据随代码提交。
+The tests **provide no credential defaults**, so that credentials are never committed with the code.
 
-| 变量 | 说明 | 示例 |
+| Variable | Description | Source |
 |------|------|------|
-| `GITLAB_URL` | GitLab 实例地址 | `https://gitlab.example.com` |
-| `GITLAB_TOKEN` | Personal Access Token（需 `api` scope） | `glpat-xxxxxxxx` |
-| `GITLAB_PROJECT` | 测试项目路径（`namespace/project`） | `mygroup/myproject` |
-| `GITLAB_HOST` | （可选）GitLab 主机名，默认从 `GITLAB_URL` 推导 | `gitlab.example.com` |
+| `GITLAB_URL` | GitLab instance URL | Environment variable, or `<skill-root>/config/.env` |
+| `GITLAB_TOKEN` | Personal Access Token (requires `api` scope) | Same as above |
+| `GITLAB_PROJECT` | Test project path (`namespace/project`) | Environment variable, or the `GITLAB_PROJECT` constant at the top of `test/conftest.py` |
 
-### 配置方式
+> `GITLAB_URL` / `GITLAB_TOKEN` are read from exactly the same location as the Skill itself
+> (both `scripts/config.py` and `test/conftest.py` point to `<skill-root>/config/.env`); there is no second credentials file.
+> `GITLAB_PROJECT` is not a credential, so it **does not go into `.env`**.
 
-**方式 1：直接设置环境变量**
+### Configuration
+
+**Option 1: Write to `config/.env` via the Skill's credential entry point (recommended)**
+
+```bash
+# 在 skill 根目录，检查是否就绪（退出码 0 就绪 / 3 未配置）
+python scripts/config.py check
+
+# 未就绪时录入：交互式，token 不回显，需真实终端
+python scripts/config.py setup
+
+# 或由用户先导出环境变量、再让 Agent 代跑落盘（值不经过命令行）
+python scripts/config.py setup --from-env
+```
+
+`setup` verifies the connection before writing to disk, and self-checks that the file is excluded by `.gitignore`.
+
+**Option 2: Set environment variables directly (takes precedence over `.env`)**
 
 ```bash
 # Linux / macOS
@@ -36,16 +54,13 @@ $env:GITLAB_TOKEN="glpat-xxxxxxxx"
 $env:GITLAB_PROJECT="mygroup/myproject"
 ```
 
-**方式 2：使用 .env 文件（推荐）**
+**If the test project is not specified**, any test that depends on GitLab will fail with a clear error on first access, telling you where to set it —
+this suite ships with no real project ID; please point it at a test project you are comfortable letting it create and merge MRs in.
 
-```bash
-cp test/.env.example test/.env
-# 编辑 .env 填入实际值
-```
+> `config/.env` is protected by the bare pattern `.env` in the repository's `.gitignore`, not by its directory location;
+> after moving to a different repository, re-confirm the protection is in effect (`git check-ignore -v config/.env` should produce output).
 
-> `.env` 已被 `.gitignore` 排除，不会随代码提交。
-
-## 运行测试
+## Running Tests
 
 ```bash
 # 进入 test 目录
@@ -64,176 +79,245 @@ python -m unittest test_gitlab_repo.TestRepoView -v
 python -m unittest test_gitlab_repo.TestRepoView.test_repo_view_current -v
 ```
 
-## 测试文件说明
+You can also run from the skill root (without `cd test`) using the package form — this is the style given in the routing table of SKILL.md:
 
-### test_git_local.py — 本地 Git 命令（git-local.md）
+```bash
+python -m unittest test.test_scripts test.test_branch_strategy test.test_config
+python -m unittest test.test_gitlab_mr.TestMRList -v
+```
 
-验证 `git-local.md` 中记录的所有本地 git 命令。
+Both entry points work; `test/__init__.py` adds this directory to `sys.path` (so modules use the flat form `from conftest import ...`).
 
-| 场景 | 验证内容 |
+## Test File Overview
+
+### test_git_local.py — Local Git Commands (references/git-local.md)
+
+Verifies every local git command documented in `references/git-local.md`.
+
+| Scenario | What is verified |
 |------|---------|
-| 全局配置 | `git config --global` 读写 |
-| 仓库初始化 | `git init` |
-| 克隆 | `git clone`、`git clone --depth 1`（浅克隆） |
-| 分支 | `git branch`、`git checkout -b`、`git switch`、`git branch -d/-D`（含强制删除未合并分支） |
-| 提交 | `git commit`、`git commit --amend` |
-| 暂存 | `git stash`、`git stash pop`、`git stash list`、`git stash push -m`（带描述）、`git stash -u`（含未跟踪文件） |
-| 远程 | `git remote add/list` |
-| 标签 | `git tag`、`git tag -a` |
-| diff / log | `git diff`（暂存区）、`git diff`（未暂存工作区变更）、`git diff A..B`（跨分支比较）、`git diff --stat`、`git log --oneline` |
-| cherry-pick | `git cherry-pick`（单个）、`git cherry-pick`（多个连续提交） |
-| merge / rebase | `git merge`（默认）、`git merge --no-ff`（强制合并提交）、`git merge --ff-only`（仅快进）、`git rebase` |
-| revert | `git revert HEAD`（安全回滚，生成逆向提交） |
-| reset | `git reset --soft`（保留暂存区）、`git reset --hard`（丢弃所有变更） |
-| reflog / 灾难恢复 | `git reflog`、删除分支后通过 reflog SHA 恢复 |
-| .gitignore | 规则语法验证 |
-| .gitattributes | 规则语法验证 |
+| Global config | `git config --global` read/write |
+| Repo init | `git init` |
+| Clone | `git clone`, `git clone --depth 1` (shallow clone) |
+| Branch | `git branch`, `git checkout -b`, `git switch`, `git branch -d/-D` (including force-deleting an unmerged branch) |
+| Commit | `git commit`, `git commit --amend` |
+| Stash | `git stash`, `git stash pop`, `git stash list`, `git stash push -m` (with message), `git stash -u` (including untracked files) |
+| Remote | `git remote add/list` |
+| Tag | `git tag`, `git tag -a` |
+| diff / log | `git diff` (staged), `git diff` (unstaged working-tree changes), `git diff A..B` (cross-branch comparison), `git diff --stat`, `git log --oneline` |
+| cherry-pick | `git cherry-pick` (single), `git cherry-pick` (multiple consecutive commits) |
+| merge / rebase | `git merge` (default), `git merge --no-ff` (forced merge commit), `git merge --ff-only` (fast-forward only), `git rebase` |
+| revert | `git revert HEAD` (safe rollback, creates an inverse commit) |
+| reset | `git reset --soft` (keeps the staging area), `git reset --hard` (discards all changes) |
+| reflog / disaster recovery | `git reflog`, recovering a deleted branch via its reflog SHA |
+| .gitignore | Rule syntax validation |
+| .gitattributes | Rule syntax validation |
 
-> 全部在本地临时仓库中执行，不需要 GitLab 连接（但需要环境变量存在）。
+> Everything runs in a local temporary repository; no GitLab connection is needed (but the environment variables must exist).
 
-### test_gitlab_auth.py — 认证与身份（gitlab-auth.md）
+### test_gitlab_auth.py — Authentication and Identity (references/gitlab-auth.md)
 
-| 场景 | 验证内容 |
+| Scenario | What is verified |
 |------|---------|
-| auth login | `--help` 输出包含 `--hostname`、`--stdin` |
-| auth status | 当前认证状态查询 |
-| auth status --hostname | 指定主机名查询 |
-| auth switch | 验证 `switch` 子命令**不存在**（应使用 logout + login） |
-| auth logout | `--help` 输出包含 `--hostname` |
-| ssh-key | list / add / get / delete 的 `--help` 验证 |
-| token | create / list / revoke 的 `--help` 验证 |
-| credential helper | git credential helper 配置验证 |
+| auth login | `--help` output contains `--hostname`, `--stdin` |
+| auth status | Query current authentication status |
+| auth status --hostname | Query for a specific hostname |
+| auth switch | Verify the `switch` subcommand **does not exist** (use logout + login instead) |
+| auth logout | `--help` output contains `--hostname` |
+| ssh-key | `--help` validation for list / add / get / delete |
+| token | `--help` validation for create / list / revoke |
+| credential helper | git credential helper configuration validation |
 
-### test_gitlab_repo.py — 仓库管理（gitlab-repo.md）
+### test_gitlab_repo.py — Repository Management (references/gitlab-repo.md)
 
-| 场景 | 验证内容 |
+| Scenario | What is verified |
 |------|---------|
-| repo view | 查看当前项目、指定项目、JSON 输出 |
-| repo browse | 验证 `browse` 子命令**不存在** |
-| repo fork | `--help` 验证，确认 `--name`、`--clone` 标志 |
-| repo archive | `--help` 验证（该命令下载 zip，**不是**归档项目） |
-| repo transfer | `--help` 验证 `--target-namespace` 标志 |
-| 分支 REST API | 通过 REST API 创建/列出/删除分支 |
+| repo view | View current project, a specified project, JSON output |
+| repo browse | Verify the `browse` subcommand **does not exist** |
+| repo fork | `--help` validation, confirming the `--name` and `--clone` flags |
+| repo archive | `--help` validation (this command downloads a zip; it does **not** archive the project) |
+| repo transfer | `--help` validation of the `--target-namespace` flag |
+| Branch REST API | Create/list/delete branches via the REST API |
 
-### test_gitlab_mr.py — 合并请求（gitlab-mr.md）
+### test_gitlab_mr.py — Merge Requests (references/gitlab-mr.md)
 
-| 场景 | 验证内容 |
+| Scenario | What is verified |
 |------|---------|
-| mr create | `--help` 验证 `--title`、`--source-branch`、`--fill` 等标志 |
-| mr list | `--help` 验证 `--state`、`--label` 等过滤标志 |
-| mr view | `--help` 验证 |
-| mr merge | `--help` 验证 `--squash`、`--remove-source-branch` 标志 |
-| mr close | `--help` 验证（**无** `--comment` 标志） |
-| mr note | `--help` 验证 `create` 子命令 |
-| mr diff | `--help` 验证 |
-| mr approve | `--help` 验证 |
-| mr rebase | `--help` 验证 |
-| 分支管理 | REST API 分支操作 |
+| mr create | `--help` validation of `--title`, `--source-branch`, `--fill`, and other flags |
+| mr list | `--help` validation of `--state`, `--label`, and other filter flags |
+| mr view | `--help` validation |
+| mr merge | `--help` validation of `--squash` and `--remove-source-branch` flags |
+| mr close | `--help` validation (**no** `--comment` flag) |
+| mr note | `--help` validation of the `create` subcommand |
+| mr diff | `--help` validation |
+| mr approve | `--help` validation |
+| mr rebase | `--help` validation |
+| Branch management | Branch operations via the REST API |
 
-### test_gitlab_issue.py — Issue 管理（gitlab-issue.md）
+### test_gitlab_issue.py — Issue Management (references/gitlab-issue.md)
 
-| 场景 | 验证内容 |
+| Scenario | What is verified |
 |------|---------|
-| issue create | `--help` 验证 `--title`、`--label`、`--assignee` 等标志 |
-| issue list | `--help` 验证过滤标志；验证 `--state opened` **不存在**（默认即 opened） |
-| issue view | `--help` 验证 |
-| issue close | `--help` 验证（**无** `--comment` 标志） |
-| issue note | `--help` 验证 |
-| issue update | `--help` 验证 |
-| issue delete | `--help` 验证（**无** `--yes` 标志） |
-| issue CRUD | 通过 REST API 完整创建/查询/更新/关闭/删除流程 |
+| issue create | `--help` validation of `--title`, `--label`, `--assignee`, and other flags |
+| issue list | `--help` validation of filter flags; verify `--state opened` **does not exist** (opened is the default) |
+| issue view | `--help` validation |
+| issue close | `--help` validation (**no** `--comment` flag) |
+| issue note | `--help` validation |
+| issue update | `--help` validation |
+| issue delete | `--help` validation (**no** `--yes` flag) |
+| issue CRUD | Full create/query/update/close/delete flow via the REST API |
 
-### test_gitlab_ci.py — CI/CD 流水线（gitlab-ci.md）
+### test_gitlab_ci.py — CI/CD Pipelines (references/gitlab-ci.md)
 
-| 场景 | 验证内容 |
+| Scenario | What is verified |
 |------|---------|
-| ci status | `--help` 验证 |
-| ci list | `--help` 验证 `--scope`、`--ref` 过滤 |
-| ci view | `--help` 验证 |
-| ci get | `--help` 验证 `--pipeline-id` 标志（**非**位置参数） |
-| ci trace | `--help` 验证 |
-| ci retry | `--help` 验证参数为 job-id（**非** pipeline-id） |
-| ci cancel | `--help` 验证 `pipeline` 子命令用法 |
-| ci trigger | `--help` 验证（触发手动 job，**非** `--branch`） |
-| schedule | list / create / update / delete 的 `--help` 验证 |
+| ci status | `--help` validation |
+| ci list | `--help` validation of `--scope` and `--ref` filters |
+| ci view | `--help` validation |
+| ci get | `--help` validation of the `--pipeline-id` flag (**not** a positional argument) |
+| ci trace | `--help` validation |
+| ci retry | `--help` validation that the argument is a job-id (**not** a pipeline-id) |
+| ci cancel | `--help` validation of the `pipeline` subcommand usage |
+| ci trigger | `--help` validation (triggers a manual job; **not** `--branch`) |
+| schedule | `--help` validation for list / create / update / delete |
 
-### test_gitlab_advanced.py — 其他功能（gitlab-advanced.md）
+### test_gitlab_advanced.py — Other Features (references/gitlab-advanced.md)
 
-| 场景 | 验证内容 |
+| Scenario | What is verified |
 |------|---------|
-| release | list / create / view / delete 的 `--help` 验证 |
-| snippet | create / view 的 `--help` 验证 |
-| variable | list / set / get / delete 的 `--help` 验证 |
-| label | list / create 的 `--help` 验证 |
-| milestone | list 的 `--help` 验证 `--project` / `--group` 标志（**无** `view` 子命令） |
-| runner | list 的 `--help` 验证 |
-| packages | list 的 `--help` 验证 |
-| todo | list / done 的 `--help` 验证 |
+| release | `--help` validation for list / create / view / delete |
+| snippet | `--help` validation for create / view |
+| variable | `--help` validation for list / set / get / delete |
+| label | `--help` validation for list / create |
+| milestone | `--help` validation of `--project` / `--group` flags for list (**no** `view` subcommand) |
+| runner | `--help` validation for list |
+| packages | `--help` validation for list |
+| todo | `--help` validation for list / done |
 
-### test_gitlab_api.py — REST API 通用模式（gitlab-api.md）
+### test_gitlab_api.py — General REST API Patterns (references/gitlab-api.md)
 
-| 场景 | 验证内容 |
+| Scenario | What is verified |
 |------|---------|
-| 认证头 | `PRIVATE-TOKEN` 头认证 |
-| 分页 | `?page=1&per_page=5` 参数 |
-| 排序 | `?order_by=created_at&sort=desc` 参数 |
-| 搜索 | `?search=keyword` 参数 |
-| CRUD | 项目信息的 GET 请求 |
+| Auth header | `PRIVATE-TOKEN` header authentication |
+| Pagination | `?page=1&per_page=5` parameters |
+| Sorting | `?order_by=created_at&sort=desc` parameters |
+| Search | `?search=keyword` parameter |
+| CRUD | GET request for project information |
 
-### test_gitlab_e2e.py — 端到端场景
+### test_gitlab_e2e.py — End-to-End Scenarios
 
-验证此前标记为"不可测"的场景，使用测试项目进行真实操作并清理。
+Verifies scenarios previously marked as "untestable", performing real operations against the test project and cleaning up afterwards.
 
-| 场景 | 验证内容 |
+| Scenario | What is verified |
 |------|---------|
-| Fork（REST API） | 通过 API fork 项目，验证后删除 |
-| Fork（glab 语法） | 验证 `glab repo fork --help` 标志正确 |
-| 归档/取消归档 | 通过 REST API archive → 验证 archived → unarchive → 验证恢复 |
-| 下载归档 | `glab repo archive` 下载 zip 文件（非项目归档） |
-| MR 创建 + 关闭 | 在临时 git 仓库中 `glab mr create`，API 验证后关闭 |
-| MR 创建 + 合并 | 在临时 git 仓库中 `glab mr create`，`glab mr merge --squash` 合并 |
-| Transfer 语法 | 验证 `--target-namespace` 标志存在 |
+| Fork (REST API) | Fork a project via the API, verify, then delete |
+| Fork (glab syntax) | Verify the `glab repo fork --help` flags are correct |
+| Archive/unarchive | Via the REST API: archive → verify archived → unarchive → verify restored |
+| Download archive | `glab repo archive` downloads a zip file (not project archival) |
+| MR create + close | `glab mr create` in a temporary git repo, verify via API, then close |
+| MR create + merge | `glab mr create` in a temporary git repo, merge with `glab mr merge --squash` |
+| Transfer syntax | Verify the `--target-namespace` flag exists |
 
-### test_scripts.py — 辅助脚本
+### test_scripts.py — Helper Scripts
 
-验证 `scripts/` 目录下的 Python 脚本语法正确且 `--help` 可执行。
+Verifies that the Python scripts under `scripts/` are syntactically correct and that `--help` is executable.
 
-| 脚本 | 验证内容 |
+| Script | What is verified |
 |------|---------|
-| branch_cleanup.py | 语法 + `--help` + `--dry-run` |
-| ci_retry_failed.py | 语法 + `--help` |
-| env_check.py | 语法 + `--help` |
-| issue_triage.py | 语法 + `--help` |
-| mr_batch_merge.py | 语法 + `--help` |
-| release_notes.py | 语法 + `--help` |
-| repo_audit.py | 语法 + `--help` |
+| branch_cleanup.py | Syntax + `--help` + `--dry-run` |
+| ci_retry_failed.py | Syntax + `--help` |
+| env_check.py | Syntax + `--help` |
+| issue_triage.py | Syntax + `--help` |
+| mr_batch_merge.py | Syntax + `--help` |
+| release_notes.py | Syntax + `--help` |
+| repo_audit.py | Syntax + `--help` |
 
-## 注意事项
+### test_config.py — Credential Read/Write (scripts/config.py)
 
-### 测试项目要求
+Purely local; never touches GitLab. Uses a temporary directory as a stand-in for the skill root, covering
+the path constraints of `config/.env`, resolution order, `check` exit codes (0 ready / 2 environment error / 3 not configured),
+**no token fragment ever echoed on any path**, no write to disk when validation fails (fail-closed),
+`_write_env` preserving unrelated keys without producing duplicates, and output bytes being UTF-8 decodable with no BOM.
 
-- e2e 测试（`test_gitlab_e2e.py`）会对项目执行真实操作（创建分支、MR、fork 等），请确保使用**专用测试项目**，不要在生产项目上运行。
-- Token 需要以下权限：`api`（完整 API 访问）。
-- 用户需要对测试项目有 Maintainer 或 Owner 权限。
+### test_branch_strategy.py — Branch Strategy Resolution (scripts/branch_strategy.py)
 
-### glab 认证
+Purely local. Covers SSH/HTTPS remote normalization, local paths returning None,
+`none` meaning "registered as not applicable" rather than "not registered", exit code 3 when unregistered,
+default-strategy fallback, unknown strategy exiting 2 without writing to disk, write-back preserving header comments and existing entry order, and round-tripping a Chinese `reason`.
 
-- 测试通过环境变量 `GITLAB_TOKEN` 注入认证，不依赖 glab 的 keyring。
-- `conftest.py` 中的 `_glab_env()` 会自动将 token 注入子进程环境。
+### test_conftest_helpers.py — The Test Suite's Own Resolution Logic
 
-### 已知行为
+Purely local, zero network (permission checks use mocks; cross-process cases import `conftest` in a subprocess).
+Pins down three spots that genuinely broke before: the `GITLAB_PROJECT` environment variable not being shadowed by the module constant,
+credential resolution not requiring the test project, and the three tiers of `require_role` ("skip when insufficient / pass when sufficient / do not pass when the role cannot be determined").
 
-- `glab repo archive` 下载仓库 zip 包，**不是**将项目设为只读。项目归档需使用 REST API。
-- `glab repo fork` 的 `--clone` 和 `--remote` 标志需用 `=` 连接（如 `--clone=false`），不能用空格。
-- `glab mr create` 必须在 git 仓库目录内执行，且仓库 remote 需匹配 GitLab 主机。
-- MR/Issue 关闭 API 使用 `PUT` + `state_event: "close"`，不存在 `POST .../close` 端点。
-- `glab mr close` 没有 `--comment` 标志，需先用 `glab mr note create` 添加评论。
-- Windows 环境下 glab 输出为 UTF-8，Python subprocess 需指定 `encoding="utf-8", errors="replace"`。
+## Cautions
 
-### 清理
+### Test Project Requirements
 
-- 每个 e2e 测试都有 `tearDown` 清理创建的分支、MR、fork 等资源。
-- 如果测试中断导致残留数据，手动删除即可：
-  - 分支：GitLab 项目页面 → Repository → Branches
-  - MR：GitLab 项目页面 → Merge requests
-  - Fork：删除 fork 后的项目
+- The e2e tests (`test_gitlab_e2e.py`) perform real operations on the project (creating branches, MRs, forks, archiving, etc.). Make sure you use a **dedicated test project**; do not run against production projects.
+- The token needs the following scope: `api` (full API access).
+- A full pass requires **Maintainer (access_level 40) or Owner on the test project**. Lower-privilege tokens (e.g. group bots are often Developer/30) are not treated as regressions; instead, tests are skipped per the table below:
+
+| Capability | Required role | Behavior when insufficient |
+|------|---------|-------------|
+| CI/CD variable add/delete/query (the actual calls in `test_gitlab_api.TestVariableAPI` and `test_gitlab_advanced.TestVariable`) | Maintainer | `skipped：管理 CI/CD 变量 需要 access_level >= 40…` (managing CI/CD variables requires access_level >= 40…) |
+| Project Webhooks (`test_gitlab_api.TestWebhookAPI`) | Maintainer | `skipped：管理项目 Webhook…` (managing project webhooks…) |
+| Archive/unarchive (`test_gitlab_e2e.TestRepoArchive`) | Maintainer | `skipped：归档项目…` (archiving the project…) |
+| Merging an MR into a protected branch (`test_gitlab_e2e.TestMRCreateAndMerge`) | Determined by branch protection and approval rules, not by role | Reads server-side `user.can_merge`; when `false`, `skipped：当前令牌对 master 无合并权限…` (current token has no merge permission on master…) |
+
+- When the role cannot be determined (the API did not return `permissions`), tests **do not skip** — the real request is allowed to fail so the problem surfaces, avoiding "silent skips" that would mask permission failures.
+- The skip decision for the merge case can only read the server-side `user.can_merge`, and `can_merge` only exists once a real MR exists,
+  so `TestMRCreateAndMerge` **still leaves behind a closed test MR** in low-privilege environments (the source branch is deleted by `tearDown`, and GitLab closes it automatically).
+  This is a known cost, not a residue bug.
+- Hard-deleting an issue (`DELETE /issues/:iid`) requires Admin; a Developer token gets `403`, and the failure leaves behind an opened issue; therefore `TestIssueAPI` only does create → `PUT state_event=close`.
+- The decision logic itself is self-verified by `test_conftest_helpers.py` (purely local, zero network, with injected negative controls).
+
+### Residue Check
+
+After running project-dependent tests, use read-only endpoints to confirm no resources were left behind (forks are especially easy to miss — see below):
+
+```bash
+python - <<'PY'
+# 在技能根目录执行；GITLAB_PROJECT 必须已指定
+import sys; sys.path.insert(0, "test")
+import conftest as c
+P = c._load_config()["PROJECT_PATH_ENCODED"]
+for name, path in [("branches", "/repository/branches?per_page=100"),
+                   ("opened MR", "/merge_requests?state=opened"),
+                   ("opened issues", "/issues?state=opened"),
+                   ("labels", "/labels?per_page=100"),
+                   ("milestones", "/milestones?per_page=50"),
+                   ("forks", "/forks")]:
+    status, data = c.api_get(f"/projects/{P}{path}")
+    print(f"{name:<15} http={status} n={len(data) if isinstance(data, list) else data}")
+PY
+```
+
+### glab Authentication
+
+- Tests inject authentication via the `GITLAB_TOKEN` environment variable and do not rely on glab's keyring.
+- `_glab_env()` in `conftest.py` automatically injects the token into the subprocess environment.
+
+### Known Behaviors
+
+- `glab repo archive` downloads the repository as a zip; it does **not** set the project to read-only. Project archival requires the REST API.
+- The `--clone` and `--remote` flags of `glab repo fork` must be joined with `=` (e.g. `--clone=false`); spaces are not accepted.
+- `glab mr create` must be run inside a git repository directory, and the repository's remote must match the GitLab host.
+- The MR/Issue close API uses `PUT` + `state_event: "close"`; there is no `POST .../close` endpoint.
+- `glab mr close` has no `--comment` flag; add a comment first with `glab mr note create`.
+- On Windows, glab output is UTF-8; Python subprocess must specify `encoding="utf-8", errors="replace"`.
+
+### Cleanup
+
+- Every e2e test has a `tearDown` that cleans up the branches, MRs, forks, and other resources it created.
+- **A fork lands in the namespace of the identity performing the fork, not in the source project's namespace**.
+  Building the path from the source project's first segment (e.g. `ocp/git-test-fork-verify`) returns 404, so `tearDown` would be deleting a non-existent project,
+  leaking one repository on every run. `TestRepoFork` locates and deletes the fork using the `id` from the `POST /fork` response,
+  with retry-waiting for the asynchronous import.
+- If an interrupted test leaves residual data, delete it manually:
+  - Branches: GitLab project page → Repository → Branches
+  - MRs: GitLab closes them automatically when the source branch is deleted; no manual action needed
+  - Issues: Developer can only close; hard deletion requires Admin
+  - Forks: `GET /projects/:id/forks` to get the fork's `id`, then `DELETE /projects/<fork_id>`
+    (`DELETE /projects/:id/forks/<fork_id>` is not a valid endpoint and returns 404)

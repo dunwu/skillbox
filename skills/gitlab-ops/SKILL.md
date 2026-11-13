@@ -2,380 +2,438 @@
 name: gitlab-ops
 version: 1.0.0
 description: >-
-  当需要执行任何 git 或 GitLab 操作时使用——本地 git 操作
-  （clone、diff、log、branch、merge、rebase）、GitLab 平台工作流
-  （Merge Request、CI/CD、Issue、Release、仓库管理），
-  或需要 git 工作流方法论、安全规范、版本控制决策指导时触发。
-  覆盖 glab CLI 与 GitLab REST API。
-  触发词：git push、git pull、git merge、git rebase、MR、merge request、
-  CI/CD、pipeline、glab、GitLab、分支管理、tag、release、issue、
-  git clone、git diff、git log、git stash、cherry-pick、冲突解决。
+  Use for any git or GitLab operation — local git operations
+  (clone, diff, log, branch, merge, rebase), GitLab platform workflows
+  (Merge Request, CI/CD, Issue, Release, repository management),
+  or when you need guidance on git workflow methodology, safety rules,
+  or version-control decisions. Covers the glab CLI and the GitLab REST API.
+  Trigger words: commit、提交、git add、git status、暂存、
+  git push、git pull、git merge、git rebase、git branch、git hook、hooksPath、
+  MR、merge request、CI/CD、pipeline、glab、GitLab、
+  分支管理、分支策略、该合到哪个分支、目标分支、集成分支、发布分支、
+  git flow、trunk-based、分支保护、tag、release、issue、
+  git clone、git diff、git log、git stash、cherry-pick、冲突解决、
+  branch management、branch strategy、target branch、release branch、
+  branch protection、conflict resolution.
 ---
 
 # gitlab-ops
 
-git 与 GitLab 全操作指南。覆盖本地 git 操作、GitLab 平台工作流、方法论与安全规范。
+A complete guide to git and GitLab operations. Covers local git operations, GitLab platform workflows, methodology, and safety rules.
 
-## 文件路由
+## File Routing
 
-根据操作类型加载对应子文件：
+Load the corresponding sub-file based on the operation type:
 
-| 操作领域 | 子文件 | 触发场景 |
+| Operation Area | Sub-file | Trigger Scenarios |
 |---------|--------|---------|
-| 本地 git 操作 | [git-local.md](git-local.md) | clone、diff、log、branch、merge、rebase、stash、tag、config、cherry-pick、reflog、.gitignore、.gitattributes、Git Hook、commit 规范 |
-| Merge Request | [gitlab-mr.md](gitlab-mr.md) | MR 创建、审查、合并、Stacked MR |
-| CI/CD 流水线 | [gitlab-ci.md](gitlab-ci.md) | pipeline 查看、job 管理、schedule、.gitlab-ci.yml |
-| Issue 管理 | [gitlab-issue.md](gitlab-issue.md) | Issue 创建、分诊、关闭、与 MR 关联、Issue 模板 |
-| 仓库管理 | [gitlab-repo.md](gitlab-repo.md) | 项目信息、fork、归档、分支管理 |
-| 认证与身份 | [gitlab-auth.md](gitlab-auth.md) | 登录、SSH key、PAT、凭据缓存、多身份管理 |
-| REST API | [gitlab-api.md](gitlab-api.md) | glab 未覆盖的操作、批量更新、Webhook |
-| 其他功能 | [gitlab-advanced.md](gitlab-advanced.md) | Release、Snippet、Variable、Label、Runner、Package |
-| Quick Actions | [quick-actions.md](quick-actions.md) | 斜杠命令速查（/assign、/label、/merge 等） |
-| 端到端工作流 | [workflows.md](workflows.md) | Git Flow、GitHub Flow、Feature Branch、Hotfix、Code Review、发布流程 |
-| 通用故障排查 | [troubleshooting.md](troubleshooting.md) | 认证失败、git 冲突、glab 异常、灾难恢复（reflog/ORIG_HEAD） |
-| 脚本模板 | [scripts/](scripts/) | 批量操作脚本模板 |
+| Local git operations | [references/git-local.md](references/git-local.md) | clone, diff, log, branch, merge, rebase, stash, tag, config, cherry-pick, reflog, .gitignore, .gitattributes, Git Hook, commit conventions |
+| Merge Request | [references/gitlab-mr.md](references/gitlab-mr.md) | MR creation, review, merge, merge gates, Stacked MR |
+| CI/CD pipelines | [references/gitlab-ci.md](references/gitlab-ci.md) | pipeline viewing, job management, schedule, .gitlab-ci.yml, CI gates, stage orchestration, rules fallback |
+| Issue management | [references/gitlab-issue.md](references/gitlab-issue.md) | Issue creation, triage, closing, linking with MRs, Issue templates |
+| Repository management | [references/gitlab-repo.md](references/gitlab-repo.md) | project info, fork, archive, branch management |
+| Server-side configuration | [references/gitlab-server-config.md](references/gitlab-server-config.md) | branch protection, Push Rules, merge settings, merge gates, mandatory pipelines, MR approval rules, tag protection |
+| Authentication & identity | [references/gitlab-auth.md](references/gitlab-auth.md) | login, SSH key, PAT, credential caching, multi-identity management |
+| REST API | [references/gitlab-api.md](references/gitlab-api.md) | operations not covered by glab, batch updates, Webhook |
+| Other features | [references/gitlab-advanced.md](references/gitlab-advanced.md) | Release, Snippet, Variable, Label, Runner, Package |
+| Quick Actions | [references/quick-actions.md](references/quick-actions.md) | slash command cheatsheet (/assign, /label, /merge, etc.) |
+| End-to-end workflows | [references/workflows.md](references/workflows.md) | branching strategy selection (git-flow / assembly-flow / github-flow), Git Flow, Feature Branch, Hotfix, Code Review, release process |
+| **Branching strategy resolution** | [scripts/branch_strategy.py](scripts/branch_strategy.py) + [config/settings.yaml](config/settings.yaml) | **MUST run `get` before every commit and before cutting branches, setting MR target branches, push targets, or release actions**; never guess when it returns `UNSET` |
+| General troubleshooting | [references/troubleshooting.md](references/troubleshooting.md) | authentication failures, git conflicts, glab errors, disaster recovery (reflog/ORIG_HEAD) |
+| Script templates | [scripts/](scripts/) | batch operation script templates |
+| Test suite | [test/](test/) | **MUST run after changing this Skill**; regression entry point for script behavior and exit codes |
 
-## 安全规范（全局）
-
-### 🛑 STOP — 不可逆操作红线
-
-> **🔴 CHECKPOINT：执行下表任一操作前，必须暂停并向用户确认。未经确认执行 = 事故。**
-
-以下操作**必须**在执行前获得用户确认：
-
-| 操作 | 风险 | 要求 |
-|------|------|------|
-| `git reset --hard` | 丢弃未提交改动 | 用户确认；先 `git stash` 备份 |
-| `git branch -D` | 丢弃未合并分支 | 确认分支可丢弃 |
-| `glab mr merge` | 合并代码 | 确认 pipeline 通过、审查完成 |
-| `glab issue delete` | 永久删除 | 用户确认 |
-| `glab repo archive` | 仓库变只读 | 用户确认 |
-
-### ⚠️ 通用安全规则（每次操作前对照）
-
-1. **操作前检查状态** — `git status` 确认工作区干净或已 stash
-2. **共享 worktree 中不用裸 stash** — 用 `git stash push -u -m "unique-tag"`
-3. **Token 不落盘** — 不写入代码文件、不打印到日志、不嵌入代码。**唯一例外**：`<skill-base>/scripts/.env`，该文件由对话式引导流程写入，专供本 Skill 读取凭据
-4. **密码脱敏** — 脚本中出现的密码/Token 在日志中必须 scrub
-5. **写操作前 GET** — REST API 操作前先查询确认目标存在
-6. **批量操作加间隔** — 避免触发 GitLab 限流（429）
-
-### 决策树总纲
-
-```
-收到 git/GitLab 操作请求？
-├── 纯本地操作（不涉及远端） → git-local.md
-├── MR 相关 → gitlab-mr.md
-├── CI/CD 相关 → gitlab-ci.md
-├── Issue 相关 → gitlab-issue.md
-├── 仓库管理 → gitlab-repo.md
-├── 认证/身份问题 → gitlab-auth.md
-├── glab 不覆盖的操作 → gitlab-api.md
-├── Release/Snippet/Variable 等 → gitlab-advanced.md
-├── 需要斜杠命令 → quick-actions.md
-├── 端到端流程 → workflows.md
-└── 遇到错误 → troubleshooting.md
-```
-
-## Agent 主工作流（收到请求后的执行顺序）
-
-> **严格按以下 5 步顺序执行。跳过任何一步 = 违规。**
-
-```
-Step 1: 路由
-  ├─ 读取用户请求 → 匹配「决策树总纲」→ 加载对应子文件
-  └─ 如果跨多个领域 → 按顺序加载多个子文件
-
-Step 2: 环境门禁
-  ├─ 首次操作？ → 运行 python scripts/env_check.py
-  ├─ 检查未通过？ → 停止，引导用户安装（见故障降级表）
-  └─ 通过 → 进入 Step 3
-
-Step 3: 认证门禁（仅 GitLab 操作）— .env 优先
-  ├─ 检查 <skill-base>/scripts/.env 是否存在
-  ├─ 存在 → 读取 GITLAB_URL 和 GITLAB_TOKEN
-  │   ├─ 变量缺失 → 报错 → 进入「对话式引导配置」
-  │   └─ 变量完整 → 用 curl 验证连接（GET /api/v4/user -H "PRIVATE-TOKEN: $GITLAB_TOKEN"）
-  │       ├─ 200 OK → 导出环境变量 → 进入 Step 4
-  │       └─ 401/403/超时 → 报错 → 进入「对话式引导配置」
-  ├─ 不存在 → 报错 → 进入「对话式引导配置」
-  │
-  └─ 对话式引导配置：
-      ├─ 向用户报错：说明 .env 缺失/变量缺失/连接失败的具体原因
-      ├─ 逐步询问用户：
-      │   ① "请输入 GitLab 地址（如 https://gitlab.example.com）："
-      │   ② "请输入 GitLab Personal Access Token："
-      ├─ 用用户提供的值验证连接（同上 curl 命令）
-      │   ├─ 成功 → 写入 <skill-base>/scripts/.env（GITLAB_URL + GITLAB_TOKEN）→ 导出环境变量 → 进入 Step 4
-      │   └─ 失败 → 展示错误原因 → 重新询问（回到 ①）
-      └─ .env 写入后提醒用户：该文件包含敏感凭据，确保不被提交到版本控制
-
-Step 4: 状态检查
-  ├─ 运行 git status → 确认工作区状态
-  ├─ 有未提交改动且即将执行写操作？ → 先 git stash push -u -m "tag" 或 git commit
-  └─ 工作区干净 → 进入 Step 5
-
-Step 5: 执行操作
-  ├─ 按子文件中的具体命令执行
-  ├─ 涉及不可逆操作？ → 🛑 STOP → 向用户确认 → 获得明确同意后才执行
-  └─ 执行完毕 → 检查退出码 → 展示结果给用户
-```
-
-### 高频操作速查命令
-
-| 场景 | 命令 |
-|------|------|
-| 创建 feature 分支 | `git checkout -b feature/TICKET-123-desc develop` |
-| 非交互式创建 MR | `glab mr create --title "feat(scope): title" --description "## What" --target-branch develop --no-editor` |
-| 查看 pipeline 状态 | `glab ci status` |
-| 合并 MR（squash） | `glab mr merge <iid> --squash --remove-source-branch` |
-| 查看文件 diff | `git diff HEAD~1 -- path/to/file` |
-| 安全撤销本地改动 | `git stash push -u -m "backup-$(date +%s)"` |
-
-## 工具依赖
-
-| 工具 | 用途 | 必需 |
-|------|------|------|
-| `git` | 本地版本控制 | 是 |
-| `glab` | GitLab CLI | 是（GitLab 操作） |
-| `curl` | REST API 调用 | 否（glab 不够用时） |
-| `jq` | JSON 解析 | 推荐（API/JSON 输出场景） |
-| `ssh` | SSH 认证 | 否（HTTPS 认证可替代） |
-
-## 🔴 CHECKPOINT — 首次运行环境检查
-
-> **🛑 STOP：Agent 在本项目首次执行任何 git/GitLab 操作前，必须通过本检查。检查未通过 = 不执行任何操作。**
-
-Agent 在本项目**首次**执行任何 git/GitLab 操作前，**必须**先运行环境检查：
+### Verification After Changing This Skill
 
 ```bash
-python scripts/env_check.py
+# Run from the skill root (four suites that are purely local, requiring no credentials or network)
+python -m unittest test.test_scripts test.test_branch_strategy test.test_config test.test_conftest_helpers
+
+# GitLab-dependent suites: you must specify the test project first (not a credential; does not go into .env)
+GITLAB_PROJECT=<dedicated test project> python -m unittest discover -s test
 ```
 
-### 检查项
+`test.test_branch_strategy` and `test.test_config` are isolated with temporary files and do not read or write the in-repo `config/settings.yaml` or `config/.env`.
+The GitLab-dependent suites (`test_gitlab_*.py`) create real resources such as branches, MRs, and forks on the specified project, so you MUST use a dedicated test project;
+capabilities that require the Maintainer role on the project (CI/CD variables, Webhooks, archiving) and merges into protected branches are reported as `skipped` with a reason when permissions are insufficient,
+and do not count as regressions — see [test/README.md](test/README.md) for details and how to check for leftovers.
 
-| 依赖 | 最低版本 | 必需 | 说明 |
+**Red-test disposition is mandatory.** A non-zero exit code is never an "expected failure" and must not be hidden by piping the command into another program. Capture the real exit code and stderr, rerun `python -m unittest <failing-suite> -v`, then classify the failure before touching any script or test:
+
+| Failure signature | Classification and required action |
+|---|---|
+| `test_scripts` fails and `glab` is unavailable | Environment-blocked, not green. Install `glab` and rerun the suite; meanwhile run the other three local suites separately and report precisely which suite remains blocked. Do not weaken or skip the failing assertion. |
+| `repo_audit.py` raises `TypeError: 'type' object is not subscriptable` | Interpreter incompatibility. Rerun with the supported Python version from §First-Run Environment Check; if it still fails on that version, stop and report a script defect with the traceback. |
+| A test reader raises `UnicodeDecodeError` mentioning GBK/UTF-8 | Test-harness decoding failure, not a product pass or a product regression. Fix the caller to use the explicit UTF-8 capture rules below, then rerun; do not edit the expected behavior to make the error disappear. |
+| Any other failure | Stop and report the failing test, exit code, and stderr. Do not modify scripts, tests, or fixtures unless the user has authorized that separate fix. |
+
+## Safety Rules (Global)
+
+### 🛑 STOP — Irreversible Operation Red Lines
+
+> **🔴 CHECKPOINT: Before performing any operation in the table below, you must pause and confirm with the user. Executing without confirmation = incident.**
+
+The following operations **must** be confirmed by the user before execution:
+
+| Operation | Risk | Requirement |
+|------|------|------|
+| `git reset --hard` | discards uncommitted changes | user confirmation; back up with `git stash` first |
+| `git branch -D` | discards unmerged branches | confirm the branch is disposable |
+| `glab mr merge` | merges code | confirm the pipeline has passed and review is complete |
+| `glab issue delete` | permanent deletion | user confirmation |
+| `glab repo archive` | repository becomes read-only | user confirmation |
+| `git clean -fd` | permanently deletes untracked files/dirs | user confirmation; dry-run with `git clean -nd` first |
+| `git push --force` | overwrites remote history | user confirmation; prefer `--force-with-lease`; forbidden on shared branches (main/develop) |
+
+### ⚠️ General Safety Rules (Check Before Every Operation)
+
+1. **Check status before operating** — use `git status` to confirm the working tree is clean or stashed
+2. **No bare stash in shared worktrees** — use `git stash push -u -m "unique-tag"`
+3. **Agent-written tokens never touch disk** — never write them into code files, print them to logs, or embed them in code. **Sole Agent-write exception**: `<skill-base>/config/.env`, which may only be written by `scripts/config.py setup` after connection verification. Treat that file as **unprotected until proven otherwise**: before `setup` writes it, and whenever it already exists, run `git check-ignore -v -- <repo-relative-path-to>/config/.env` from the host repository root. Exit code 1, a negated rule, or an unreadable result means 🛑 STOP before `setup` or any staging while the file exists; exit code 0 must name an effective ignore rule. If the file is absent and no write is planned, unrelated explicit staging does not require this check. When this Skill lives in the target worktree, `git add -A` and `git add .` are always forbidden; stage explicit paths only. Never infer protection from the file's location or from a `setup` warning
+4. **Redact secrets** — passwords/tokens appearing in scripts must be scrubbed from logs
+5. **GET before write** — for REST API operations, query first to confirm the target exists
+6. **Pace batch operations** — avoid triggering GitLab rate limiting (429)
+
+### Master Decision Tree
+
+```
+Received a git/GitLab operation request?
+├── Involves a commit / cutting a branch / setting an MR target / push target / release?
+│   └── Resolve through Step 4 → then follow the subsection for that strategy in references/workflows.md §Branch Management Strategy
+├── Purely local operations (no remote involved) → references/git-local.md
+├── MR related → references/gitlab-mr.md
+├── CI/CD related → references/gitlab-ci.md
+├── Issue related → references/gitlab-issue.md
+├── Repository management → references/gitlab-repo.md
+├── Auth/identity issues → references/gitlab-auth.md
+├── Operations not covered by glab → references/gitlab-api.md
+├── Release/Snippet/Variable etc. → references/gitlab-advanced.md
+├── Need slash commands → references/quick-actions.md
+├── End-to-end flows → references/workflows.md
+└── Hit an error → references/troubleshooting.md
+```
+
+## Agent Main Workflow (Execution Order After Receiving a Request)
+
+> **Execute the following 6 steps in strict order. Skipping any step = violation.**
+
+```
+Step 1: Routing
+  ├─ Read the user request → match against the "Master Decision Tree" → load the corresponding sub-file
+  └─ Spans multiple areas → load multiple sub-files in order
+
+Step 2: Environment gate
+  ├─ Purely local read-only op (git diff / log / status / show / blame)? → skip all gates, go straight to Step 6 and execute
+  ├─ First non-read-only operation? → run python scripts/env_check.py and record its real exit code
+  ├─ Only glab is missing, while every dependency required by the requested local operation passed?
+  │   ├─ GitLab operation → 🛑 STOP; install glab or use the credential-safe REST fallback in the failure table
+  │   └─ Purely local operation → record "glab unavailable; GitLab operations blocked", skip Step 3, proceed to Step 4
+  ├─ Any other required dependency failed? → 🛑 STOP; guide the user through installation (see the failure fallback table)
+  └─ Passed → GitLab operations proceed to Step 3; purely local operations skip Step 3 and proceed to Step 4
+
+Step 3: Credential gate (GitLab operations only) — credentials live in config/.env
+  ├─ Run python scripts/config.py check
+  ├─ Exit code 0 (ready) → readiness confirmed; check exports nothing to the Agent shell → use the credential-safe channel below for glab/curl → proceed to Step 4
+  ├─ Exit code 3 (not configured) → 🛑 STOP; guide the user through setup (Method A interactive, preferred; Method B --from-env), then rerun check
+  ├─ Setup/check errors → follow "Credential Check (Credential Gate)" below; never skip the gate or improvise credentials
+  └─ Red line: tokens MUST NOT appear in command-line arguments, heredocs, file excerpts, or reply text
+
+Step 4: Branching strategy gate (MUST run before every commit and before branches/MRs/pushes/releases) — the strategy is governed entirely by what is registered in settings.yaml
+  ├─ Run python scripts/branch_strategy.py get inside the target repository
+  ├─ Exit code 0 (prints git-flow / assembly-flow / github-flow)
+  │   └─ Go to the subsection for that strategy in references/workflows.md §Branch Management Strategy, and use its transition rules to determine the branch-off source and MR target
+  ├─ Exit code 0 (prints none) → no strategy applies to this project: control branches entirely per the user's stated intent for the current task,
+  │   MUST NOT apply any model on your own (do not proactively suggest cutting a feature branch, do not pick an MR target yourself)
+  ├─ Exit code 3 (UNSET) → 🛑 STOP; do not infer from document wording or existing branches in the repo:
+  │   ├─ Present the three strategies (git-flow / assembly-flow / github-flow) and their criteria to the user
+  │   ├─ User picks one → python scripts/branch_strategy.py set <strategy> --reason '<reason>' to write the registration
+  │   ├─ User says none of the three applies → set none --reason '<reason>' (once registered, do not ask again)
+  │   └─ MUST write back the registration; do not leave the project unregistered after answering only the immediate question
+  └─ Exit code 2 → environment/argument/configuration error; fix per the error message and retry; never degrade into guessing
+
+Step 5: Status check
+  ├─ Run git status → confirm working-tree state
+  ├─ Check the current branch: git branch --show-current
+  │   └─ Already on a protected trunk (main/master/develop) with uncommitted changes? → 🛑 STOP, ask the user to confirm
+  │       whether to commit directly on the trunk or cut a feature branch first (the branch-off source is decided by the strategy from Step 4)
+  ├─ Uncommitted changes present? → branch by operation type:
+  │   ├─ About to commit → the changes ARE the commit; do NOT stash, proceed to Step 6
+  │   └─ About to run an operation needing a clean tree (checkout / rebase / pull / merge) → `git stash push -u -m "tag"` (or commit) first
+  └─ Working tree clean → proceed to Step 6
+
+Step 6: Execute the operation
+  ├─ Execute per the specific commands in the sub-files
+  ├─ Involves an irreversible operation? → 🛑 STOP → confirm with the user → execute only after explicit approval
+  └─ Finished → check the exit code → present the result to the user
+```
+
+### Quick Reference for Frequent Operations
+
+| Scenario | Command |
+|------|------|
+| Create a feature branch | `git checkout -b <feature branch name> origin/<BASE>` (`<BASE>` and the naming format are decided by the strategy; see references/workflows.md §Workflow 1) |
+| Create an MR non-interactively | `glab mr create --title "feat(scope): title" --description "## Summary" --source-branch <src> --target-branch <TARGET> --no-editor` (`<TARGET>` is decided by the strategy) |
+| Check pipeline status | `glab ci status` |
+| Merge an MR | `glab mr merge <iid> --remove-source-branch` (whether to add `--squash`: see references/gitlab-mr.md §the squash authorship trap) |
+| View a file's diff | `git diff HEAD~1 -- path/to/file` |
+| Safely undo local changes | `git stash push -u -m "backup-$(date +%s)"` |
+
+## Additional Tools
+
+Core Python/git/glab/PyYAML requirements are defined only in §First-Run Environment Check.
+
+| Tool | When Needed | Installation |
+|------|------|------|
+| `curl` | REST fallback when glab is unavailable or insufficient | usually bundled with the OS |
+| `jq` | parsing JSON API output | `winget install jqlang.jq` / `brew install jq` / `sudo apt install jq` |
+| `ssh` | SSH authentication instead of HTTPS | usually bundled with the OS |
+
+## Interpreter Resolution
+
+Use `python` for the commands in this Skill, but verify the interpreter before the first script invocation:
+
+```bash
+python --version
+python -c "import sys; print(sys.executable)"
+```
+
+1. The printed version must satisfy §First-Run Environment Check, and the printed path must be a real Python installation.
+2. Do not assume `python3` is equivalent. On Windows it may be a Microsoft Store alias that prints nothing and exits with code 49; that is a launcher failure, not a script with empty output and not a successful check.
+3. If `python3` exhibits that behavior, stop retrying it and run the verified `python` interpreter instead. If `python` is also invalid, follow the installation fallback below.
+4. When Python code invokes another script from this Skill, launch it with `sys.executable` so the parent and child use the same interpreter.
+5. Never read `$?` after a pipeline and attribute it to the script; run the script directly or capture its own pipeline status (for example, Bash `PIPESTATUS`).
+
+## Script Output and Encoding Conventions
+
+The scripts in this Skill (`config.py`, `branch_strategy.py`, etc.) uniformly set stdout/stderr to **UTF-8**;
+prompts and error messages contain Chinese.
+
+> **A script can only guarantee one half — that what it emits is valid UTF-8 bytes; the capturing side must specify the encoding explicitly. The other half cannot be handled by the script.**
+
+On Windows, `subprocess.run(..., text=True)` without an explicit `encoding` decodes
+UTF-8 bytes using the locale (GBK); the reader thread raises `UnicodeDecodeError`, and the result is **`stdout` / `stderr` becoming `None`** —
+the caller sees no error message at all, only an empty result, which is easily misdiagnosed as "the script produced no output".
+
+```python
+# ✅ Correct: specify the encoding explicitly
+subprocess.run([sys.executable, script, "check"], capture_output=True,
+               text=True, encoding="utf-8", errors="replace")
+
+# ✅ Or capture bytes and decode yourself (consistent across platforms)
+raw = subprocess.run([...], capture_output=True).stdout
+text = raw.decode("utf-8", errors="replace")
+
+# ❌ Wrong: text=True without an encoding
+subprocess.run([...], capture_output=True, text=True)
+```
+
+When adding a new script that produces Chinese output, reuse `config.configure_utf8_stdio()`; do not write yet another encoding handler.
+
+## 🔴 CHECKPOINT — First-Run Environment Check
+
+> **🛑 STOP: Before the first non-read-only git/GitLab operation, the Agent must run this check. A failed dependency blocks every operation that needs it; missing `glab` blocks GitLab operations only. Purely local read-only operations are exempt.**
+
+Step 2 is the sole invocation and dependency-routing procedure; this section is the authority for required versions and failure handling.
+
+### Check Items
+
+| Dependency | Minimum Version | Required | Notes |
 |------|---------|------|------|
-| `python3` | 3.8+ | 是 | 脚本执行环境 |
-| `git` | **2.41+** | 是 | 本地版本控制（低于 2.41 会警告） |
-| `glab` | 任意 | 是（GitLab 操作） | GitLab CLI |
+| `python` | **3.9+** | yes | `repo_audit.py` uses runtime-evaluated built-in generic annotations and fails on older interpreters |
+| `git` | **2.41+** | yes | local version control (a warning is issued below 2.41) |
+| `glab` | any | yes (GitLab operations) | GitLab CLI |
+| `PyYAML` | any | yes | required for `branch_strategy.py` to read/write `config/settings.yaml`; when missing, the script fails with exit code 2 instead of silently degrading |
 
-### 检查结果处理
+The current `env_check.py` reports Python as `OK` when it can parse any version; it does **not** enforce the 3.9 floor. Independently compare the `python --version` result from §Interpreter Resolution: Python <3.9 means the environment is not ready even when `env_check.py` prints `OK`.
 
-1. **全部通过** → 继续执行请求的操作
-2. **有缺失或版本不满足** → 向用户报告缺失项，展示安装命令
-3. **用户要求自动安装** → 运行 `python scripts/env_check.py --install`
-4. **自动安装失败** → 展示手动安装指令，等待用户完成后重试
+### Handling Check Results
 
-### 安装后验证
+1. **All passed** → continue with the requested operation
+2. **Only `glab` failed** → block GitLab operations; a purely local operation may continue only when all of its own dependencies passed, following Step 2
+3. **Any other required dependency failed** → stop the dependent operation, report the missing items, and show the install commands
+4. **User requests automatic installation** → run `python scripts/env_check.py --install`
+5. **Automatic installation failed** → show the manual installation instructions and retry after the user completes them
 
-自动安装完成后，重新运行检查确认：
+### Post-Install Verification
 
-```bash
-python scripts/env_check.py
+After automatic installation completes, rerun Step 2 and confirm that every dependency required by the requested operation passes.
+
+## 🔴 CHECKPOINT — Credential Check (Credential Gate)
+
+> **🛑 STOP: After the environment check passes and before performing GitLab operations, the credential check must pass. Credentials unavailable = perform no GitLab operations.**
+
+The only legitimate location for credentials is **`<skill-base>/config/.env`** (keys: `GITLAB_URL`, `GITLAB_TOKEN`).
+All reads and writes are handled by `scripts/config.py` — **do not** parse it manually with `grep`/`cut`, and **do not**
+write the file with `cat > … << EOF`; that would expose the token in command text, shell history, and tool logs.
+
+**1. Check whether credentials are ready**
+
+Run the check exactly as shown in Step 3. Exit code 0 means ready; exit code 3 means `GITLAB_URL` or `GITLAB_TOKEN` is missing. Output reports only whether each value is set and its character length, never its contents.
+
+**2. Guide the user to configure when not ready (`setup`)**
+
+`setup` performs, in order: read values → verify via `GET /api/v4/user` → write `config/.env` only on connection-verification success →
+self-check that the file is excluded by `.gitignore`. **If connection verification fails, nothing is written**, avoiding stored credentials that don't work. The `.gitignore` self-check runs after the write and only warns; it is not fail-closed, so a warning requires the stop-and-verify procedure in Safety Rule 3 before any staging.
+
+Two ways to supply values; neither passes them on the command line:
+
+| Method | Command | Who Can Run It | Notes |
+|------|------|---------|------|
+| **A. Interactive (preferred)** | `python scripts/config.py setup` | **The user only**, requires a real terminal | the token is entered via `getpass` and not echoed. The Agent running it on the user's behalf fails due to no input (exit code 2); this is intended protection |
+| **B. Persist from environment variables** | `python scripts/config.py setup --from-env` | The Agent may run it | the user first runs `export GITLAB_URL=… GITLAB_TOKEN=…` in their own terminal; the Agent passes only variable names (`--url-var` / `--token-var` can change them) and **never touches the values** |
+
+**3. Use ready credentials without exporting or printing them**
+
+The `check` subcommand loads `config/.env` only into its own Python process. It cannot modify the Agent's shell or any later `glab`/`curl` process.
+
+- For `glab`, the user runs `glab auth login` in their own terminal (its credential store remains user-managed and is never read by the Agent), or starts the Agent with `GITLAB_URL` and `GITLAB_TOKEN` already exported. Never `source` `.env`, parse it with shell commands, or ask the user to paste the token into chat.
+- For the REST fallback, run this wrapper **from the Skill root**. `require_env` uses the existing process environment first and `config/.env` second; curl receives the header on stdin through `--config -`, so the token is neither a command-line argument nor written into any new file by the wrapper:
+
+```python
+import subprocess
+import sys
+
+sys.path.insert(0, "scripts")
+from config import require_env
+
+url = require_env("GITLAB_URL").rstrip("/")
+token = require_env("GITLAB_TOKEN")
+subprocess.run(
+    ["curl", "--fail", "--silent", "--show-error",
+     "--config", "-", f"{url}/api/v4/user"],
+    input=f'header = "PRIVATE-TOKEN: {token}"\n',
+    text=True, encoding="utf-8", check=True,
+)
 ```
 
-### 可选依赖
+Save it as a temporary script only when the user authorizes a new file, or execute it through `python -` with the same code on stdin. Replace only the URL and add non-secret curl options for other endpoints in [references/gitlab-api.md](references/gitlab-api.md); do not copy that file's placeholder token assignment as a real value.
 
-以下工具非必需，但 API/JSON 场景必须安装：
+**4. Handling Results**
 
-| 工具 | 用途 | 安装 |
+| Symptom | Meaning | Action |
 |------|------|------|
-| `jq` | JSON 解析（API 场景） | `winget install jqlang.jq` / `brew install jq` / `sudo apt install jq` |
-| `ssh` | SSH 认证 | 通常系统自带 |
+| `check` exit code 3 | not configured or a key is empty | follow the `setup` guidance above (prefer method A) |
+| `setup` reports `HTTP 401/403` | token invalid, expired, or insufficient scope | follow the PAT remediation rows in §Failure Fallback Table, then run `setup` again |
+| `setup` reports `无法连接 / getaddrinfo failed` (unable to connect) | wrong address or network unreachable | verify `GITLAB_URL` (protocol, hostname, no stray spaces) |
+| `setup` reports `没有可读输入` (no readable input) | the Agent tried to run an interactive command | have the user run method A themselves, or switch to method B |
+| `WARN: … 未被 .gitignore 排除` (not excluded by .gitignore) | the file has already been written but is not proven ignored | stop before any staging; add an effective `.env` ignore rule in the host repository, rerun the `git check-ignore -v` proof in Safety Rule 3, and stage only explicit non-secret paths |
 
-### 🔴 CHECKPOINT — .env 凭据检查（认证门禁）
+> Whichever path is taken, the token **MUST NOT** appear in command-line arguments, heredocs, file content excerpts, or reply text.
+> Once a token has entered version-control history, treat it as compromised: deleting the file does not undo it — immediately revoke the PAT in GitLab
+> and issue a new one.
 
-> **🛑 STOP：环境检查通过后、执行 GitLab 操作前，必须通过 .env 凭据检查。凭据不可用 = 不执行 GitLab 操作。**
+## Failure Fallback Table
 
-环境检查通过后，如果即将执行 GitLab 操作，**必须**按以下顺序检查凭据：
+> Each failure scenario is handled in three stages: trigger condition → first-line fix → last-resort fallback. Do not skip the fallback step.
 
-**1. 检查 `scripts/.env` 文件是否存在**
-
-```bash
-# <skill-base> 为本 Skill 的根目录
-test -f "<skill-base>/scripts/.env" && echo "EXISTS" || echo "NOT_FOUND"
-```
-
-**2. 如果存在，读取变量**
-
-```bash
-# 读取 .env 中的变量（不 source 到全局环境，仅提取值）
-GITLAB_URL=$(grep '^GITLAB_URL=' "<skill-base>/scripts/.env" | cut -d'=' -f2-)
-GITLAB_TOKEN=$(grep '^GITLAB_TOKEN=' "<skill-base>/scripts/.env" | cut -d'=' -f2-)
-```
-
-**3. 验证连接**
-
-```bash
-curl -s -o /dev/null -w "%{http_code}" \
-  -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
-  "$GITLAB_URL/api/v4/user"
-# 期望：200
-```
-
-**4. 检查未通过时的处理**
-
-| 情况 | 处理 |
-|------|------|
-| `scripts/.env` 不存在 | → 进入「对话式引导配置」 |
-| 文件存在但 `GITLAB_URL` 或 `GITLAB_TOKEN` 为空 | → 进入「对话式引导配置」 |
-| 连接返回 401/403 | → 报错「Token 无效或已过期」→ 进入「对话式引导配置」 |
-| 连接超时 / 非 200 | → 报错「无法连接到 GitLab」→ 检查 URL 是否正确 |
-
-### 对话式引导配置流程
-
-> 当 .env 缺失、变量不完整、或连接验证失败时，Agent **必须**按以下步骤引导用户完成配置。
-
-**Step A — 报错并说明原因**
-
-向用户展示具体失败原因（三选一）：
-- `scripts/.env 文件不存在，需要配置 GitLab 凭据`
-- `scripts/.env 中缺少 GITLAB_URL 或 GITLAB_TOKEN`
-- `GitLab 连接验证失败（HTTP 状态码: xxx），Token 可能已过期或地址不正确`
-
-**Step B — 逐步询问**
-
-使用 AskUserQuestion 或对话方式逐步收集：
-
-1. **GitLab 地址**：`请输入你的 GitLab 实例地址（例如 https://gitlab.example.com）：`
-2. **Personal Access Token**：`请输入 GitLab Personal Access Token（需要 api scope）：`
-   - 如果用户不知道如何获取，提示：`前往 GitLab → Settings → Access Tokens → 创建新 Token，勾选 api scope`
-
-**Step C — 验证并写入**
-
-```bash
-# 用用户提供的值验证连接
-curl -s -o /dev/null -w "%{http_code}" \
-  -H "PRIVATE-TOKEN: <用户提供的TOKEN>" \
-  "<用户提供的URL>/api/v4/user"
-```
-
-- **200** → 写入 `scripts/.env`：
-
-```bash
-cat > "<skill-base>/scripts/.env" << 'EOF'
-GITLAB_URL=<用户提供的URL>
-GITLAB_TOKEN=<用户提供的TOKEN>
-EOF
-```
-
-- **非 200** → 展示错误原因，回到 Step B 重新询问
-
-**Step D — 导出变量并提醒**
-
-```bash
-export GITLAB_URL
-export GITLAB_TOKEN
-```
-
-提醒用户：`scripts/.env 已写入，包含敏感凭据。该文件位于 Skill 目录内，不会被提交到项目仓库。`
-
-## 故障降级表
-
-> 每个故障场景按「触发条件 → 一线修复 → 仍失败兜底」三段式处理。不要跳过兜底步骤。
-
-| 触发条件 | 一线修复 | 仍失败兜底 |
+| Trigger Condition | First-Line Fix | Last-Resort Fallback |
 |---------|---------|-----------|
-| `scripts/.env` 不存在 | 进入「对话式引导配置」→ 询问用户 GitLab 地址和 Token → 写入 .env | 引导用户手动创建：`GitLab → Settings → Access Tokens → 创建 PAT（api scope）` |
-| `.env` 中 `GITLAB_URL` 或 `GITLAB_TOKEN` 为空 | 进入「对话式引导配置」→ 仅询问缺失的变量 → 覆写 .env | 引导用户手动编辑 `scripts/.env`，展示文件模板 |
-| curl 验证返回 `401 Unauthorized` | Token 已过期或被撤销 → 进入「对话式引导配置」→ 重新询问 Token | 引导用户到 GitLab 重新生成 PAT → 勾选 `api` scope |
-| curl 验证返回 `403 Forbidden` | Token scope 不足 → 提示用户检查 Token 权限 | 引导用户创建新 Token，确保勾选 `api` scope |
-| curl 验证超时 / 连接拒绝 | 检查 URL 是否正确（拼写、协议）→ 检查网络连通性 | 进入「对话式引导配置」→ 重新询问 GitLab 地址 |
-| `python scripts/env_check.py` 报 `python3: command not found` | 检查 `python --version`（Windows 可能只有 `python`）→ 用 `python scripts/env_check.py` 重试 | 引导用户安装 Python 3.8+：`winget install Python.Python.3` / `brew install python3` / `sudo apt install python3` |
-| 环境检查通过但 `glab` 命令报 `command not found` | `winget install glab` / `brew install glab` / 从 GitLab 官网下载 binary | 降级为纯 REST API 模式：所有 GitLab 操作改用 `curl` + `PRIVATE-TOKEN` 头（见 gitlab-api.md） |
-| `glab auth status` 报 `no token configured` | 引导用户执行 `glab auth login` 或设置 `GITLAB_TOKEN` 环境变量 | 如果用户无法交互登录（CI 环境），引导创建 PAT：GitLab → Settings → Access Tokens → 勾选 `api` scope |
-| `glab auth status` 报 `401 Unauthorized`（Token 过期） | 引导用户到 GitLab 重新生成 PAT → `glab auth login --token <new-token>` | 检查是否多身份冲突：`glab auth status --hostname` 确认目标 hostname 正确 |
-| `glab mr create` 报 `403 Forbidden` | 检查 PAT scope 是否包含 `api`；检查保护分支是否允许该用户 push | 如果是 CI `CI_JOB_TOKEN`，确认 `.gitlab-ci.yml` 中 `GITLAB_TOKEN` 变量已配置且 scope 足够 |
-| REST API 返回 `429 Too Many Requests` | 等待 `Retry-After` 头指定的秒数后重试 | 降低批量操作并发：加 `sleep 1` 间隔；检查是否触发了 GitLab 全局限流 |
-| `git clone` 超时（>5 分钟） | 检查网络连通性：`curl -I https://$GITLAB_HOST` | 尝试 shallow clone：`git clone --depth 1`；如果是大仓库，用 `--filter=blob:none` 做 partial clone |
+| `config.py check` exit code 3 (not configured) | guide the user to run `config.py setup` (interactive, by the user themselves) or `setup --from-env` (run by the Agent) → writes `config/.env` | guide the user to issue credentials first: `GitLab → Settings → Access Tokens → create a PAT (api scope)` |
+| File exists but `GITLAB_URL` or `GITLAB_TOKEN` is empty | `check` also returns 3 → rerun `setup` to overwrite that key (the script preserves other keys) | guide the user to fill in each item per `config/.env.example`, then rerun `setup` |
+| `setup` reports `HTTP 401` | token expired or revoked → rerun `setup` with a new token (the script won't write to disk if verification fails) | follow the PAT issuance procedure in the `check` exit 3 row above |
+| `setup` reports `HTTP 403` | insufficient token scope → prompt to check token permissions | follow the PAT issuance procedure in the `check` exit 3 row above |
+| `setup` reports connection failure / `getaddrinfo` | check URL spelling and protocol → check network connectivity | rerun `setup` and have the user re-enter the GitLab address |
+| `setup` reports `没有可读输入` (no readable input) | the Agent tried to run the interactive entry on the user's behalf — this command requires a human typing live | have the user run it themselves, or switch to `setup --from-env` |
+| `setup` reports `WARN: 未被 .gitignore 排除` (not excluded by .gitignore) | the write has already happened: stop all staging, add an effective `.env` rule, then prove it with `git check-ignore -v` per Safety Rule 3 | until ignore protection is proven, perform no `git add`; for future runs prefer credentials already exported by the user instead of persisting again |
+| `python3 --version` reports `command not found` | verify `python --version` and its executable path per §Interpreter Resolution → run Step 2 with that interpreter | if no supported real interpreter is available, install Python 3.9+: `winget install Python.Python.3` / `brew install python3` / `sudo apt install python3` |
+| `python3` prints nothing and exits with code 49 on Windows | treat it as a Microsoft Store launcher stub, not as script output; verify `python --version` and `python -c "import sys; print(sys.executable)"`, then use that interpreter | if `python` is not a supported real interpreter, install Python and rerun the version/path checks before any Skill script |
+| `glab` is missing or reports `command not found` | purely local operations may proceed only per Step 2; for GitLab operations run `winget install glab` / `brew install glab` / download the binary from the GitLab website | for GitLab operations, degrade to pure REST API mode using `curl` + the `PRIVATE-TOKEN` header through the credential-safe channel (see references/gitlab-api.md); never place the token in a command argument |
+| `glab auth status` reports `no token configured` | guide the user to run `glab auth login` or set the `GITLAB_TOKEN` environment variable | if the user cannot log in interactively (CI environment), follow the PAT issuance procedure in the `check` exit 3 row above |
+| `glab auth status` reports `401 Unauthorized` (token expired) | guide the user to regenerate a PAT in GitLab → run `glab auth login` themselves (interactive; the token is never passed as a command-line argument) | check for multi-identity conflicts: `glab auth status --hostname` to confirm the target hostname is correct |
+| `glab mr create` reports `403 Forbidden` | verify PAT permissions per the credential fallback rows above; check whether the protected branch allows this user to push | if using CI `CI_JOB_TOKEN`, confirm the `GITLAB_TOKEN` variable is configured in `.gitlab-ci.yml` with sufficient scope |
+| REST API returns `429 Too Many Requests` | wait the number of seconds specified by the `Retry-After` header, then retry | reduce batch-operation concurrency: add a `sleep 1` interval; check whether GitLab global rate limiting was triggered |
+| `git clone` times out (>5 minutes) | check network connectivity: `curl -I "$GITLAB_URL"` | try a shallow clone: `git clone --depth 1`; for large repositories, use `--filter=blob:none` for a partial clone |
 
 ---
 
-## 🔴 Agent 执行检查点速查
+## 🔴 Agent Execution Checkpoint Quick Reference
 
-> **以下是本 Skill 中所有强制停止点的汇总。命中任一条 = 暂停执行、等待用户确认或条件满足。**
+> **A summary of all mandatory stop points in this Skill. Hitting any one = pause execution and wait for user confirmation or the condition to be met.**
 
-| # | 检查点 | 触发条件 | 停止动作 |
+| # | Checkpoint | Trigger Condition | Stop Action |
 |---|--------|---------|---------|
-| 1 | 🛑 不可逆操作 | 即将执行 `reset --hard` / `branch -D` / `mr merge` / `issue delete` / `repo archive` | 暂停 → 向用户展示风险 → 获得确认 |
-| 2 | 🔴 环境检查 | 首次执行任何 git/GitLab 操作前 | 运行 `python scripts/env_check.py` → 未通过则停止 |
-| 3 | 🔴 .env 凭据检查 | 环境检查通过后、执行 GitLab 操作前 | 检查 `scripts/.env` → 读取 GITLAB_URL/TOKEN → curl 验证连接 → 失败则进入对话式引导 |
-| 4 | ⚠️ 操作前状态 | 每次写操作（commit/push/merge）前 | `git status` 确认工作区状态 |
-| 5 | ⚠️ Token 安全 | 任何涉及凭据的操作 | Token 不落盘、不打印、不嵌入代码 |
+| 1 | 🛑 Irreversible operation | about to run `reset --hard` / `branch -D` / `clean -fd` / `push --force` / `mr merge` / `issue delete` / `repo archive` | pause → present the risks to the user → obtain confirmation |
+| 2 | 🔴 Environment check | before the first non-read-only git/GitLab operation | apply Step 2 → a failed dependency blocks dependent operations; missing `glab` blocks GitLab operations only, and purely local read-only operations are exempt |
+| 3 | 🔴 Credential check | after the environment check passes, before GitLab operations | apply Step 3 and §Credential Check → on exit code 3, proactively guide `setup` (interactive run by the user, or `--from-env` persisted by the Agent) → **forbidden** to read/write `.env` manually or let the token appear in command text |
+| 4 | 🔴 Branching strategy gate | before every commit and before cutting a branch / setting an MR target / push target / release | apply Step 4 → on `UNSET` (exit code 3), stop, guide the user to choose, then `set` to write it back (use `set none` when none of the three applies) → **never guess the target branch**; when the output is `none`, control branches per the user's stated intent without applying any model |
+| 5 | ⚠️ Pre-operation status | before every write operation (commit/push/merge) | `git status` + `git branch --show-current` to confirm the working tree and current branch |
+| 6 | ⚠️ Committing on trunk | currently on `main`/`master`/`develop` and about to commit | pause → confirm "commit directly on trunk" vs. "cut a feature branch first" |
+| 7 | ⚠️ Token safety | any operation involving credentials or staging | no token in output, arguments, or code; the sole Agent-written on-disk exception is `config/.env` written by `setup`, and Safety Rule 3's conditional ignore proof must pass before writing it or staging while it exists |
 
-## Agent 反模式黑名单
+## Agent Anti-Pattern Blacklist
 
-> **以下是 Agent 使用本 Skill 时最常见的错误。命中任一条 = 立即停止、纠正后再继续。**
+> **The most common mistakes the Agent makes when using this Skill. Hitting any one = stop immediately, correct it, then continue.**
 
-| # | 反模式 | 为什么错 | 正确做法 |
+| # | Anti-Pattern | Why It's Wrong | Correct Approach |
 |---|--------|---------|---------|
-| 1 | **Token 硬编码到脚本/配置文件** | Token 泄露 = 整个 GitLab 账号被接管；一旦 commit 到仓库无法撤回 | 始终用环境变量 `$GITLAB_TOKEN` 或 `glab auth login` 交互注入；脚本中用 `$VAR` 引用 |
-| 2 | **共享 worktree 中裸 `git stash`** | `git stash` 无标记 → 多人/多 agent 共享时无法区分谁的 stash → 恢复错误 stash 导致代码错乱 | `git stash push -u -m "agent-unique-tag"` → 恢复时用 `git stash apply stash^{/agent-unique-tag}` |
-| 3 | **`git push --force` 到 main/develop** | 覆盖他人提交、断裂 CI 历史、不可逆 | 只允许 `--force-with-lease` 到个人 feature 分支；共享分支禁止 force push |
-| 4 | **跳过环境检查直接执行** | 工具缺失或版本不满足时，git 命令可能静默产生错误结果（如旧版 git 不支持 `--filter`） | 首次操作前必须运行 `python scripts/env_check.py`（见 🔴 CHECKPOINT） |
-| 5 | **静默吞掉 git 命令的 stderr** | git 错误信息在 stderr，只看 stdout 会误以为操作成功（如 clone 失败但 stdout 为空） | 始终检查退出码 `$?`；stderr 重定向到日志或展示给用户 |
-| 6 | **批量 API 调用不加间隔** | GitLab 全局限流（默认 600 req/min），触发 429 后所有请求被拒 | 批量操作间加 `sleep 1`；遇到 429 读取 `Retry-After` 头等待 |
-| 7 | **直接在 main/develop 上 commit** | 违反分支策略 → MR 审查形同虚设 → 未经 CI 验证的代码进入主干 | 始终创建 feature branch → MR → review → merge 流程 |
-| 8 | **MR pipeline 未通过就合并** | CI 失败 = 测试未过/构建断裂 → 合并后污染主干 | 合并前用 `glab ci status` 确认 pipeline 为 `passed` |
+| 1 | **Hardcoding tokens into scripts/config files** | a leaked token = the entire GitLab account is taken over; once committed to a repo it cannot be clawed back | always inject via the environment variable `$GITLAB_TOKEN` or `glab auth login` interactively; reference `$VAR` in scripts |
+| 2 | **Bare `git stash` in a shared worktree** | `git stash` without a tag → indistinguishable among multiple people/agents sharing the worktree → applying the wrong stash corrupts code | `git stash push -u -m "agent-unique-tag"` → restore with `git stash apply stash^{/agent-unique-tag}` |
+| 3 | **`git push --force` to main/develop** | overwrites others' commits, breaks CI history, irreversible | only `--force-with-lease` to personal feature branches is allowed; force-pushing shared branches is forbidden |
+| 4 | **Skipping the environment check or letting a `glab` failure block unrelated local work** | missing dependencies invalidate dependent operations, but `glab` is not needed for a purely local commit | apply Step 2 before the first non-read-only operation; follow its dependency-scoped branches instead of either skipping the check or stopping all local work |
+| 5 | **Silently swallowing git's stderr** | git error messages go to stderr; looking only at stdout makes failures look like success (e.g., clone fails but stdout is empty) | always check the exit code `$?`; redirect stderr to a log or show it to the user |
+| 6 | **Batch API calls without intervals** | GitLab global rate limiting (default 600 req/min); once 429 is triggered all requests are rejected | add `sleep 1` between batch operations; on 429, read the `Retry-After` header and wait |
+| 7 | **Committing directly on main/develop** | violates the branching strategy → MR review becomes a formality → code not verified by CI enters the trunk | resolve Step 4 first; commit on the trunk only when the strategy allows it (e.g., a tools repo directly on `master`) or the user explicitly agrees; otherwise cut a feature branch |
+| 8 | **Merging an MR before its pipeline passes** | CI failure = tests not passing / broken build → merging pollutes the trunk | confirm the pipeline is `passed` with `glab ci status` before merging |
+| 9 | **Using `subprocess` with `text=True` but no `encoding`** | Windows decodes the script's UTF-8 output as GBK; after the reader thread raises, `stdout`/`stderr` become `None`; the caller misreads "can't read output" as "the script didn't respond", silently losing all diagnostics | explicitly set `encoding="utf-8", errors="replace"`, or capture bytes and decode yourself (see §Script Output and Encoding Conventions) |
 
-## 输出规范
+## Output Specification
 
-> **Agent 执行完操作后，按以下格式向用户报告结果。**
+> **After completing an operation, the Agent reports the result to the user in the following format.**
 
-### 成功操作
-
-```
-✅ 操作完成：[操作名称]
-- 分支：feature/TICKET-123-desc
-- 远端：已推送到 origin
-- MR：!42 已创建 → https://gitlab.example.com/group/project/-/merge_requests/42
-```
-
-### 失败操作
+### Successful Operation
 
 ```
-❌ 操作失败：[操作名称]
-- 错误：[具体错误信息，来自 stderr]
-- 原因：[分析的可能原因]
-- 修复建议：[来自故障降级表的具体步骤]
+✅ Operation completed: [operation name]
+- Branch: feature/TICKET-123-desc
+- Remote: pushed to origin
+- MR: !42 created → https://gitlab.example.com/group/project/-/merge_requests/42
 ```
 
-### 需要用户确认
+### Failed Operation
 
 ```
-⚠️ 需要确认：即将执行不可逆操作
-- 操作：[具体操作，如 git reset --hard]
-- 影响：[影响范围，如 3 个未提交文件将丢失]
-- 备份：[已做的备份措施，如已 stash]
-- 确认执行？(y/n)
+❌ Operation failed: [operation name]
+- Error: [specific error message, from stderr]
+- Cause: [analyzed possible cause]
+- Suggested fix: [specific steps from the failure fallback table]
 ```
 
-## 场景判断指南
+### User Confirmation Required
 
-> **当用户请求模糊时，按以下规则判断意图。**
+```
+⚠️ Confirmation required: about to perform an irreversible operation
+- Operation: [specific operation, e.g., git reset --hard]
+- Impact: [scope of impact, e.g., 3 uncommitted files will be lost]
+- Backup: [backup measures taken, e.g., already stashed]
+- Proceed? (y/n)
+```
 
-| 用户说 | 实际意图 | 加载子文件 | 执行路径 |
+## Scenario Judgment Guide
+
+> **When a user request is ambiguous, judge the intent by the following rules.**
+
+| User Says | Actual Intent | Sub-files to Load | Execution Path |
 |--------|---------|-----------|---------|
-| "帮我看看改了什么" | 查看 diff | git-local.md | `git diff` 或 `git diff --cached` |
-| "提交代码" | commit + push | git-local.md + workflows.md | `git add` → `git commit`（Angular 格式）→ `git push` |
-| "开个 MR" | 创建 MR | gitlab-mr.md | 先确认分支已 push → `glab mr create` → 展示 MR 链接 |
-| "CI 挂了" | 排查 pipeline | gitlab-ci.md + troubleshooting.md | `glab ci status` → `glab ci view` → 定位失败 job → 分析日志 |
-| "合并这个 MR" | 合并 MR | gitlab-mr.md | 🛑 先检查 pipeline 状态 + 审查状态 → 用户确认 → `glab mr merge` |
-| "创建 issue" | 创建 Issue | gitlab-issue.md | 收集标题/描述/标签 → `glab issue create` |
-| "这个仓库的信息" | 查看项目 | gitlab-repo.md | `glab repo view` 或 REST API |
-| "Token 过期了" | 认证问题 | gitlab-auth.md | 引导重新登录或刷新 PAT |
+| "show me what changed" | view the diff | references/git-local.md | `git diff` or `git diff --cached` |
+| "commit the code" | commit (confirm whether to push as well) | references/git-local.md + references/workflows.md | resolve Step 4 to confirm the current branch is compliant → `git add` (stage files precisely) → `git commit` (Angular format, single responsibility) → `git push` only when the user explicitly asks |
+| "open an MR" | create an MR | references/gitlab-mr.md + references/workflows.md | resolve Step 4 to get `<TARGET>` → confirm the branch is pushed first → `glab mr create --target-branch <TARGET>` → show the MR link |
+| "CI is broken" | troubleshoot the pipeline | references/gitlab-ci.md + references/troubleshooting.md | `glab ci status` → `glab ci view` → locate the failed job → analyze the logs |
+| "merge this MR" | merge an MR | references/gitlab-mr.md | 🛑 check pipeline status + review status first → user confirmation → `glab mr merge` |
+| "create an issue" | create an Issue | references/gitlab-issue.md | collect title/description/labels → `glab issue create` |
+| "info about this repo" | view the project | references/gitlab-repo.md | `glab repo view` or the REST API |
+| "the token expired" | authentication issue | references/gitlab-auth.md | guide re-login or PAT refresh |
 
-## 🔴 操作完成自检清单
+## 🔴 Post-Operation Self-Check Checklist
 
-> **每次操作完成后，逐项对照。未通过任何一项 = 操作未完成。**
+> **After every operation, check each item. Failing any one = the operation is not complete.**
 
-| # | 检查项 | 验证方法 |
+| # | Check Item | How to Verify |
 |---|--------|---------|
-| 1 | 命令退出码为 0 | 检查 `$?` 或捕获异常 |
-| 2 | 远端状态与预期一致 | `git fetch` + `git status` 确认无意外变更 |
-| 3 | 无 Token/密码泄露到输出 | 检查 stdout/stderr 日志中无 `glpat-`、`Bearer` 等敏感字符串 |
-| 4 | 用户已被告知操作结果 | 按「输出规范」格式展示结果 |
-| 5 | 不可逆操作已获得用户确认 | 回查对话记录中有用户明确的确认消息 |
-| 6 | 分支策略合规 | feature 分支未直接 push 到 main/develop；MR 已创建 |
-| 7 | 临时资源已清理 | stash 已 pop、临时分支已删除 |
+| 1 | command exit code is 0 | check `$?` or catch exceptions |
+| 2 | remote state matches expectations | `git fetch` + `git status` to confirm no unexpected changes |
+| 3 | no token/password leaked into output | check stdout/stderr logs for sensitive strings like `glpat-`, `Bearer` |
+| 4 | the user has been informed of the result | present the result per the "Output Specification" format |
+| 5 | irreversible operations had user confirmation | look back in the conversation for an explicit confirmation message from the user |
+| 6 | branching strategy compliance | before every commit and every operation involving branches/MRs/pushes/releases, Step 4 was resolved (not UNSET); no target branch was guessed on unregistered projects; the feature branch was not pushed directly to a protected trunk; the MR was created with `--target-branch` consistent with the strategy |
+| 7 | commit has a single responsibility | this commit contains only one logical change; unrelated changes were split out; the commit body explains "why" rather than listing which lines changed |
+| 8 | temporary resources cleaned up | working stashes popped after the operation; a backup stash made before `reset --hard` is NOT popped (it would restore the discarded changes) — keep it or drop it only after user confirmation; temporary branches deleted |

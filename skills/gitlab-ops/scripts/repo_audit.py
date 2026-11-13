@@ -6,7 +6,7 @@
     python repo_audit.py [--output json|text]
 
 环境变量:
-    GITLAB_URL, GITLAB_TOKEN, GITLAB_PROJECT（必需）
+    GITLAB_URL, GITLAB_TOKEN（必需）
 """
 
 import argparse
@@ -38,12 +38,13 @@ def main() -> None:
     """入口：并行获取项目元数据并输出审计报告。"""
     parser = argparse.ArgumentParser(description="Repository audit report")
     parser.add_argument("--output", choices=["json", "text"], default="text")
+    parser.add_argument("--project", required=True,
+                        help="GitLab project path (e.g. group/project)")
     args = parser.parse_args()
 
     url = require_env("GITLAB_URL")
     token = require_env("GITLAB_TOKEN")
-    project = require_env("GITLAB_PROJECT")
-    client = GitLabClient(url, token, project)
+    client = GitLabClient(url, token, args.project)
 
     status, proj = client.get(f"/projects/{client.project_encoded}")
     if status != 200:

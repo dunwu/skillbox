@@ -10,8 +10,8 @@ import shutil
 import tempfile
 import time
 from conftest import (
-    run, run_ok, api_get, api_post, api_put, api_delete, TempRepo,
-    GITLAB_URL, GITLAB_TOKEN, GITLAB_PROJECT, GITLAB_NAMESPACE, PROJECT_PATH_ENCODED,
+    run, run_ok, api_get, api_post, api_put, api_delete, TempRepo, require_role,
+    GITLAB_URL, GITLAB_TOKEN, GITLAB_PROJECT, PROJECT_PATH_ENCODED,
 )
 
 
@@ -35,21 +35,29 @@ class TestRepoFork(unittest.TestCase):
 
     FORK_NAME = "git-test-fork-verify"
 
+    def setUp(self):
+        # fork 落在「执行 fork 的身份」 own namespace 下，与源项目的 namespace 无关，
+        # 所以只能记住 POST 响应里的 id，不能按源项目路径拼。
+        self._fork_id = None
+
     def tearDown(self):
-        fork_path = f"{GITLAB_NAMESPACE}/{self.FORK_NAME}"
-        fork_encoded = fork_path.replace("/", "%2F")
-        api_delete(f"/projects/{fork_encoded}")
+        if self._fork_id:
+            api_delete(f"/projects/{self._fork_id}")
 
     def test_fork_via_api(self):
         status, data = api_post(
             f"/projects/{PROJECT_PATH_ENCODED}/fork",
             {"name": self.FORK_NAME, "path": self.FORK_NAME}
         )
-        self.assertIn(status, [200, 201], f"Fork failed: {data}")
+        self.assertIn(status, [200, 201, 202], f"Fork failed: {data}")
+        self._fork_id = data["id"]
 
-        fork_path = f"{GITLAB_NAMESPACE}/{self.FORK_NAME}"
-        fork_encoded = fork_path.replace("/", "%2F")
-        status2, data2 = api_get(f"/projects/{fork_encoded}")
+        # fork 是异步导入，立刻 GET 可能还没可见
+        for _ in range(10):
+            status2, data2 = api_get(f"/projects/{self._fork_id}")
+            if status2 == 200:
+                break
+            time.sleep(2)
         self.assertEqual(status2, 200, f"Forked project not found: {data2}")
         self.assertFalse(data2.get("archived"))
 
@@ -74,6 +82,9 @@ class TestRepoArchive(unittest.TestCase):
     Note: glab repo archive downloads a zip file, it does NOT archive
     (make read-only) a project. Use REST API for archiving.
     """
+
+    def setUp(self):
+        require_role(self, 40, "归档项目")
 
     def tearDown(self):
         api_post(f"/projects/{PROJECT_PATH_ENCODED}/unarchive", {})
@@ -247,6 +258,17 @@ class TestMRCreateAndMerge(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertGreater(len(mrs), 0, "MR should exist")
         mr_iid = mrs[0]["iid"]
+
+        # 能否合并由服务端的分支保护与审批规则决定，不只看角色——直接读 can_merge。
+        # 权限不足时记为「未执行」，避免把令牌角色问题当成回归。
+        st_p, mr_p = api_get(
+            f"/projects/{PROJECT_PATH_ENCODED}/merge_requests/{mr_iid}"
+        )
+        if st_p == 200 and not (mr_p.get("user") or {}).get("can_merge", True):
+            self.skipTest(
+                f"当前令牌对 master 无合并权限（分支保护/审批规则），"
+                f"需 Maintainer 令牌或放开 {GITLAB_PROJECT} 的 master 保护"
+            )
 
         rc2, out2, err2 = run(
             f"glab mr merge {mr_iid} -R {GITLAB_PROJECT} --squash --remove-source-branch --yes",

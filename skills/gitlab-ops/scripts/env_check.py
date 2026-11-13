@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Environment prerequisite check for gitlab-ops Skill.
 
-Checks: python3, Git >= 2.41, glab CLI.
+Checks: python3, Git >= 2.41, glab CLI, PyYAML.
 Reports missing or outdated tools and offers auto-install guidance.
 
 Usage:
@@ -109,8 +109,19 @@ def check_glab() -> dict[str, Any]:
     return {"name": "glab", "ok": True, "version": ver_str}
 
 
+def check_pyyaml() -> dict[str, Any]:
+    """检查 PyYAML 是否可导入——branch_strategy.py 读写 settings.yaml 依赖它。"""
+    try:
+        import yaml  # noqa: PLC0415
+    except ImportError:
+        return {"name": "PyYAML", "ok": False, "version": None}
+    return {"name": "PyYAML", "ok": True, "version": getattr(yaml, "__version__", "unknown")}
+
+
 def install_instructions(name: str, os_family: str) -> list[str]:
     """返回缺失工具的人工安装指引（按操作系统区分）。"""
+    if name == "PyYAML":
+        return [f"{sys.executable} -m pip install pyyaml"]
     table = {
         ("python3", "windows"): [
             "winget install Python.Python.3.12",
@@ -155,6 +166,12 @@ def install_instructions(name: str, os_family: str) -> list[str]:
 
 def auto_install(name: str, os_family: str) -> tuple[bool, str]:
     """尝试自动安装缺失工具，返回 (是否成功, 结果消息)。"""
+    if name == "PyYAML":
+        rc, out, err = _run([sys.executable, "-m", "pip", "install", "pyyaml"], timeout=120)
+        if rc == 0:
+            return True, "PyYAML installed successfully."
+        return False, f"Install failed (rc={rc}): {err or out}"
+
     commands: dict[tuple[str, str], list[str]] = {
         ("python3", "windows"): ["winget", "install", "Python.Python.3.12",
                                  "--accept-source-agreements", "--accept-package-agreements"],
@@ -187,7 +204,7 @@ def main() -> None:
     args = parser.parse_args()
 
     os_family = _os_family()
-    checks = [check_python(), check_git(), check_glab()]
+    checks = [check_python(), check_git(), check_glab(), check_pyyaml()]
 
     missing = [c for c in checks if not c["ok"]]
     outdated = [c for c in checks if c.get("too_old")]

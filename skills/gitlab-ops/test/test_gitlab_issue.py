@@ -1,4 +1,4 @@
-"""Tests for gitlab-issue.md — Issue management commands."""
+"""Tests for references/gitlab-issue.md — Issue management commands."""
 
 import unittest
 from conftest import run, run_ok, GITLAB_PROJECT

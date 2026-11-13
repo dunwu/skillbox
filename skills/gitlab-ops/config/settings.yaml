@@ -1,0 +1,63 @@
+# gitlab-ops 非敏感配置（本文件入库共享，跨机器一致）
+#
+# 安全边界：凭据禁止写入本文件。GITLAB_URL / GITLAB_TOKEN 只允许在
+# config/.env（已 gitignore）。本文件出现任何 token / 密码即为违规。
+#
+# ── branch_strategy ────────────────────────────────────────────────
+# 记录每个仓库应遵循的分支管理策略。模型定义、拓扑图与选型判据见
+# references/workflows.md「分支管理策略」章节；解析与写入用 scripts/branch_strategy.py。
+#
+# 策略取值：
+#   git-flow        经典 Git Flow：develop 作集成分支，feature→develop，
+#                   release 从 develop 切出，合回 main + develop
+#   assembly-flow   装配式 release：无 develop；feature 从 master 切出并装配进
+#                   release/<四段版本>（如 release/13.7.0.2）；release→master；
+#                   剔除 feature 靠重建 release。分支名只用四段纯数字，
+#                   -SNAPSHOT/-RELEASE 后缀仅存在于 pom 版本，不进分支名
+#   github-flow     单主干：feature 从主干切出，直接 MR 回主干，从主干发布
+#
+# 项目键格式：归一化项目路径 group/[subgroup/]project（如 ocp/ocp-biz/ocp）。
+#   MUST NOT 用 gitlab_url 作键——同一项目的 SSH（git@host:group/proj.git）与
+#   HTTPS（https://host/group/proj.git）remote 形态不同，URL 字符串匹配会失效。
+#   脚本由 `git remote get-url origin` 自动归一化，两种形态都能命中。
+#
+# default 为 null 表示：未匹配到项目时不猜，Agent MUST 走对话式引导确认后写入。
+#
+# 条目示例（reason 为必填语义字段，写回时由脚本保留；自由注释会在 dump 时丢失，
+# 故「为什么选这套」一律写进 reason，不要写成行内注释）：
+#   projects:
+#     - project: ocp/ocp-biz/ocp
+#       strategy: assembly-flow
+#       reason: 多需求同版本发布，需支持剔除单个 feature 后重建 release
+
+schema_version: 1
+branch_strategy:
+  default: null
+  projects:
+  - project: ocp/ocp-biz/ocp-doc
+    strategy: github-flow
+    reason: 知识库仓只有 master，feature 直接 MR 到 master
+  - project: ocp/ocp-biz/ocp
+    strategy: assembly-flow
+    reason: 多需求同版本发布，需支持剔除单个 feature 后重建 release
+  - project: ocp/ocp-biz/ocp-module
+    strategy: assembly-flow
+    reason: 多需求同版本发布，release 由 feature 装配而成，需支持剔除单个 feature 后重建
+  - project: ocp/ocp-biz/ocp-mng
+    strategy: assembly-flow
+    reason: 多需求同版本发布，release 由 feature 装配而成，需支持剔除单个 feature 后重建
+  - project: ocp/ocp-biz/ocp-msg-hub
+    strategy: assembly-flow
+    reason: 多需求同版本发布，release 由 feature 装配而成，需支持剔除单个 feature 后重建
+  - project: ocp/ocp-biz/ocp-web
+    strategy: assembly-flow
+    reason: 多需求同版本发布，release 由 feature 装配而成，需支持剔除单个 feature 后重建
+  - project: ocp/ocp-biz/ocp-upload
+    strategy: assembly-flow
+    reason: 多需求同版本发布，release 由 feature 装配而成，需支持剔除单个 feature 后重建
+  - project: ocp/ocp-biz/ocp-workflow-test
+    strategy: assembly-flow
+    reason: 同组业务仓（Spring Boot + 前端，有发布产物）；本仓兼作门禁流程试验仓，必须与真实业务仓同策略才有验证价值
+  - project: ocp/ocp-ai/ocp-ai-agent
+    strategy: none
+    reason: 技能与规约仓，无发布产物，直接在 master 提交

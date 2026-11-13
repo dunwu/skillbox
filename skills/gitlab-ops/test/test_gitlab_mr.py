@@ -1,4 +1,4 @@
-"""Tests for gitlab-mr.md — MR lifecycle commands via glab CLI."""
+"""Tests for references/gitlab-mr.md — MR lifecycle commands via glab CLI."""
 
 import unittest
 from conftest import run, run_ok, GITLAB_PROJECT

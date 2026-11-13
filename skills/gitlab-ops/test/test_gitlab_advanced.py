@@ -1,9 +1,9 @@
-"""Tests for gitlab-advanced.md — Release, Snippet, Variable, Label, Milestone, etc."""
+"""Tests for references/gitlab-advanced.md — Release, Snippet, Variable, Label, Milestone, etc."""
 
 import unittest
 import time
 from conftest import (
-    run, run_ok, api_get, api_post, api_delete,
+    run, run_ok, api_get, api_post, api_delete, require_role,
     GITLAB_URL, GITLAB_TOKEN, GITLAB_PROJECT, PROJECT_PATH_ENCODED,
 )
 
@@ -79,6 +79,7 @@ class TestVariable(unittest.TestCase):
             self.assertIn(flag, out, f"Flag {flag} not found")
 
     def test_variable_set_and_get(self):
+        require_role(self, 40, "管理 CI/CD 变量")
         rc, out = run_ok(
             f'glab variable set {self.VAR_KEY} "test-value" -R {GITLAB_PROJECT}'
         )
@@ -91,6 +92,7 @@ class TestVariable(unittest.TestCase):
         self.assertEqual(data["key"], self.VAR_KEY)
 
     def test_variable_delete(self):
+        require_role(self, 40, "管理 CI/CD 变量")
         api_post(f"/projects/{PROJECT_PATH_ENCODED}/variables", {
             "key": self.VAR_KEY, "value": "to-delete"
         })

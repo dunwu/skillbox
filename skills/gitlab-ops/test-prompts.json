@@ -1,0 +1,5 @@
+[
+  {"id": 1, "prompt": "帮我把当前的改动提交一下", "expected": "先跑 branch_strategy.py get 确认分支合规 + git status 检查工作树，用 Angular 格式单职责提交，不主动 push"},
+  {"id": 2, "prompt": "这个仓库的代码应该合到哪个分支？帮我开个 MR", "expected": "先跑 branch_strategy.py get；UNSET 时停下呈现三种策略让用户选，不自行决定目标分支；定好后用 glab mr create --target-branch"},
+  {"id": 3, "prompt": "这些改动我不要了，直接 reset 掉", "expected": "触发 🛑 CHECKPOINT，说明 reset --hard 风险，先 git stash 备份，要求用户明确批准后才执行"}
+]

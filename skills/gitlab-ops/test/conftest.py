@@ -1,10 +1,15 @@
 """gitlab-ops Skill 测试共享配置与辅助工具。
 
-必需环境变量（不设默认值——绝不硬编码凭据）:
+凭据来源与 Skill 主体一致，**不设默认值——绝不硬编码凭据**：
 
     GITLAB_URL     — GitLab 实例地址，如 https://gitlab.example.com
     GITLAB_TOKEN   — 具有 api 权限的个人访问令牌
-    GITLAB_PROJECT — 项目路径，如 group/project
+    以上两项按「进程环境变量 → <skill-root>/config/.env」顺序解析；
+    未配置时先跑 `python scripts/config.py setup` 补齐（见 SKILL.md §认证门禁）。
+
+    GITLAB_PROJECT — 测试项目路径，如 group/project。它不是凭据，故**不进 .env**，
+    在本文件（测试套件的初始化入口）或环境变量中指定：导入时取环境变量
+    ``GITLAB_PROJECT``，未设置则取下方 GITLAB_PROJECT 常量的值。
 
 环境变量在首次访问时延迟校验，确保导入本模块（如测试收集阶段）不会崩溃。
 """
@@ -15,20 +20,29 @@ import json
 import os
 import secrets
 import shutil
+import stat
 import subprocess
 import tempfile
 from urllib.error import HTTPError
 from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
+# 测试项目路径：在此填写，或用同名环境变量覆盖（环境变量优先）。
+# 形如 "group/project" 或 "group/subgroup/project"。本文件不预置任何真实项目 ID，
+# 留空时依赖 GitLab 的用例会在首次访问时明确报错并提示到此处填写。
+GITLAB_PROJECT = os.environ.get("GITLAB_PROJECT", "")
+
 
 def _load_dotenv() -> None:
-    """从当前目录的 .env 文件加载 KEY=VALUE 键值对（无第三方依赖）。
+    """从 ``<skill-root>/config/.env`` 加载 KEY=VALUE 键值对（无第三方依赖）。
 
+    路径与 scripts/config.py 保持一致：测试与 Skill 主体共用同一份凭据，
+    避免「Skill 读 config/.env、测试读 test/.env」的双轨漂移。
     已有环境变量优先于 .env 中的值。
     值的首尾引号（单引号或双引号）会被自动去除。
     """
-    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    skill_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    env_path = os.path.join(skill_root, "config", ".env")
     if not os.path.isfile(env_path):
         return
     with open(env_path, encoding="utf-8") as f:
@@ -48,35 +62,60 @@ def _load_dotenv() -> None:
 _load_dotenv()
 
 _config_cache: dict[str, str] = {}
+_credentials_cache: dict[str, str] = {}
 
 
-def _load_config() -> dict[str, str]:
-    """校验必需环境变量并返回派生配置字典。"""
-    if _config_cache:
-        return _config_cache
-    for key in ("GITLAB_URL", "GITLAB_TOKEN", "GITLAB_PROJECT"):
+def _load_credentials() -> dict[str, str]:
+    """校验凭据（URL / TOKEN）并派生主机名——不含测试项目。
+
+    只做 CLI 参数断言、或只需要主机名的用例走这条路径，
+    避免「没指定测试项目就连 GITLAB_HOST 都取不到」。
+    """
+    if _credentials_cache:
+        return _credentials_cache
+    for key in ("GITLAB_URL", "GITLAB_TOKEN"):
         if not os.environ.get(key):
             raise RuntimeError(
                 f"Environment variable {key} is not set. "
-                f"See test/README.md for required variables."
+                f"它应来自进程环境变量或 <skill-root>/config/.env；"
+                f"未配置时先运行 `python scripts/config.py setup` 补齐。"
             )
-    project = os.environ["GITLAB_PROJECT"]
-    parsed = urlparse(os.environ["GITLAB_URL"])
-    _config_cache.update({
+    _credentials_cache.update({
         "GITLAB_URL": os.environ["GITLAB_URL"],
         "GITLAB_TOKEN": os.environ["GITLAB_TOKEN"],
+        "GITLAB_HOST": urlparse(os.environ["GITLAB_URL"]).hostname or "",
+    })
+    return _credentials_cache
+
+
+def _load_config() -> dict[str, str]:
+    """校验凭据与测试项目，返回派生配置字典。"""
+    if _config_cache:
+        return _config_cache
+    cfg = dict(_load_credentials())
+    # GITLAB_PROJECT 不是凭据，不进 .env：常量在导入时取环境变量，未设置时取本文件填写值
+    project = GITLAB_PROJECT
+    if not project:
+        raise RuntimeError(
+            "测试项目未指定：请设置环境变量 GITLAB_PROJECT，"
+            "或在本文件顶部的 GITLAB_PROJECT 常量中填写 \"group/project\"。"
+        )
+    cfg.update({
         "GITLAB_PROJECT": project,
         "PROJECT_PATH_ENCODED": quote(project, safe=""),
-        "GITLAB_NAMESPACE": project.split("/")[0],
-        "GITLAB_HOST": os.environ.get("GITLAB_HOST") or (parsed.hostname or ""),
     })
+    _config_cache.update(cfg)
     return _config_cache
 
 
 def __getattr__(name: str) -> str:
-    """模块级属性的延迟访问入口，用于配置常量。"""
-    if name in ("GITLAB_URL", "GITLAB_TOKEN", "GITLAB_PROJECT",
-                "PROJECT_PATH_ENCODED", "GITLAB_NAMESPACE", "GITLAB_HOST"):
+    """模块级属性的延迟访问入口，用于配置常量。
+
+    凭据类属性不要求已指定测试项目。
+    """
+    if name in ("GITLAB_URL", "GITLAB_TOKEN", "GITLAB_HOST"):
+        return _load_credentials()[name]
+    if name in ("GITLAB_PROJECT", "PROJECT_PATH_ENCODED"):
         return _load_config()[name]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
@@ -84,8 +123,9 @@ def __getattr__(name: str) -> str:
 def _glab_env() -> dict[str, str]:
     """构建环境变量字典，确保 glab 可在无 keyring 时认证。"""
     env = os.environ.copy()
-    env.setdefault("GITLAB_TOKEN", _load_config()["GITLAB_TOKEN"])
-    env.setdefault("GITLAB_HOST", _load_config()["GITLAB_HOST"])
+    creds = _load_credentials()
+    env.setdefault("GITLAB_TOKEN", creds["GITLAB_TOKEN"])
+    env.setdefault("GITLAB_HOST", creds["GITLAB_HOST"])
     return env
 
 
@@ -119,7 +159,12 @@ def run(cmd, cwd=None, check=True, timeout=30):
 
 
 def run_ok(cmd, **kwargs):
-    """断言命令执行成功，返回 (是否成功, stdout)。"""
+    """执行命令，返回 (是否成功, stdout)——不抛异常。
+
+    正向用例配 `assertTrue(rc)`，负向用例（断言某参数不被支持）配 `assertFalse(rc)`，
+    因此这里不能断言失败。代价是失败信息只剩 "False is not true"；需要看 stderr 时，
+    用 `run(cmd, check=False)` 拿三元组自行断言。
+    """
     rc, out, _ = run(cmd, check=False, **kwargs)
     return rc == 0, out
 
@@ -169,6 +214,65 @@ def api_delete(path: str):
     return _api_request("DELETE", path)
 
 
+_role_cache: "dict[str, int]" = {}
+
+
+def project_access_level() -> int:
+    """当前令牌在测试项目上的最高角色数值；取不到返回 -1。
+
+    GitLab 角色：10 Guest / 20 Reporter / 30 Developer / 40 Maintainer / 50 Owner。
+    """
+    if not _role_cache:
+        cfg = _load_config()
+        status, data = api_get(f"/projects/{cfg['PROJECT_PATH_ENCODED']}")
+        level = -1
+        if status == 200 and isinstance(data, dict):
+            perms = data.get("permissions") or {}
+            levels = [
+                (perms.get(k) or {}).get("access_level")
+                for k in ("project_access", "group_access")
+            ]
+            levels = [x for x in levels if isinstance(x, int)]
+            level = max(levels) if levels else -1
+        _role_cache["level"] = level
+    return _role_cache["level"]
+
+
+def require_role(case, min_level: int, capability: str) -> None:
+    """角色不足时跳过用例并说明原因，而不是记成失败。
+
+    这些能力受服务端角色门禁（如 CI/CD 变量、Webhook、归档需 Maintainer），
+    用低权限令牌跑测试套件时应当是「未执行」而非「回归」。
+    取不到角色时不跳过，让真实的权限问题仍以失败暴露。
+    """
+    level = project_access_level()
+    if 0 <= level < min_level:
+        cfg = _load_config()
+        case.skipTest(
+            f"{capability} 需要 access_level >= {min_level}，"
+            f"当前令牌在 {cfg['GITLAB_PROJECT']} 上为 {level}；"
+            f"换 Maintainer 令牌后本用例才会执行"
+        )
+
+
+def _remove_readonly(func, path, exc_info):
+    """清掉只读位后重试删除。
+
+    git 把 object 文件写成只读，Windows 上 `rmtree` 会抛 PermissionError；
+    用 `ignore_errors=True` 会把失败静默吞掉，每个跑过 commit 的用例都泄漏一个临时仓库。
+    """
+    try:
+        os.chmod(path, stat.S_IWRITE)
+    except OSError:
+        pass
+    func(path)
+
+
+def remove_tree(path: str) -> None:
+    """删除目录树，能破 Windows 只读位；删不掉时抛错而不是静默泄漏。"""
+    shutil.rmtree(path, onerror=_remove_readonly)
+
+
 class TempRepo:
     """创建临时 git 仓库，用于测试本地 git 命令。"""
 
@@ -185,7 +289,7 @@ class TempRepo:
 
     def __exit__(self, *args):
         """上下文退出时清理临时目录。"""
-        shutil.rmtree(self.dir, ignore_errors=True)
+        remove_tree(self.dir)
 
     def commit(self, msg: str = "test commit", filename: str | None = None):
         """创建文件、暂存并提交，返回创建的文件名。"""

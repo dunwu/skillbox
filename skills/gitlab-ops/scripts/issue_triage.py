@@ -6,7 +6,7 @@
     python issue_triage.py [--no-label] [--assign USERNAME]
 
 环境变量:
-    GITLAB_URL, GITLAB_TOKEN, GITLAB_PROJECT（必需）
+    GITLAB_URL, GITLAB_TOKEN（必需）
 """
 
 from __future__ import annotations
@@ -36,12 +36,13 @@ def main() -> None:
     parser.add_argument("--no-label", action="store_true",
                         help="Only show issues without labels")
     parser.add_argument("--assign", help="Assign all listed issues to username")
+    parser.add_argument("--project", required=True,
+                        help="GitLab project path (e.g. group/project)")
     args = parser.parse_args()
 
     url = require_env("GITLAB_URL")
     token = require_env("GITLAB_TOKEN")
-    project = require_env("GITLAB_PROJECT")
-    client = GitLabClient(url, token, project)
+    client = GitLabClient(url, token, args.project)
 
     issues = client.get_all("/issues?state=opened")
 

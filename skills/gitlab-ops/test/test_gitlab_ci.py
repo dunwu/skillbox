@@ -1,4 +1,4 @@
-"""Tests for gitlab-ci.md — CI/CD pipeline commands."""
+"""Tests for references/gitlab-ci.md — CI/CD pipeline commands."""
 
 import unittest
 from conftest import run, run_ok, GITLAB_PROJECT

@@ -6,7 +6,7 @@
     python ci_retry_failed.py [--ref BRANCH] [--max-pipelines N] [--dry-run]
 
 环境变量:
-    GITLAB_URL, GITLAB_TOKEN, GITLAB_PROJECT（必需）
+    GITLAB_URL, GITLAB_TOKEN（必需）
 """
 
 import argparse
@@ -29,12 +29,13 @@ def main() -> None:
                         help="Max pipelines to scan (default: 5)")
     parser.add_argument("--dry-run", action="store_true",
                         help="List failed jobs without retrying")
+    parser.add_argument("--project", required=True,
+                        help="GitLab project path (e.g. group/project)")
     args = parser.parse_args()
 
     url = require_env("GITLAB_URL")
     token = require_env("GITLAB_TOKEN")
-    project = require_env("GITLAB_PROJECT")
-    client = GitLabClient(url, token, project)
+    client = GitLabClient(url, token, args.project)
 
     status, pipelines = client.get(
         f"/pipelines?ref={args.ref}&status=failed&per_page={args.max_pipelines}"
@@ -61,7 +62,7 @@ def main() -> None:
             continue
 
         result = subprocess.run(
-            ["glab", "ci", "retry", str(pid), "-R", project],
+            ["glab", "ci", "retry", str(pid), "-R", args.project],
             capture_output=True, text=True, timeout=60,
         )
         if result.returncode == 0:

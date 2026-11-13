@@ -1,4 +1,4 @@
-"""Tests for gitlab-auth.md — authentication and identity management."""
+"""Tests for references/gitlab-auth.md — authentication and identity management."""
 
 import unittest
 from conftest import run, run_ok, GITLAB_HOST
