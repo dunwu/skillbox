@@ -1,173 +1,173 @@
-# 面试题重要度评估标尺
+# Interview Question Importance Rubric
 
-> 模式五（重要度评估）的唯一评分依据。**不读本文件禁止评分**，禁止凭记忆或印象给星级建议。
+> The sole scoring basis for Mode 5 (Importance Rating). **Scoring without reading this file is forbidden**; never hand out star suggestions from memory or impression.
 >
-> 基准口径：头部大厂 Java 后端**资深技术专家 / 架构师**（阿里 P8、字节 2-2、腾讯 T10，15 年+ 经验）。
-> 非 Java 主线专题（大数据、人工智能、DevOps）只评估「**与该岗位的关联性重要度**」，不按本专业纵深给分。
+> Baseline: Java backend **senior technical expert / architect** at a top-tier company (Alibaba P8, ByteDance 2-2, Tencent T10, 15+ years).
+> Non-Java-mainline topics (big data, AI, DevOps) are rated only on "**relevance importance to this role**", not on depth within their own specialty.
 
 ---
 
-## 一、五维加权模型
+## 1. Five-Dimension Weighted Model
 
-| 维度 | 名称 | 权重 | 评什么 | 打分要点 |
+| Dimension | Name | Weight | What it measures | Scoring points |
 | --- | --- | --- | --- | --- |
-| **D1** | 面试热度（P8 口径） | **35%** | 近 2 年头部大厂 P8/2-2/T10 面试中，这个知识点被真实考察的频率 | 5=几乎必问；4=高频；3=常问；2=偶问；1=罕见/已过时。**注意是 P8 口径，不是校招口径**——校招必考但 P8 不再单独问的（如 `==` 与 `equals`）D1 给 1-2 |
-| **D2** | 知识基础性 | **20%** | 是否为该领域绕不开的底层原理，不懂它就无法理解上层 | 5=地基级（不懂则整块崩塌）；3=重要但可绕；1=边角知识点 |
-| **D3** | 架构决策相关性 | **25%** | 该知识点是否直接支撑「做技术选型 / 定容量 / 判故障 / 权衡方案」的决策 | **P8 口径下新增的关键维度**。5=答错就会做出错误架构决策；3=影响实现质量；1=纯知识记忆，与决策无关 |
-| **D4** | 实战价值 | **10%** | 是否对应真实生产场景、踩坑、调参、故障排查 | 5=生产事故级经验；3=日常开发用得上；1=纯理论 |
-| **D5** | 区分度 | **10%** | 能否区分「背过」与「真懂」，追问空间有多大 | 5=可层层追问 3 层以上且每层都能筛人；3=有一层追问空间；1=一句话答完 |
+| **D1** | Interview heat (P8 bar) | **35%** | How often this knowledge point is actually probed in P8/2-2/T10 interviews at top-tier companies over the past 2 years | 5=almost always asked; 4=high frequency; 3=regularly asked; 2=occasionally asked; 1=rare/outdated. **This is the P8 bar, not the campus-recruiting bar**—items mandatory in campus hiring but no longer asked separately at P8 (e.g. `==` vs `equals`) get D1 1-2 |
+| **D2** | Knowledge foundationality | **20%** | Whether it is an unavoidable underlying principle in the field, without which the layers above cannot be understood | 5=bedrock level (the whole block collapses without it); 3=important but skippable; 1=corner-case knowledge point |
+| **D3** | Architecture-decision relevance | **25%** | Whether the knowledge point directly supports decisions to "pick a technology / size capacity / diagnose failures / weigh options" | **Key dimension added under the P8 bar**. 5=a wrong answer leads to a wrong architecture decision; 3=affects implementation quality; 1=pure knowledge recall, unrelated to decisions |
+| **D4** | Practical value | **10%** | Whether it maps to real production scenarios, pitfalls, tuning, incident troubleshooting | 5=production-incident-grade experience; 3=useful in daily development; 1=pure theory |
+| **D5** | Discrimination | **10%** | Whether it separates "memorized" from "truly understood", and how much follow-up room it offers | 5=can be probed 3+ layers deep and every layer filters candidates; 3=one layer of follow-up room; 1=answered in one sentence |
 
-**加权分** = D1×0.35 + D2×0.20 + D3×0.25 + D4×0.10 + D5×0.10（保留两位小数）
+**Weighted score** = D1×0.35 + D2×0.20 + D3×0.25 + D4×0.10 + D5×0.10 (keep two decimals)
 
-### 为什么 D3 必须独立成维且给到 25%
+### Why D3 must be an independent dimension at 25%
 
-权威站点调研结论：P8 级面试中，**纯知识盘问仅占约 25%**，其余为项目深挖约 30%、技术决策约 25%、影响力约 15%；字节后端二面中系统设计占约 45%、深度原理占约 35%。
+Authoritative-site research conclusion: in P8-level interviews, **pure knowledge quizzing accounts for only about 25%**; the rest is project deep-dive ~30%, technical decisions ~25%, influence ~15%; in ByteDance backend round 2, system design is ~45% and deep principles ~35%.
 
-旧的四维模型（缺 D3）会把评估结果偏向「知识广度」，与 P8 真实考察点错位——大量「知识面很宽但不影响任何决策」的题被高估，而「直接决定架构选型」的题被低估。
+The old four-dimension model (missing D3) skewed results toward "knowledge breadth", misaligned with what P8 actually probes—plenty of questions with "broad knowledge but no bearing on any decision" were overrated, while questions that "directly determine architecture selection" were underrated.
 
 ---
 
-## 二、星级分档
+## 2. Star Bands
 
-| 星级 | 加权分区间 | 语义 |
+| Star | Weighted-score range | Semantics |
 | --- | --- | --- |
-| ⭐ | ≤ 1.55 | 边缘/过时/纯记忆，P8 面试基本不问 |
-| ⭐⭐ | 1.56 – 2.70 | 低频或浅层，暖场题、命令细节题 |
-| ⭐⭐⭐ | 2.71 – 3.50 | 常考，需答出原理但不到决策层 |
-| ⭐⭐⭐⭐ | 3.51 – 4.49 | 高频且与架构决策强相关，P8 必须能深答 |
-| ⭐⭐⭐⭐⭐ | ≥ 4.50 **且 R4 成立** | 必考 + 决策级 + 可深度追问，题库核心资产 |
+| ⭐ | ≤ 1.55 | Marginal/outdated/pure recall; P8 interviews basically never ask |
+| ⭐⭐ | 1.56 – 2.70 | Low-frequency or shallow: warm-up questions, command-detail questions |
+| ⭐⭐⭐ | 2.71 – 3.50 | Commonly asked; must state the principle but not reach decision level |
+| ⭐⭐⭐⭐ | 3.51 – 4.49 | High-frequency and strongly tied to architecture decisions; a P8 must be able to answer deeply |
+| ⭐⭐⭐⭐⭐ | ≥ 4.50 **and R4 holds** | Must-ask + decision-level + deep follow-up possible; core asset of the question bank |
 
-**五星是稀缺资源**：全库五星占比应控制在 5%–10%。若某板块五星超过 20%，几乎必然是通胀，需回查 R4 是否真的成立。
+**Five stars is a scarce resource**: across the whole bank, five-star items should stay within 5%–10%. If a section exceeds 20% five-star, it is almost certainly inflation; re-check whether R4 really holds.
 
 ---
 
-## 三、决策规则 R1–R7
+## 3. Decision Rules R1–R7
 
-规则**优先于**加权分区间。冲突时按 R1/R4（托底）> R2（封顶）> 加权分区间 的顺序裁定。
+Rules **take precedence over** weighted-score bands. On conflict, adjudicate in the order R1/R4 (floor) > R2 (cap) > weighted-score band.
 
-| 编号 | 规则 | 效果 |
+| No. | Rule | Effect |
 | --- | --- | --- |
-| **R1** | **托底**：D1 ≥ 4 **且** D2 ≥ 4 | 星级不得低于 ⭐⭐⭐⭐ |
-| **R2** | **封顶**：D1 ≤ 2 | 星级不得高于 ⭐⭐⭐，无论内容写得多深 |
-| **R3** | **区分度补偿**：D5 ≥ 4 且加权分落在某档上界 ±0.15 内 | 可上调一档 |
-| **R4** | **决策相关性**：D3 ≥ 4 ⇒ 星级 ≥ ⭐⭐⭐⭐；**且** D1 ≥ 4 ⇒ ⭐⭐⭐⭐⭐ | 五星的必要条件 |
-| **R5** | **降档封顶**：纯记忆型 / 暖场型 / 已过时技术 / 纯命令与配置细节 | 星级 ≤ ⭐⭐ |
-| **R6** | **AI 专题时效口径**：D1 取**趋势值而非历史值**，按 2025-2026 年热度判定 | 见 §五 三分法 |
-| **R7** | **非主线关联口径**：非 Java 主线专题按「与 Java 后端架构师岗位的关联深度」给 D1/D3 | 见 §五 白名单 |
+| **R1** | **Floor**: D1 ≥ 4 **and** D2 ≥ 4 | Star MUST NOT be lower than ⭐⭐⭐⭐ |
+| **R2** | **Cap**: D1 ≤ 2 | Star MUST NOT be higher than ⭐⭐⭐, no matter how deep the content is |
+| **R3** | **Discrimination compensation**: D5 ≥ 4 and the weighted score falls within ±0.15 of a band's upper bound | May move up one band |
+| **R4** | **Decision relevance**: D3 ≥ 4 ⇒ star ≥ ⭐⭐⭐⭐; **and** D1 ≥ 4 ⇒ ⭐⭐⭐⭐⭐ | Necessary condition for five stars |
+| **R5** | **Downgrade cap**: pure recall / warm-up / obsolete technology / pure command-and-config detail | Star ≤ ⭐⭐ |
+| **R6** | **AI-topic timeliness basis**: D1 takes the **trend value, not the historical value**, judged by 2025-2026 heat | See §5 trichotomy |
+| **R7** | **Non-mainline relevance basis**: for non-Java-mainline topics, assign D1/D3 by "depth of relevance to the Java backend architect role" | See §5 whitelist |
 
 ---
 
-## 四、派生规则 A / B / C（具全局约束力）
+## 4. Derived Rules A / B / C (globally binding)
 
-### 规则 A：难度—星级硬约束（含双重校验）
+### Rule A: difficulty–star hard constraint (with double validation)
 
-题目标注【困难】**且**目标等级 L3-L4 ⇒ 星级**下限 ⭐⭐⭐⭐**；低于此判为「**梯度倒挂**」。
+A question tagged 【困难】 **and** targeted at L3-L4 ⇒ star **floor ⭐⭐⭐⭐**; anything lower counts as "**gradient inversion**".
 
-**必须叠加双重校验**：规则 A 触发 **且** 加权分 ≥ 3.5 才允许上调。
+**Double validation MUST be stacked**: Rule A fires **and** the weighted score is ≥ 3.5 before any upgrade is allowed.
 
-若触发规则 A 但加权 < 3.5，说明是**【困难】标签虚高**，正确处置是**建议校准难度标签**（降为【中等】），而非机械上调星级。不加这条校验会导致全库五星通胀。
+If Rule A fires but the weighted score is < 3.5, the **【困难】 label is inflated**; the correct handling is to **recommend recalibrating the difficulty label** (down to 【中等】), not to mechanically raise the star. Without this check, five-star inflation spreads across the whole bank.
 
-已知实例：Shenandoah（加权 2.00）、CMF（2.55）、AOT（2.35）——均应降难度标签而非升星级。
+Known instances: Shenandoah (weighted 2.00), CMF (2.55), AOT (2.35)—all should have the difficulty label lowered rather than the star raised.
 
-### 规则 A 的对称上限：反向倒挂
+### Rule A's symmetric ceiling: reverse inversion
 
-规则 A 只约束了「困难题不得低星」，还须补一条上限：**难度标注更低或内容更浅的题，星级不得高于内容更深的同板块题**。
+Rule A only constrains "hard questions must not be low-star"; a ceiling is also required: **a question with a lower difficulty label or shallower content MUST NOT be rated higher than deeper questions in the same section**.
 
-发现反向倒挂时，处置方向是**下调浅题**，而不是上调深题。
+When reverse inversion is found, fix it by **lowering the shallow question**, not by raising the deep one.
 
-实例：并发（一）前 24 题中，【简单】/L2 的「并发 vs 并行」「阻塞 vs 非阻塞」星级高于内容更深的【中等】/L2-L3 题，且【中等】五星 5 题 > 【困难】四星 3 题。
+Instance: in `并发（一）`, among the first 24 questions, the 【简单】/L2 "concurrency vs parallelism" and "blocking vs non-blocking" items outrank deeper 【中等】/L2-L3 items, and 【中等】 has 5 five-star items > 【困难】's 3 four-star items.
 
-### 规则 B：内容深度不得抬高热度
+### Rule B: content depth must not inflate heat
 
-内容写得深**只能**作为 **D5** 的加分依据，**不得**抬高 D1 / D3 判定。
+Deep content counts **only** toward **D5**; it **MUST NOT** raise D1 / D3 judgments.
 
-反向同样成立——内容优秀但题面价值低的仍应下调，但**理由中必须写明「下调星级不否定内容质量」**。
+The reverse holds too—excellent content with low question-prompt value should still be downgraded, but **the rationale MUST state that "downgrading the star does not deny content quality"**.
 
-实例：「ArrayList 和 LinkedList 有什么区别」内容含 64 字节 Cache Line、L1/L3/RAM 访问周期、10~40× 量化对比，质量很高，但加权仅 2.35，仍由 ⭐⭐⭐⭐⭐ 降至 ⭐⭐⭐。
+Instance: "ArrayList 和 LinkedList 有什么区别" covers 64-byte cache lines, L1/L3/RAM access cycles, and a 10–40× quantified comparison—very high quality, yet the weighted score is only 2.35, so it still drops from ⭐⭐⭐⭐⭐ to ⭐⭐⭐.
 
-### 规则 C：跨文件一致性
+### Rule C: cross-file consistency
 
-同一主题在不同源文件中星级冲突时**必须标记**，给出两边标题与当前星级，裁定基准为「**以架构决策价值更高的一侧为准**」。若两侧视角确实不同（如一为原理、一为运维），保留差异但在正文声明分工。
-
----
-
-## 五、非主线专题与 AI 专题的专门口径
-
-### R7 非主线专题
-
-Docker / K8S / Hadoop / Hive / HBase / 大数据等非 Java 主线专题，只评「与 Java 后端架构师岗位的关联性重要度」。
-
-- 纯命令、纯 Yaml、纯语法、纯部署运维步骤：D1 给 1-2，R5 封顶 ⭐⭐
-- 只有落在下列「**Java 交叉点白名单**」内的题才可给 D3 4-5：
-
-**Docker 白名单**：JVM 容器化适配（`UseContainerSupport`、cgroup v1/v2 配额感知、`MaxRAMPercentage` 取代 `-Xmx`、容器 OOMKilled vs JVM OOM、堆外内存预留）、Namespace/Cgroups 隔离原理、镜像分层与 UnionFS 对构建与弹性伸缩效率的影响、容器 vs 虚拟机的安全边界。
-
-**K8S 白名单**：声明式 API 与 Reconcile Loop（Level-triggered vs Edge-triggered，属通用分布式设计范式）、request/limit 与 QoS 三级对 JVM 内存的匹配、探针三件套与 Java 应用启动慢/优雅上下线、HPA/VPA/CA 指标选型与扩缩容抖动、Informer 与 List-Watch、Service Mesh 与客户端治理的取舍。
-
-### R6 AI 专题三分法
-
-D1 取**趋势值而非历史值**，按 2025-2026 年热度判定：
-
-1. **AI 应用工程化架构** → D1/D3 给 4-5：Agent 编排（ReAct / Plan-Execute）、RAG 系统设计、工具调用与 MCP、上下文工程、推理服务治理、Token 成本优化、评测体系、Prompt 注入防御
-2. **纯模型内部原理** → 对 Java 架构师 D1 只给 2-3：注意力机制数学推导、反向传播、BPE 实现
-3. **纯框架 API 用法** → R5 封顶 ⭐⭐
+When the same topic has conflicting stars across different source files, **it MUST be flagged**, giving both titles and current stars; the adjudication basis is "**the side with higher architecture-decision value wins**". If the two perspectives genuinely differ (e.g. one is principles, one is ops), keep the difference but declare the division of labor in the body text.
 
 ---
 
-## 六、五星虚高的可操作判据
+## 5. Dedicated Bases for Non-Mainline and AI Topics
 
-即使主题是 volatile / synchronized 这类 P8 必考高频题，若**同时满足**以下三条，⭐⭐⭐⭐⭐ 应降至 ⭐⭐⭐⭐：
+### R7 Non-mainline topics
 
-1. 正文极短（数十行量级）
-2. 无 🏭 实战场景小节
-3. 内容与同文件他题重复
+Docker / K8S / Hadoop / Hive / HBase / big data and other non-Java-mainline topics are rated only on "relevance importance to the Java backend architect role".
 
-实例：并发（一）「volatile vs synchronized」（正文 52 行）、「synchronized 有什么作用」（37 行）。
+- Pure commands, pure YAML, pure syntax, pure deployment/O&M steps: D1 1-2, R5 caps at ⭐⭐
+- Only questions inside the following "**Java intersection whitelist**" may get D3 4-5:
+
+**Docker whitelist**: JVM containerization adaptation (`UseContainerSupport`, cgroup v1/v2 quota awareness, `MaxRAMPercentage` replacing `-Xmx`, container OOMKilled vs JVM OOM, off-heap memory headroom), Namespace/Cgroups isolation principles, image layering and UnionFS impact on build and autoscaling efficiency, container vs VM security boundary.
+
+**K8S whitelist**: declarative API and Reconcile Loop (level-triggered vs edge-triggered, a general distributed design pattern), request/limit and the three QoS tiers matched to JVM memory, the probe trio and slow Java app startup / graceful online-offline, HPA/VPA/CA metric selection and scaling flapping, Informer and List-Watch, Service Mesh vs client-side governance trade-offs.
+
+### R6 AI-topic trichotomy
+
+D1 takes the **trend value, not the historical value**, judged by 2025-2026 heat:
+
+1. **AI application engineering architecture** → D1/D3 4-5: Agent orchestration (ReAct / Plan-Execute), RAG system design, tool calling and MCP, context engineering, inference service governance, token cost optimization, evaluation systems, prompt injection defense
+2. **Pure model internals** → for a Java architect, D1 only 2-3: attention mechanism math derivation, backpropagation, BPE implementation
+3. **Pure framework API usage** → R5 caps at ⭐⭐
 
 ---
 
-## 七、板块级重定基线
+## 6. Actionable Criteria for Five-Star Inflation
 
-当某板块出现以下**任一**情形，不再逐题硬调，改走板块级重定基线流程：
+Even if the topic is a P8 must-ask hot item such as volatile / synchronized, if **all three** of the following hold, ⭐⭐⭐⭐⭐ should drop to ⭐⭐⭐⭐:
 
-| 判定条件 | 含义 |
+1. The body is extremely short (on the order of tens of lines)
+2. No 🏭 `实战场景` section
+3. Content duplicates other questions in the same file
+
+Instance: `并发（一）` "volatile vs synchronized" (52-line body), "synchronized 有什么作用" (37 lines).
+
+---
+
+## 7. Section-Level Rebaseline
+
+When a section shows **any one** of the following, stop per-question hard-tuning and switch to the section-level rebaseline process:
+
+| Trigger condition | Meaning |
 | --- | --- |
-| 某一星级档位**整档空缺** | 例如 Kafka 全库无 ⭐⭐⭐⭐ |
-| **≥50%** 题目落在同一星级 | 地板效应或天花板效应 |
-| 升/降方向**单向率 ≥80%** | 整板块基线系统性偏移 |
+| A star band is **entirely empty** | e.g. no ⭐⭐⭐⭐ anywhere in the whole Kafka bank |
+| **≥50%** of questions fall in the same star band | floor effect or ceiling effect |
+| Up/down direction is **one-way ≥80%** | the whole section's baseline is systematically shifted |
 
-术语：
-- **地板效应**：某板块 ≥50% 题目落在同一低星级档
-- **天花板效应**：某板块最高星级被压制在低于其内容深度的档位
-- **梯度倒挂**：标注更深/更难的题目星级反而更低
+Terminology:
+- **Floor effect**: ≥50% of a section's questions fall in the same low star band
+- **Ceiling effect**: a section's top star is suppressed below the band its content depth warrants
+- **Gradient inversion**: questions labeled deeper/harder get lower stars instead
 
-触发后流程：先输出板块级缺口清单与重定基线方案 → 待用户确认 → 再执行，**不得自行批量改写**。
-
----
-
-## 八、元数据缺陷的处理纪律
-
-多个源文件的「目标等级」字段被批量写错（已知：分布式理论 31 题全标 L2、Dubbo 三文件全标 L2、Spring 后半 42 题全为 L1/L2），与【困难】+L3/L4 的实际内容矛盾。
-
-**评估这类文件时不能依赖「目标等级」字段，须按内容实际深度自行判定 L 级**，并在系统性观察中量化报告元数据失真比例。
+Post-trigger flow: first output the section-level gap list and rebaseline plan → wait for user confirmation → then execute; **never batch-rewrite on your own**.
 
 ---
 
-## 九、执行纪律与边界原则
+## 8. Handling Discipline for Metadata Defects
 
-1. **单题自证，禁止批量公式重算**。用户曾明确否决过批量评级修正。每一条星级建议都必须给出该题自己的证据（引用答案正文的实际论述作为深度证据），不得用「整个板块统一 +1 星」这类公式化处理。
-2. **调整率控制在 15% 以内**为健康区间。超过则说明标尺或原库基线有一方系统性错误，应先回查再动手。
-3. **评估清单四要素缺一不可**：当前星级 → 建议星级 + 触发规则编号 + 加权分 + 2-4 句理由。
-4. **下调也要给足理由**，且必须区分「题面价值低」与「内容质量差」——规则 B 要求写明下调不否定内容质量。
-5. **🔴 CHECKPOINT-D**：执行星级调整前必须先输出完整评估清单待用户确认；用户明确说「直接调整/无需确认」时，本次批量任务内可跳过。板块级重定基线同样适用。
-6. **跨文件一致性检查（规则 C）不可跳过**，否则同一主题在不同源文件的星级冲突会长期潜伏。
-7. **不读标尺不评分**；标尺文件缺失时停止评估并告知用户，不得凭记忆输出。
+The "target level" field in several source files was batch-written wrong (known: all 31 distributed-theory questions marked L2, all three Dubbo files marked L2, the last 42 Spring questions all L1/L2), contradicting the actual content of 【困难】 + L3/L4.
+
+**When evaluating such files, do not rely on the "target level" field; judge the L level yourself from actual content depth**, and report the metadata distortion ratio quantitatively in the systematic observations.
 
 ---
 
-## 十、输出格式
+## 9. Execution Discipline and Boundary Principles
 
-### 单题评估条目
+1. **Prove each question individually; batch formula recalculation is forbidden**. The user has explicitly rejected batch rating corrections. Every star suggestion must carry that question's own evidence (quote actual argumentation from the answer body as depth evidence); formulaic handling such as "whole section +1 star" is not allowed.
+2. **Keep the adjustment rate within 15%** as the healthy range. Beyond that, either the rubric or the original bank baseline is systematically wrong—re-check before acting.
+3. **The evaluation list has four mandatory elements**: current star → suggested star + triggered rule number + weighted score + 2-4 sentences of rationale.
+4. **Downgrades need full justification too**, and must distinguish "low question-prompt value" from "poor content quality"—Rule B requires stating that the downgrade does not deny content quality.
+5. **🔴 CHECKPOINT-D**: before applying star adjustments, first output the complete evaluation list and wait for user confirmation; when the user explicitly says 「直接调整/无需确认」, it may be skipped within this batch task. The same applies to section-level rebaseline.
+6. **Cross-file consistency check (Rule C) must not be skipped**, otherwise same-topic star conflicts across source files lurk indefinitely.
+7. **No rubric, no scoring**; if the rubric file is missing, stop the evaluation and tell the user—never output from memory.
+
+---
+
+## 10. Output Format
+
+### Single-question evaluation entry
 
 ```
 - 【难度】题目原文标题
@@ -177,10 +177,10 @@ D1 取**趋势值而非历史值**，按 2025-2026 年热度判定：
   - 理由：<2-4 句，必须引用答案正文的实际论述作为深度证据，不得只复述标题>
 ```
 
-### 板块汇总条目
+### Section summary entry
 
 ```
 | 源文件 | 深读题数 | 评级合理 | 建议上调 | 建议下调 | 调整率 | 星级分布（当前） |
 ```
 
-调整率 = (上调 + 下调) / 深读题数。「评级合理 + 调整」若与深读题数不等，必须在口径说明中逐项披露差额成因，不得静默吞掉。
+Adjustment rate = (upgrades + downgrades) / questions read in depth. If "rating reasonable + adjustments" does not equal questions read in depth, the cause of the difference MUST be disclosed item by item in the basis notes—never silently swallowed.

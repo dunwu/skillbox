@@ -1,148 +1,148 @@
-# 面试题答案编写规约
+# Interview Answer Writing Rules
 
-本规约是 interview skill 子能力「面试答案编写/优化」的执行标准。编写、改写、评审任何面试题答案时，必须遵循本规约。
+This document is the execution standard for the interview skill sub-capability 「面试答案编写/优化」. Writing, rewriting, or reviewing any interview answer MUST follow these rules.
 
-**模板结构与基准样例**：见 [template/answer.md](../template/answer.md)。对规约有歧义时，以基准样例的实际格式为准。
+**Template structure and reference example**: see [template/answer.md](../template/answer.md). When these rules are ambiguous, the actual format of the reference example wins.
 
-## 设计目标
+## Design Goals
 
-一份答案同时适配多类读者与多档备考周期，各自读到自己的层级即停：
+One answer serves several reader profiles and prep horizons at once; each reader stops at their own level:
 
-| 维度     | 分层               | 阅读范围                                                               |
+| Dimension | Tier | Reading scope |
 | -------- | ------------------ | ---------------------------------------------------------------------- |
-| 读者资历 | ≤3 年（目标 L2）   | 💎 关键结论 + ⚡记忆卡片 + 📖 核心知识                                 |
-|          | 3-5 年（目标 L3）  | 上述 + 🔬 扩展知识【L3】层 + 🔀 发散问题                               |
-|          | 5-10 年（目标 L4） | 全量，重点在【L4】层与 🏭 实战场景                                     |
-|          | 10 年+（目标 L4+） | 全量，重点在横向对比、版本演进、跨领域串联；能将答案反哺为面试出题素材 |
-| 备考时间 | 短期冲刺（1-2 周） | 只过 💎 关键结论 + ⚡记忆卡片；发散问题只看标题                        |
-|          | 中期（1-2 月）     | + 📖 核心知识（能完整口述）+ 发散问题简答                              |
-|          | 长期（持续）       | 全量精读；记忆卡片导 Anki 循环复习                                     |
+| Reader seniority | ≤3 years (target L2) | 💎 关键结论 + ⚡记忆卡片 + 📖 核心知识 |
+|          | 3-5 years (target L3) | the above + 🔬 扩展知识 【L3】 layer + 🔀 发散问题 |
+|          | 5-10 years (target L4) | everything, focused on the 【L4】 layer and 🏭 实战场景 |
+|          | 10 years+ (target L4+) | everything, focused on cross-sectional comparison, version evolution, cross-domain links; can feed the answer back as material for posing interview questions |
+| Prep time | Short sprint (1-2 weeks) | only 💎 关键结论 + ⚡记忆卡片; for 发散问题 read titles only |
+|          | Medium term (1-2 months) | + 📖 核心知识 (able to narrate it fully) + short answers to 发散问题 |
+|          | Long term (ongoing) | full close reading; export 记忆卡片 to Anki for spaced repetition |
 
-## 模板结构
+## Template Structure
 
-模块顺序固定，禁止调换。模板骨架与基准样例见 [template/answer.md](../template/answer.md)。
+Module order is fixed and MUST NOT be reordered. See [template/answer.md](../template/answer.md) for the skeleton and reference example.
 
-## 逐模块写作要求
+## Per-Module Writing Requirements
 
-### 0. 题头元信息
+### 0. Question Header Metadata
 
-- 格式为引用块，紧跟题目标题，字段顺序固定：`🎯 目标等级 ｜ ⏱ 建议用时 ｜ 🏷 标签`。
-- 题目的难度与重要度以题目标题为准，且**必须与题库索引表（`questionBankDir`，config.json 配置）保持一致**。重要度的评估方法论（五维加权模型、星级分档、决策规则 R1–R7、派生规则 A/B/C）见 [reference/importance-rubric.md](importance-rubric.md)。
-- 目标等级参考：简单题 L2，中等题 L2-L3，困难题 L3-L4。
+- Format: a blockquote immediately after the question title, with fixed field order: `🎯 目标等级 ｜ ⏱ 建议用时 ｜ 🏷 标签`.
+- A question's difficulty and importance follow its title, and **MUST stay consistent with the question bank index table (`questionBankDir`, configured in config.json)**. For the importance rating methodology (five-dimension weighted model, star bands, decision rules R1–R7, derived rules A/B/C) see [reference/importance-rubric.md](importance-rubric.md).
+- Target grade reference: 简单 → L2, 中等 → L2-L3, 困难 → L3-L4.
 
 ### 1. 💎 关键结论
 
-- 面试开场的 30 秒口述稿，**≤100 字**，纯口语、可直接读出来。
-- 字数计量口径：中英混排按自然字符累计——每个中文字符、标点计 1 字；连续英文单词、数字串、代码标识符整体计 1 字（如 `binlog`、`8.0.17` 各计 1 字）。
-- 先给结论，再给一句话理由；禁止罗列细节。
+- The 30-second spoken script that opens the interview, **≤100 字**, pure spoken language, readable aloud as-is.
+- Word-count convention: count natural characters in mixed Chinese/English — each Chinese character or punctuation mark counts as 1; a consecutive English word, number string, or code identifier counts as 1 as a whole (e.g. `binlog`, `8.0.17` each count as 1).
+- Conclusion first, then a one-sentence reason; never list details.
 
 ### 2. ⚡记忆卡片
 
-- 注意标题写法：`⚡` 与「记忆卡片」之间**无空格**。
-- 三字段固定，缺一不可：**口诀**（谐音/对仗/短句）、**关键词**（用全角斜杠 `／` 分隔）、**链路**（因果或流程箭头）。
-- 链路字段对分类对比型题目（无因果链）的写法：按「大类 → 成员 → 各自职责」组织（如「Server 层 4 日志 → InnoDB 层 redo/undo → 复制与崩溃恢复各司其职」），禁止为凑箭头强造因果。
-- 该模块是 Anki 卡片的数据源，字段名与结构禁止变更。
+- Mind the heading spelling: there is **no space** between `⚡` and 「记忆卡片」.
+- Three fixed fields, none optional: **口诀** (homophone / parallel phrasing / short sentence), **关键词** (separated by the full-width slash `／`), **链路** (causal or process arrows).
+- The 链路 field for compare-and-classify questions (no causal chain): organize as "major category → members → each one's responsibility" (e.g. 「Server 层 4 日志 → InnoDB 层 redo/undo → 复制与崩溃恢复各司其职」); never invent causality just to fill arrows.
+- This module is the data source for Anki cards; field names and structure MUST NOT change.
 
 ### 3. 📖 核心知识
 
-- L2 基准完整答案：覆盖问题基本点，结构化分点，3-5 个要点为限。
-- 书面但可读出口；优先使用表格、流程图（mermaid）组织对比与流程类内容。
-- 案例、示例代码一律用**带标题**的 `::: details 案例名称` 折叠，保持正文主线清爽。
+- The L2 baseline full answer: cover the question's basic points, structured into bullets, 3-5 points maximum.
+- Written but speakable; prefer tables and mermaid flowcharts for comparisons and process-type content.
+- Cases and sample code always go into a **titled** `::: details 案例名称` fold to keep the main text clean.
 
 ### 4. 🔬 扩展知识
 
-- 结构固定：`#### 🔬 扩展知识` 标题在外 + **无标题** `::: details` 折叠内容。
-- 内容按子层标注：【L3】= 原理深挖、定量分析、源码定位；【L4】= 批判性分析、横向对比、版本演进。
-- 【L3】在前【L4】在后；每层 1-3 条，必须超出核心知识，禁止重复。
-- 容器内排版规则**只作用于本节与 🏭 实战场景**：📖 核心知识 的带标题案例容器、⚠️ 常见误区 容器按普通写法，不套用下述分行式。
-- 容器展开后读者是扫读态，禁止把整段论证压在一条列表项里连续写完。每条以问句独占首行 `- 【L3】<问句>？`（该行结尾不接正文），空一行后写正文，缩进 2 空格与列表项文本起始列对齐，按语义拆 1-3 个短段、段间留空行。
-- 空行只跟着「段落边界」走，不跟着「列表项」走：同构的单行自足 bullet 之间**紧挨不空行**，无论长短；只有条目自带缩进正文段、或相邻两侧是段落 / `>` 引用块 / 表格 / 代码块时，才在其间空一行。
-  反例（不合适）：
+- Fixed structure: a `#### 🔬 扩展知识` heading outside + **untitled** `::: details` folded content.
+- Tag content by sub-layer: 【L3】 = principle deep dive, quantitative analysis, source-code localization; 【L4】 = critical analysis, cross-sectional comparison, version evolution.
+- 【L3】 before 【L4】; 1-3 items per layer, MUST go beyond 核心知识, no repetition.
+- The in-container layout rules **apply only to this section and 🏭 实战场景**: the titled case containers in 📖 核心知识 and the ⚠️ 常见误区 container follow normal formatting and do not use the line-split form below.
+- When expanded the reader is skimming, so never cram a whole argument into one list item written as a continuous run. Each item starts with a question alone on the first line `- 【L3】<问句>？` (that line ends without body text), then a blank line, then the body indented 2 spaces to align with the list item's text start column, split semantically into 1-3 short paragraphs with blank lines between them.
+- Blank lines follow **paragraph boundaries**, not **list items**: structurally identical self-contained one-line bullets sit **directly adjacent with no blank line**, however long; add a blank line only when an item carries an indented body paragraph, or when the neighbors are paragraphs / `>` blockquotes / tables / code blocks.
+  Counter-example (wrong):
   ```text
   - 消费取消时批量处理，减少 DB 交互。
 
   - 扫表兜底每 5 分钟扫描一次。
   ```
-  正例（正确）：
+  Correct example (right):
   ```text
   - 消费取消时批量处理，减少 DB 交互。
   - 扫表兜底每 5 分钟扫描一次。
   ```
-- 单段 ≤ 3 句、单行 ≤ 120 字，超出即换段或改用表格 / 代码块：同一组对象具备 ≥ 3 个可比属性时用 Markdown 表格，指令重排 / 执行流程 / 状态流转时用带行注释的代码块；表格与代码块缩进 2 空格（对齐所属列表项文本起始列），前后各留一个空行。
-- 延伸阅读链接以 `> 📚 延伸阅读：` 引用块放在 details 内末尾。
+- One paragraph ≤ 3 sentences, one line ≤ 120 字; when exceeded, break the paragraph or switch to a table / code block: use a Markdown table when one group of objects has ≥ 3 comparable attributes, and a code block with line comments for instruction reordering / execution flow / state transitions; indent tables and code blocks 2 spaces (aligned with the owning list item's text start column) with one blank line before and after.
+- Extension-reading links go at the end inside details as a `> 📚 延伸阅读：` blockquote.
 
 ### 5. 🏭 实战场景
 
-- 仅困难高频题启用；结构同扩展知识（标题 + 无标题 details）。
-- 必须含量化信息（规模、参数、效果数字）；禁止编造生产数据，业界公认案例或推演须注明性质。
-- 容器内排版沿用第 4 节的分行式：单个案例按「现象 → 排查 → 根因 → 修复」独占行分小段（该四标签仅适用故障/事故型案例；方案设计型案例用「背景 → 方案 → 要点」），量化数据单独成行或小表，不压进数百字段落。
-- 案例叙事段之间按段落边界空行；段下若跟多条单行要点（如「分析要点：」后的 bullet 列表），要点之间紧挨不空行（第 4 节空行规则）。
+- Enabled only for high-frequency hard questions; structure same as 扩展知识 (heading + untitled details).
+- MUST contain quantitative information (scale, parameters, effect numbers); never fabricate production data — well-known industry cases or reasoned projections MUST be labeled as such.
+- In-container layout follows the line-split form of Section 4: a single case splits into standalone lines per 「现象 → 排查 → 根因 → 修复」 (those four labels apply only to failure/incident cases; design-type cases use 「背景 → 方案 → 要点」), with quantitative data on its own line or in a small table, never buried in a hundreds-of-characters paragraph.
+- Blank lines between case narrative paragraphs follow paragraph boundaries; if a paragraph is followed by several one-line points (e.g. the bullet list after 「分析要点：」), those points sit directly adjacent with no blank lines (blank-line rule of Section 4).
 
 ### 6. ⚠️ 常见误区
 
-- 容器结构同扩展知识（标题在外 + 无标题 `::: details`），但**不套用**第 4 节的问答分行式。
-- 每条格式：`❌ "错误说法" → 纠正与原因`。
-- 来源：高频错误认知、面试陷阱题、历史踩坑（如 EXPLAIN `type` 排序误为 `const > system`、查询缓存 8.0 已移除）。
+- Container structure same as 扩展知识 (heading outside + untitled `::: details`), but **does not** use the Q/A line-split form of Section 4.
+- Each entry: `❌ "错误说法" → 纠正与原因`.
+- Sources: high-frequency misconceptions, trap questions, past pitfalls (e.g. mis-ranking EXPLAIN `type` as `const > system`, 查询缓存 already removed in 8.0).
 
 ### 7. 🔀 发散问题
 
-- **不使用** `::: details` 折叠，内容直接跟在 `#### 🔀 发散问题` 标题下方。
-- **排版采用问答分行式**：`- **Q：<问题>？**` 独占一行，空一行后再写 `  → <简答>`，缩进 2 空格与问题文本起始列对齐；**问题与答案禁止写在同一行**。
-- 每个引申问题给 2-3 句简答，**必须能自问自答**。
-- 引申方向：细节下探、相关领域、上下游知识。
-- 目标题在本文档已存在时，注明 `见本文档「题目名」`，引用前须核实该题真实存在。
+- **Does not** use `::: details` folds; content sits directly under the `#### 🔀 发散问题` heading.
+- **Layout uses the Q/A line-split form**: `- **Q：<问题>？**` alone on one line, then a blank line, then `  → <简答>` indented 2 spaces to align with the question text start column; **question and answer MUST NOT share a line**.
+- Each follow-up question gets a 2-3 sentence short answer and **MUST be self-answerable**.
+- Follow-up directions: drill into details, related domains, upstream/downstream knowledge.
+- When the target question already exists in this document, cite it as `见本文档「题目名」`; verify that the question actually exists before citing.
 
-## 模块裁剪矩阵
+## Module Pruning Matrix
 
-● 必选　◐ 可选　— 省略
+● required　◐ optional　— omitted
 
-| 模块        | 简单⭐ | 简单⭐⭐⭐ | 中等⭐⭐+ | 困难⭐⭐⭐+ |
+| Module | 简单⭐ | 简单⭐⭐⭐ | 中等⭐⭐+ | 困难⭐⭐⭐+ |
 | ----------- | :----: | :--------: | :-------: | :---------: |
-| 题头元信息  |   ●    |     ●      |     ●     |      ●      |
-| 💎 关键结论 |   ●    |     ●      |     ●     |      ●      |
-| ⚡记忆卡片  |   ●    |     ●      |     ●     |      ●      |
-| 📖 核心知识 |   ●    |     ●      |     ●     |      ●      |
-| 🔬 扩展知识 |   —    |     ◐      |     ●     |      ●      |
-| 🏭 实战场景 |   —    |     —      |     ◐     |      ●      |
-| ⚠️ 常见误区 |   —    |     ◐      |     ◐     |      ●      |
-| 🔀 发散问题 |   ◐    |     ●      |     ●     |      ●      |
+| 题头元信息 | ● | ● | ● | ● |
+| 💎 关键结论 | ● | ● | ● | ● |
+| ⚡记忆卡片 | ● | ● | ● | ● |
+| 📖 核心知识 | ● | ● | ● | ● |
+| 🔬 扩展知识 | — | ◐ | ● | ● |
+| 🏭 实战场景 | — | — | ◐ | ● |
+| ⚠️ 常见误区 | — | ◐ | ◐ | ● |
+| 🔀 发散问题 | ◐ | ● | ● | ● |
 
-列名口径：「中等⭐⭐+」「困难⭐⭐⭐+」中的 `+` 表示「及以上」（即重要度 ≥2 星 / ≥3 星）。重要度落在两列之间时（如简单⭐⭐），**取较低列**（保守裁剪，避免过度模块）；如需启用该列省略的 ◐ 模块，由用户显式要求。
+Column semantics: the `+` in 「中等⭐⭐+」「困难⭐⭐⭐+」 means "and above" (i.e. importance ≥2 stars / ≥3 stars). When importance falls between two columns (e.g. 简单⭐⭐), **take the lower column** (conservative pruning, avoid over-modularizing); if you need an ◐ module that the column omits, the user must explicitly ask for it.
 
-## 内容质量红线
+## Content Quality Red Lines
 
-1. **事实准确**：版本相关结论必须标注版本（如"MySQL 8.0 已移除查询缓存"）；不确定的内容禁止写入。
-2. **分层不重复**：扩展知识不得复述核心知识；关键结论不得照抄核心知识段落。
-3. **格式合规**：Prettier 零告警；折叠容器只用 `::: details`（vuepress-theme-hope 语法），禁用 `::: warning` 等容器承载模块内容。
-4. **索引一致**：题目标题的难度、重要度与题库索引表（`questionBankDir`，config.json 配置）一致；新增题目须同步登记索引表。
-5. **发散有效**：发散问题引用的题目必须真实存在；简答必须自洽、可独立成立。
-6. **信息不丢失**：改写前先列举既有答案的知识点清单，改写后逐条核对；遗漏的知识点必须归入对应模块，或在交付说明中注明省略理由（如该点事实有误、与主题无关）。
-7. **排版不密集**：🔬 扩展知识 与 🏭 实战场景 遵循第 4/5 节的容器内排版要求——问句独占首行、正文分行分段、单段 ≤ 3 句、单行 ≤ 120 字、多维对比用表格、步骤时序用代码块；🔀 发散问题 遵循问答分行式。禁止把整段论证压在一条列表项里连续写完。
+1. **Factual accuracy**: version-dependent conclusions MUST state the version (e.g. "MySQL 8.0 已移除查询缓存"); never write anything uncertain.
+2. **Layered, no repetition**: 扩展知识 MUST NOT restate 核心知识; 关键结论 MUST NOT copy paragraphs from 核心知识.
+3. **Format compliance**: zero Prettier warnings; fold containers only use `::: details` (vuepress-theme-hope syntax); `::: warning` and other containers MUST NOT host module content.
+4. **Index consistency**: a question title's difficulty and importance MUST match the question bank index table (`questionBankDir`, configured in config.json); newly added questions MUST be registered in the index table.
+5. **Effective follow-ups**: questions referenced by 发散问题 MUST really exist; short answers MUST be self-consistent and stand on their own.
+6. **No information loss**: before rewriting, enumerate the existing answer's knowledge points; after rewriting, check them one by one; every omitted point MUST be filed into the matching module, or its omission reason (e.g. the fact is wrong, unrelated to the topic) stated in the delivery note.
+7. **Layout not dense**: 🔬 扩展知识 and 🏭 实战场景 follow the in-container layout requirements of Sections 4/5 — question alone on the first line, body split into paragraphs, one paragraph ≤ 3 sentences, one line ≤ 120 字, multi-dimensional comparisons in tables, step sequences in code blocks; 🔀 发散问题 follows the Q/A line-split form. Never cram a whole argument into one list item written as a continuous run.
 
-## 编写/改写工作流程
+## Writing / Rewriting Workflow
 
-1. 定位题目：从题库索引表（`questionBankDir`，config.json 配置的题库根目录）确认难度、重要度、所属专题文档。新增或调整重要度时须遵循 [reference/importance-rubric.md](importance-rubric.md) 标尺。
-2. 按裁剪矩阵确定启用模块。
-3. 校验既有内容的事实准确性（尤其版本相关表述），先纠错再套用模板。
-4. 按模块顺序组织内容，逐模块对照写作要求。
-5. 完成后自检：Prettier 格式、details 容器配对、发散问题引用存在性、索引表一致性、信息点无丢失（对照既有答案知识点清单）、🔬 扩展知识 与 🏭 实战场景 的容器内排版符合第 4/5 节（问句独占首行、单段 ≤ 3 句、单行 ≤ 120 字）。
+1. Locate the question: confirm difficulty, importance, and owning topic document from the question bank index table (`questionBankDir`, the question bank root directory configured in config.json). When adding or adjusting importance, follow the scale in [reference/importance-rubric.md](importance-rubric.md).
+2. Determine the enabled modules per the pruning matrix.
+3. Verify the factual accuracy of existing content (especially version-related statements); fix errors before applying the template.
+4. Organize content in module order, checking each module against its writing requirements.
+5. Self-check when done: Prettier format, `::: details` container pairing, existence of 发散问题 references, index table consistency, no information loss (against the existing answer's knowledge-point list), and in-container layout of 🔬 扩展知识 and 🏭 实战场景 per Sections 4/5 (question alone on the first line, one paragraph ≤ 3 sentences, one line ≤ 120 字).
 
-## 题库索引与统计维护
+## Question Bank Index and Statistics Maintenance
 
-适用于题库索引更新、统计重算、索引与源文档一致性审计场景。触发词：更新题库索引、题库统计、索引审计、统计重算、同步索引。
+Applies to question bank index updates, statistics recalculation, and audits of index/source consistency. Trigger words: 更新题库索引、题库统计、索引审计、统计重算、同步索引.
 
-### 架构约定
+### Architecture Conventions
 
-- **源文档（唯一事实源）**：每题形如 `### 【难度】题目标题⭐⭐`（难度 ∈ 简单/中等/困难，星级 1-5 表重要度），章节标题为 `## xxx`。
-- **索引表**：`questionBankDir`（config.json 配置的题库根目录）下汇总清单，每个板块以 `### 板块名` 起头，含六列表格 `| 分类 | 题目 | 难易度 | 重要度 | 掌握度 | 评估 |`。
-- 冲突时一律**以源文档为准**修正索引；但删除类动作须遵守 CHECKPOINT-B 协议，不得静默执行。
+- **Source documents (single source of truth)**: each question looks like `### 【难度】题目标题⭐⭐` (难度 ∈ 简单/中等/困难, star rating 1-5 represents importance), section headings are `## xxx`.
+- **Index table**: the summary list under `questionBankDir` (the question bank root directory configured in config.json); each section starts with `### 板块名` and contains a six-column table `| 分类 | 题目 | 难易度 | 重要度 | 掌握度 | 评估 |` (category / question / difficulty / importance / mastery / assessment).
+- On conflict, always **fix the index to match the source documents**; but deletion-type actions MUST follow the CHECKPOINT-B protocol and MUST NOT run silently.
 
-### 索引统计块格式（参照基准：题库索引文档，如 `数据库面试.md`）
+### Index Statistics Block Format (baseline: question bank index documents, e.g. `数据库面试.md`)
 
-每个板块在题目表格前依次包含三件套：
+Each section contains three pieces before the question table, in order:
 
-1. `::: tip **题库**` 容器：列出该板块的源文档链接。
-2. `::: note **统计**` 块：总题数 + 难易度分布 + 重要度分布，格式固定：
+1. A `::: tip **题库**` container: lists the section's source document links.
+2. A `::: note **统计**` block: total question count + difficulty distribution + importance distribution, fixed format:
 
    ```markdown
    ::: note **统计**：共 **N** 题
@@ -153,21 +153,21 @@
    :::
    ```
 
-3. mermaid 难易度饼图：`pie title 板块名 - 难易度分布`，仅列非零项。
+3. mermaid difficulty pie chart: `pie title 板块名 - 难易度分布`, listing only non-zero entries.
 
-文档顶部总统计为引用块，含总题数、各难度题数与百分比（保留 1 位小数）。
+At the top of the document, the overall statistics are a blockquote containing the total question count and each difficulty's count and percentage (1 decimal place).
 
-### 工具：`script/bank_index.py`
+### Tool: `script/bank_index.py`
 
-零依赖标准库脚本（Python 3.7+），只读，永不修改文件。三个子命令：
+Zero-dependency standard-library script (Python 3.7+), read-only, never modifies files. Three subcommands:
 
-| 子命令   | 用途       | 关键行为                                                                                                 |
+| Subcommand | Purpose | Key behavior |
 | -------- | ---------- | -------------------------------------------------------------------------------------------------------- |
-| `audit`  | 一致性审计 | 源文档为事实源，双向核对；报告缺失题/孤儿行/题面失配/难度失配/重要度失配/重复题/格式违规；有差异退出码 1 |
-| `stats`  | 统计重算   | 按板块聚合题数与难易度/重要度分布，输出全局汇总与占比                                                    |
-| `render` | 渲染统计块 | 输出可直接粘入索引的 `::: note` 块与 mermaid 饼图                                                        |
+| `audit` | consistency audit | source documents are the source of truth, cross-check both ways; reports missing questions / orphan rows / question-prompt mismatches / difficulty mismatches / importance mismatches / duplicate questions / format violations; exit code 1 when differences exist |
+| `stats` | statistics recalculation | aggregate question counts and difficulty/importance distributions per section, output global summary and shares |
+| `render` | render statistics blocks | output `::: note` blocks and mermaid pie charts ready to paste into the index |
 
-`audit` / `stats` 支持 `--json` 输出，供程序化处理。用法：
+`audit` / `stats` support `--json` output for programmatic use. Usage:
 
 ```bash
 python script/bank_index.py audit  --index <索引文件> --src <源文档目录或文件…>
@@ -175,61 +175,61 @@ python script/bank_index.py stats  --index <索引文件>
 python script/bank_index.py render --index <索引文件>
 ```
 
-### 工作流程
+### Workflow
 
-1. **审计**：运行 `audit`，输出差异报告。
-2. **修复**：按报告逐项处理——
-   - 缺失题：从源文档题头提取难度/重要度，补录索引行（归入正确分类）。
-   - 孤儿行：核实源文档是否已删题；确认删除则同步删索引行，存疑则向用户列出裁决。
-   - 题面/难度/重要度失配：以源文档为准修正索引；若源文档本身有误，先修源再同步索引。
-   - 格式违规：按「### 【难度】标题⭐」规范修正；索引行多余列清理为 6 列。
-   - 重复题：转入「题目去重与合并」流程，遵守 CHECKPOINT-B。
-3. **统计重算**：修复完成后运行 `stats`，将结果写入顶部总统计、各板块 `::: note` 块与 mermaid 饼图（可直接采用 `render` 输出）。
-4. **终验**：重跑 `audit`，必须 `NO FINDINGS`（退出码 0）；并核对各板块统计之和等于全局总数。
+1. **Audit**: run `audit`, get a difference report.
+2. **Fix**: work through the report item by item —
+   - Missing question: extract difficulty/importance from the source document's question header, add the index row (into the correct category).
+   - Orphan row: verify whether the question was deleted from the source document; if deletion is confirmed, delete the index row in sync; if in doubt, list it to the user for a ruling.
+   - Question prompt / difficulty / importance mismatch: fix the index to match the source documents; if the source document itself is wrong, fix the source first, then sync the index.
+   - Format violation: fix per the `### 【难度】标题⭐` convention; trim extra columns in index rows down to 6.
+   - Duplicate question: hand over to the "Question Deduplication and Merging" flow, obeying CHECKPOINT-B.
+3. **Statistics recalculation**: after fixes, run `stats`; write results into the top overall statistics, each section's `::: note` block, and the mermaid pie chart (the `render` output can be used directly).
+4. **Final verification**: re-run `audit`; it MUST be `NO FINDINGS` (exit code 0); also check that the sum of per-section statistics equals the global total.
 
-### 执行红线
+### Execution Red Lines
 
-1. **事实源唯一**：统计与审计一律以源文档为准；禁止凭记忆或旧统计填数。
-2. **双写一致**：补录/删除/修正必须索引与源文档同步，禁止只改一边。
-3. **删除受控**：孤儿行清理、重复题删除前必须输出清单待用户确认（CHECKPOINT-B），未确认不得删。
-4. **统计自洽**：交付前验证「各板块之和 = 全局总数」「note 块数字 = mermaid 数字 = 表格实际行数」三处一致。
-5. **工具优先**：审计与统计必须运行 `bank_index.py`，禁止手工估算；人工仅负责执行报告中的修复动作。
+1. **Single source of truth**: statistics and audits always follow the source documents; never fill numbers from memory or stale statistics.
+2. **Consistent double-write**: additions/deletions/corrections MUST update both index and source documents; never change only one side.
+3. **Controlled deletion**: before cleaning orphan rows or deleting duplicates, output a list for user confirmation (CHECKPOINT-B); never delete without confirmation.
+4. **Self-consistent statistics**: before delivery verify three alignments — "sum of sections = global total", "note-block numbers = mermaid numbers = actual table row count".
+5. **Tools first**: audits and statistics MUST run `bank_index.py`; no manual estimation; humans only execute the fix actions in the report.
 
-## 题目去重与合并
+## Question Deduplication and Merging
 
-适用于题库重复题识别、合并、删除、精简场景。
+Applies to identifying, merging, deleting, and trimming duplicate questions in the question bank.
 
-### 识别重复
+### Identifying Duplicates
 
-扫描索引表与源文件，按三类归组：
+Scan the index table and source files, group into three types:
 
-| 类型       | 判定标准                     | 示例                                                                         |
+| Type | Criterion | Example |
 | ---------- | ---------------------------- | ---------------------------------------------------------------------------- |
-| 完全重复   | 同一源文件内题目一字不差     | RabbitMQ 死信题在同一文件出现两次                                            |
-| 跨专题重叠 | 不同专题问同一知识点         | 理论「什么是 CAP 定理？」vs 协同「什么是 CAP 理论？BASE 理论又是什么？」     |
-| 子集关系   | 一题的知识点是另一题的一部分 | 「Zab 和 Paxos 有什么区别？」是「Paxos、Raft、ZAB 有什么区别与联系？」的子集 |
+| Exact duplicate | question text identical within the same source file | the RabbitMQ dead-letter question appears twice in the same file |
+| Cross-topic overlap | different topics asking the same knowledge point | 「什么是 CAP 定理？」 vs 「什么是 CAP 理论？BASE 理论又是什么？」 |
+| Subset relation | one question's knowledge points are part of another's | 「Zab 和 Paxos 有什么区别？」 is a subset of 「Paxos、Raft、ZAB 有什么区别与联系？」 |
 
-输出物：重复题分组清单（每组含题目、专题、难度、星级、重叠点分析）。
+Output: a grouped duplicate list (each group with questions, topic, difficulty, star rating, overlap analysis).
 
-### 处理决策
+### Handling Decisions
 
-每组按优先级确定保留题：**有图片 > 星级高 > 内容全 > 结构合规**。处理方式三选一：
+For each group, pick the keeper by priority: **has images > higher star rating > more complete content > compliant structure**. Then choose one of three actions:
 
-- **直接删除**：内容完全被保留题覆盖，无任何独有信息点。
-- **合并后删除**：待删题有独占精华（独特视角、对比表、发散问题、量化数据、误区），先并入保留题的对应模板模块（🔬 扩展知识 / ⚠️ 常见误区 / 🔀 发散问题），再删除。
-- **改述保留**：两题各覆盖知识点的一半，改写题目边界使互补（如「什么是 CAP 理论？BASE 理论又是什么？」拆出后改述为纯 BASE 题）。
+- **Delete outright**: content fully covered by the keeper, with no unique information points at all.
+- **Merge then delete**: the doomed question has exclusive gems (unique angle, comparison table, 发散问题, quantitative data, pitfalls); merge them into the keeper's matching template modules (🔬 扩展知识 / ⚠️ 常见误区 / 🔀 发散问题) first, then delete.
+- **Rephrase and keep**: the two questions each cover half of the knowledge points; rewrite the question boundaries so they complement each other (e.g. split 「什么是 CAP 理论？BASE 理论又是什么？」 out and rephrase it as a pure BASE question).
 
-### 执行红线
+### Execution Red Lines
 
-1. **图片红线**：删除前必须通读待删题全文；题目中存在图片（含 mermaid、外链图）的，必须先将图片并入保留题；无法安置则保留该题不删，并向用户说明。
-2. **双写一致**：索引表与源文件必须同步删除，禁止只删一边。
-3. **边界保护**：删除源文件题目区块时逐行核对起止边界（题头 `### 【` 至下一题/章节前），严禁误伤相邻章节标题（`##`/`###`）。
-4. **引用修复**：删除后全文搜索指向已删题的引用（`本文档『题目名』`、`详见本文档`），替换为保留题引用；跨文档的改为 `《xxx面试》『题目名』` 格式；无保留题可指时移除该条引用，禁止留死链。
-5. **统计同步**：索引的专题统计（题数/难易度/重要度）、图表、总览统计同步重算更新（运行 `bank_index.py stats` + `render`）。
+1. **Image red line**: before deleting, read the doomed question in full; if the question contains images (including mermaid and external-link images), the images MUST first be merged into the keeper; if they cannot be placed, keep the question and explain to the user.
+2. **Consistent double-write**: the index table and source file MUST be deleted in sync; never delete only one side.
+3. **Boundary protection**: when deleting a question block from a source file, check start/end boundaries line by line (from the header `### 【` to the next question/section), never damaging adjacent section headings (`##`/`###`).
+4. **Reference repair**: after deletion, search the whole text for references to the deleted question (`本文档『题目名』`, `详见本文档`), replace them with references to the keeper; cross-document ones become `《xxx面试》『题目名』`; if no keeper can be referenced, remove that reference — never leave a dead link.
+5. **Statistics sync**: recalculate and update the index's topic statistics (question count / difficulty / importance), charts, and overview statistics (run `bank_index.py stats` + `render`).
 
-### 收尾验证
+### Final Verification
 
-- 源文件题目数（`^### 【` 计数）与索引对应专题行数一致（运行 `bank_index.py audit` 须 NO FINDINGS）。
-- `::: details` 容器开关配对。
-- Prettier 零告警。
-- 已删题目全文检索无残留（标题、引用）。
+- Source-file question count (`^### 【` count) matches the index row count of the matching topic (running `bank_index.py audit` MUST be NO FINDINGS).
+- `::: details` container open/close tags are paired.
+- Zero Prettier warnings.
+- Full-text search shows no residue of deleted questions (titles, references).

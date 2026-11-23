@@ -1,42 +1,50 @@
-# 模式一 · 快速评测细则
+# Mode 1 · Quick Review Details
 
-> 本文档是 interview skill「模式一：模拟面试」的快速评测子模块：出题流程、五段输出格式、基准样例（用户定稿）与执行反例。
+> This document is the quick-review sub-module of the interview skill's "Mode 1: Mock Interview": the question flow, the five-section output format, the reference example (user-finalized), and execution anti-patterns.
 >
-> 模式选择规则与两种评测方式的总览见 SKILL.md「评测模式」章节；快速评测以题库源文档答案为蓝本比对，不进入多轮追问。
+> For mode-selection rules and an overview of the two review styles, see the "Review Modes" section of SKILL.md; quick review compares against the question bank source-document answer as the blueprint and does not enter multi-turn follow-up probes.
 
-## 快速评测：出题流程
+## Quick Review: Posing Questions
 
-1. **扫描选题**：读取题库索引，圈定待评测范围（默认：掌握度 ≠ ✅ 的题目；可按用户指定的板块/星级/掌握度过滤）。按板块顺序逐板块推进，当前板块未评测完毕不进入下一板块；板块内选题优先级 = 重要度高者优先 ＞ ❌ 优先于 ⚠️ ＞ 同优先级按索引表顺序。
-2. **批量出题**：每批默认 5 题（用户可指定批大小）。题面禁止使用 ⭐ 符号，重要度一律以中文书写（一星/二星/三星/四星/五星）。提问格式固定（无论初次评测还是再次评测，题面均不带掌握度字段）：
+1. **Scan and select**: read the question bank index and scope the review range (default: questions whose mastery ≠ 🟢; filter by section / star rating / mastery as the user specifies). Advance section by section in order, and do not enter the next section until the current one is fully reviewed; within a section, selection priority = higher importance first ＞ 🔴 before 🟡 ＞ same priority in index-table order.
+2. **Batch posing**: 5 questions per batch by default (the user may set the batch size). For the question prompt format see "Question Presentation Format" in SKILL.md — the number stands on its own line, and the next line is `**【难度】【星级】题目原文**`; write importance in Chinese numerals and never use the ⭐ symbol. The presentation format is fixed (first review or repeat review alike, the question prompt carries no category or mastery field):
 
-   > **题 1** | Java 新特性 | 困难 | 四星 | Java 8 的 Stream API 的核心操作有哪些？
+   > **题 1**
+   >
+   > **【困难】【四星】Java 8 的 Stream API 的核心操作有哪些？**
 
-3. **逐题评估**：以题库源文档中该题的既有答案为蓝本（💎 关键结论 + 📖 核心知识的要点清单），比对作答的关键要点命中情况：
-   - 要点大部分命中 → 判定【已掌握】✅
-   - 部分命中 → ⚠️，逐条列出未命中要点
-   - 基本未命中 → ❌，附要点速记供复习
-   - 候选人明确放弃/表示不会 → 直接判 ❌ 并附要点速记，不追问
-4. **同步索引**：逐题回写索引表掌握度列；评估列仅在为空时同步同款标记（✅/⚠️/❌），已有 L1-L4 评级的行不覆盖——深度评测评级优先于快速评测标记。
-5. **进度快照**：每批评估完毕输出板块进度（已评 X/Y 题、本批掌握度变化），板块完成后切入下一板块。
+3. **Evaluate question by question**: take the existing answer for that question in the question bank source document as the blueprint (the 💎 关键结论 + 📖 核心知识 key-point list) and compare which key points the answer hits:
+   - most key points hit → judge 【可复述】🔵 (pending consolidation)
+   - partially hit → 🟡, list every missed key point
+   - mostly missed → 🔴, attach a key-point crib for review
+   - the candidate explicitly gives up or says they don't know → judge 🔴 directly and attach a key-point crib; do not probe
+4. **Sync the index**: write the mastery column of the index table back question by question with 🔵 / 🟡 / 🔴; sync the same markers into the assessment column only when it is empty, and never overwrite rows that already carry an L1-L4 grade — a deep-review grade outranks a quick-review marker.
+5. **Progress snapshot**: after each batch, print the section progress (X/Y questions reviewed, mastery changes in this batch); once a section is done, move to the next one.
 
-## 快速评测：输出格式
+> 🔴 **This mode only produces 🔵 / 🟡 / 🔴 and never writes 🟢.** Hitting the key points in a single review is only D7-level evidence; 🟢 mastery MUST be granted by the learning-plan ledger at the D30 / D60 recheck. Writing a review result straight to 🟢 = bypassing the double gate.
+>
+> ✓ / ✗ under "Analysis" mean only "hit / missed", not a mastery state; do not mix them up when writing back.
 
-每题评测结果必须按以下结构输出，不得省略任何部分：
+## Quick Review: Output Format
+
+Every per-question result MUST follow the structure below and omit no part:
 
 ```markdown
-## **题 N** | 分类 | 难度 | 星级 | 题目
+## **题 N**
+
+**【难度】【星级】题目原文**
 
 **回答**：
 
 > [候选人回答内容原文]
 
-**评测**：✅ / ⚠️ / ❌
+**评测**：🔵 / 🟡 / 🔴（只写这三个）
 
 **分析**：
 
-- ✅ **要点名**：命中说明（每条一个要点）
-- ⚠️ **遗漏要点**：逐条列出未命中内容
-- ❌ **事实错误**：指出错误并纠正（无错误则省略本条）
+- ✓ **命中要点**：命中说明（每条一个要点）
+- ✗ **遗漏要点**：逐条列出未命中内容
+- ✗ **事实错误**：指出错误并纠正（无错误则省略本条）
 
 **参考**：
 
@@ -51,30 +59,34 @@
 > **📖 核心知识**：
 >
 > - [提炼核心要点，逐条列出，每条约 1-2 行]
+>
+> 📎 原文：[文件名 · L行号](绝对路径) → 「题目原文」
 ```
 
-**参考答案内容来源**：
+**Where the reference answer comes from**:
 
-- 💎 关键结论：直接引用源文档原文
-- ⚡ 记忆卡片：直接引用源文档原文
-- 📖 核心知识：从源文档 📖 核心知识模块提炼（非原文照抄，要求凝练为要点列表）
+- 💎 关键结论：quote the source-document text verbatim
+- ⚡ 记忆卡片：quote the source-document text verbatim
+- 📖 核心知识：distill from the source document's 📖 核心知识 module (not verbatim copying; MUST be condensed into a key-point list)
 
-#### 基准样例（用户定稿）
+#### Reference Example (user-finalized)
 
-> ### **题 4** | 架构设计 | 困难 | 五星 | 如何设计异地多活/容灾架构？
+> ### **题 4**
+>
+> **【困难】【五星】如何设计异地多活/容灾架构？**
 >
 > **回答**：
 >
 > > 无状态应用简单，多机房部署+负载均衡切流量。有状态应用以一个机房为主，MQ 实时同步到其他机房，故障时手动或 Raft 自动选主。
 >
-> **评测**：✅
+> **评测**：🔵
 >
 > **分析**：
 >
-> - ✅ **区分有状态/无状态**：无状态简单切流，有状态需数据同步
-> - ✅ **覆盖同步机制**：MQ 实时同步
-> - ✅ **覆盖故障切换**：手动或 Raft 自动选主
-> - ⚠️ **遗漏要点**：容灾等级演进、RTO/RPO 指标、单元化设计、流量调度 GSLB、容量规划 N/(N-1)、切流演练
+> - ✓ **区分有状态/无状态**：无状态简单切流，有状态需数据同步
+> - ✓ **覆盖同步机制**：MQ 实时同步
+> - ✓ **覆盖故障切换**：手动或 Raft 自动选主
+> - ✗ **遗漏要点**：容灾等级演进、RTO/RPO 指标、单元化设计、流量调度 GSLB、容量规划 N/(N-1)、切流演练
 >
 > **参考**：
 >
@@ -95,12 +107,13 @@
 > > - **容量规划**：N 个单元需承担 N/(N-1) 倍容量（挂一个后其余能承接全量）
 > > - **实践建议**：先同城双活，再异地冷备，最后核心链路单元化；定期切流演练
 
-## 快速评测执行反例（不要做）
+## Quick Review Anti-patterns (Do Not Do)
 
-- ❌ 题面使用 ⭐ 符号而非中文星级
-- ❌ 题面中展示「掌握度」字段
-- ❌ 凭印象评分，不对照题库源文档答案蓝本
-- ❌ 一次输出多个板块的题目，或超出用户指定的批量
-- ❌ 评估后忘记回写索引掌握度列
-- ❌ 评测输出偏离「标题 → 回答 → 评测 → 分析 → 参考」五段结构，或省略参考
-- ❌ 参考答案中 💎/⚡ 模块自行改写而非引用源文档原文
+- ❌ The question prompt uses the ⭐ symbol instead of the Chinese star rating
+- ❌ The question prompt uses the pipe-field form `| 分类 | 难度 | 星级 | 题目` instead of `**【难度】【星级】题目**`
+- ❌ The question prompt shows a 「掌握度」 field
+- ❌ Scoring from impression instead of against the question bank source-document answer blueprint
+- ❌ Outputting questions from multiple sections at once, or exceeding the user-specified batch size
+- ❌ Forgetting to write the mastery column back to the index after evaluating
+- ❌ Review output deviating from the five-part structure "heading → answer → evaluation → analysis → reference", or omitting the reference
+- ❌ Rewriting the 💎/⚡ modules in the reference answer instead of quoting the source document verbatim

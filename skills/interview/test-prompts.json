@@ -21,7 +21,7 @@
     "id": 4,
     "mode": "模式四：Anki 卡片生成",
     "prompt": "生成 Anki 卡片，把我没掌握的题导出",
-    "expected": "读取 config.json 的 questionBankPath；从索引筛选掌握度 ⚠️/❌ 题目；运行 script/gen_anki.py 生成 Tab 分隔 + UTF-8 BOM 的 CSV；报告卡片数量、未匹配项与 AnkiDroid 导入步骤；背面仅保留关键结论/记忆卡片/核心知识三模块"
+    "expected": "读取 config.json 的 questionBankPath；从索引筛选掌握度 🟡/🔴 题目；运行 script/gen_anki.py 生成 Tab 分隔 + UTF-8 BOM 的 CSV；报告卡片数量、未匹配项与 AnkiDroid 导入步骤；背面仅保留关键结论/记忆卡片/核心知识三模块"
   },
   {
     "id": 5,

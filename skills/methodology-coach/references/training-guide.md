@@ -42,16 +42,16 @@
 
 Each round is three moves:
 
-1. **Coach presents a scenario** — a realistic, specific situation with one primary bottleneck and (at higher levels) subtle misleading signals. End by asking the three questions.
+1. **Coach presents a scenario** — a realistic, specific situation with one primary bottleneck and (at higher levels) subtle misleading signals. End by asking the three questions. The scenario MUST embed the minimum facts needed to answer: current metrics, constraints, the known-item list, deadline pressure. **If the learner would have to invent numbers to answer, the scenario is under-specified — that is the coach's defect, not the learner's.** For goal-setting drills (SMART), ship a fact card with baseline data.
 2. **User answers three questions**:
    - **Locate** — which stage are they stuck in? (Direction / Execution / Improvement / Learning / Communication; Learning subdivides into Understand · Memorize · Apply · Curate, Execution into Habit · Focus, Communication into Structure · Narrative).
    - **Select** — which method (from the three quick-reference tables in methodology.md)?
-   - **Land** — the first concrete action tomorrow morning (time + verb + object), not a principle.
+   - **Land** — the first concrete action tomorrow morning (time + verb + object + deliverable), not a principle.
 3. **Coach gives feedback** in the fixed format (§5).
 
 > **Stage boundary (drill this in L1)**: prioritization / trade-offs ("urgent crowds out important", "the list keeps growing") is an **Execution** problem, not Direction. Direction = no goal at all ("不知道该学什么 / 往哪走"). Execution = has a goal but can't finish / can't arrange — including prioritization. This boundary is a frequent error (the coach itself tripped on it once); always resolve it to Execution.
 >
-> **Landing rubric (drill this in L2+)**: a landable action = **time + verb + object**, executable tomorrow morning. Not landable = principle verbs like 梳理 / 排序 / 优化 / 明确 ("深挖轻重缓急" / "整理清楚待办" / "主动回忆"). A landable landing also performs the method's "soul actions" — e.g. the Eisenhower Matrix must Delete Q4 + Delegate Q3 + Protect Q2, not just "rank the list".
+> **Landing rubric (drill this in L2+)**: a landable action = **time + verb + object + deliverable**, executable tomorrow morning. Not landable = principle verbs like 梳理 / 排序 / 优化 / 明确 ("深挖轻重缓急" / "整理清楚待办" / "主动回忆"). A landable landing also performs the method's "soul actions" — e.g. the Eisenhower Matrix must Delete Q4 + Delegate Q3 + Protect Q2, not just "rank the list".
 
 🔴 **CHECKPOINT** — always wait for the user's answer before giving feedback. Do not pre-empt, do not hint, do not reveal the answer "for reference" before the user attempts. The retrieval-practice effect is the whole point.
 
@@ -61,7 +61,7 @@ Each round is three moves:
 | --- | --- | --- | --- | --- |
 | ① | Locate | ① Locate the stage | A pain described in symptoms | Name the primary stage + why, in one sentence |
 | ② | Select | ② Select the method | A stage + symptom ("理解了但讲不清") | Name the method + evidence grade (S/A/B/C) |
-| ③ | Land | ③ Land the first action | A method + scenario | The first concrete action (time + verb + object) |
+| ③ | Land | ③ Land the first action | A method + scenario | The first concrete action (time + verb + object + deliverable) |
 | ④ | Boundary | ④ Recall the boundary | "When does method X fail?" | The failure form / boundary in the user's own words |
 | ⑤ | Chain | ⑤ Chain methods | A complex multi-stage scenario (≥2 stages) | A 3–5 stage combination chain + the handoff logic |
 
@@ -109,6 +109,8 @@ After the user answers, the coach MUST give feedback in this structure. This is 
 - ❌ Grade a C-grade method as empirically optimal during feedback
 - ❌ Skip the boundary warning in feedback
 - ❌ Promise a fixed number of weeks/days to mastery ("学 6 周就能掌握") — success is measured by correct-rate + real application, not calendar time
+- ❌ Force the learner to fabricate figures in a data-free scenario, then mark placeholders (XX) wrong — either supply the facts, or accept "metric form + TBD + how to measure" as the correct answer
+- ❌ Present the coach's own invented figures as "the" answer without labeling them `[示例数据]`
 - ❌ Move to the next level before the user passes the current one
 
 ## 7. Worked Example (Level 2 · Execution, locate + select + land)
@@ -141,7 +143,8 @@ After the user answers, the coach MUST give feedback in this structure. This is 
 
 ## 8. Assessment & Exit
 
-- **Per-round**: mark Locate / Select / Land / Boundary each ✓ / ✗. A round passes when Locate + Select are both correct, Land is landable (time + verb + object), and (from L3) Boundary names a specific failure scenario.
+- **Per-round**: mark Locate / Select / Land / Boundary each ✓ / ✗. A round passes when Locate + Select are both correct, Land is landable (time + verb + object + deliverable), and (from L3) Boundary names a specific failure scenario.
+- **Data-availability rule**: when the learner has no data, grade a goal statement on its **metric form** (metric name + measurement basis + threshold source), not on its values. "TBD + how to collect it" is a pass; inventing numbers is a fail; "例如 / XX / 有待量化" is a pass only if the metric form is named.
 - **Retry rule**: a failed part gets at most **2 retries**. After 2 misses on the same part, give the full model answer, mark it "not yet mastered", and move on (or downgrade a level) — do not loop indefinitely.
 - **Per-level**: pass when the user answers one full drill correctly (≤2 retries per part); then move up one level. The "3 consecutive rounds" bar is for independent self-practice, not for a coach-led walkthrough.
 - **Exit (mastery)**: pass a Level-5 Combination round AND the user has applied ≥1 method in real work that week and can describe the result.
@@ -155,11 +158,13 @@ These recur across learners; recognize them and respond as prescribed (observed 
 | # | Pattern | Symptom | Prescribed coach response |
 | --- | --- | --- | --- |
 | 1 | Jump-to-solution | Answers with advice ("学习要带目标") instead of locating the stage | "你把「怎么学才对」当成了「卡在哪」。先只答：卡在哪个环节？" |
-| 2 | Abstract landing | Uses principle verbs 梳理 / 排序 / 优化 / 明确 ("深挖轻重缓急") | Require "time + verb + object"; show the model on concrete items; refuse 梳理 / 排序 / 优化 |
+| 2 | Abstract landing | Uses principle verbs 梳理 / 排序 / 优化 / 明确 ("深挖轻重缓急") | Require "time + verb + object + deliverable"; show the model on concrete items; refuse 梳理 / 排序 / 优化 |
 | 3 | Method stacking | Lists 4–5 methods for one stage ("原子笔记、主动回忆、间隔重复、输出、反馈") | Enforce one primary method per stage; map the sub-stage to its 1–2 methods (Memorize → Spaced Repetition + Active Recall) |
 | 4 | Fabricated method | Uses a method not in the knowledge base ("头脑风暴") | Red Line 5: label it "not in the knowledge base"; substitute the catalogued method (Pre-mortem) |
 | 5 | Vague boundary | "不知道" / "不适用于其他场景" / describes mechanism not boundary | Contrast mechanism vs boundary; require a specific failure scenario ("发散性讨论") |
 | 6 | Recheck-as-method | Answers "复测方案 = PDCA" (a method, not the recheck card) | Require the 4-element recheck card (Metric / Baseline / Date / Adjustment rule) |
+
+| 7 | Forced fabrication | Writes `XX ms → XX ms` / "例如优化服务器性能" because the scenario gave no data | Concede the scenario was under-specified. Accept the **metric form** (metric + measurement basis + threshold source + value TBD) as valid; grade only the missing "where to get the number" step. Never demand invented figures |
 
 Coaching rule: when a pattern recurs ≥2 times across rounds, stop drilling new content and teach that pattern directly (a one-off "补课"), then resume.
 

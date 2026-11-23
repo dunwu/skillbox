@@ -2,6 +2,10 @@
 通用 Anki 卡片生成脚本（优化版）
 从面试题库索引文件中提取未掌握题目，匹配源文件答案，生成 AnkiDroid 可导入的 CSV。
 
+掌握度口径：默认导出 🟡（追问即卡）+ 🔴（讲不出主线），兼容旧符号 ⚠️/❌。
+可用 ANKI_MASTERY 覆盖：failed / degraded / pending / mastered / empty
+（旧名 warning 仍兼容；unknown 等价于 empty）。
+
 优化点：
 - 正面：分类徽章 + 难度色标
 - 代码块：保留换行、左侧色条、等宽字体
@@ -391,10 +395,58 @@ def extract_qa_from_sources(source_dir):
     return qa_map
 
 
+# === 掌握度符号 ===
+# 题库自 v4 起使用四态：🟢 掌握 / 🔵 待固化 / 🟡 追问即卡 / 🔴 讲不出主线
+# 兼容旧的八股三态：✅ 已掌握 / ⚠️ 部分掌握 / ❌ 未掌握
+# 注意：🟢 只能由学习计划的 D30/D60 复核授予，评测流程不得写入
+MASTERY_GROUPS = {
+    'mastered': {'\U0001F7E2', '\u2705'},          # 🟢 ✅
+    'pending': {'\U0001F535'},                      # 🔵 待固化（旧体系无对应）
+    'degraded': {'\U0001F7E1', '\u26a0\ufe0f'},     # 🟡 ⚠️
+    'failed': {'\U0001F534', '\u274c'},             # 🔴 ❌
+    'empty': {''},                                  # 未测
+}
+
+# 默认导出「未掌握」：🟡/🔴（含旧 ⚠️/❌）。🔵 待固化默认不导出——
+# 它的 D30 复核走学习计划台账，不靠 Anki 刷。
+DEFAULT_MASTERY_FILTER = MASTERY_GROUPS['degraded'] | MASTERY_GROUPS['failed']
+
+ENV_ALIASES = {
+    'degraded': 'degraded',
+    'warning': 'degraded',      # 旧关键词，向后兼容
+    'failed': 'failed',
+    'pending': 'pending',
+    'mastered': 'mastered',
+    'empty': 'empty',
+    'unknown': 'empty',         # 语义更贴切的别名
+}
+
+
 def filter_by_mastery(questions, mastery_filter=None):
     if mastery_filter is None:
-        mastery_filter = {'\u26a0\ufe0f', '\u274c'}
-    return [q for q in questions if q['mastery'] in mastery_filter]
+        mastery_filter = DEFAULT_MASTERY_FILTER
+    return [q for q in questions if q['mastery'].strip() in mastery_filter]
+
+
+def resolve_mastery_filter(env_value):
+    """把 ANKI_MASTERY 关键词解析为符号集合；空值返回 None 表示走默认。"""
+    if not env_value:
+        return None
+    symbols = set()
+    unknown = []
+    for token in env_value.split(','):
+        key = token.strip().lower()
+        if not key:
+            continue
+        group = ENV_ALIASES.get(key)
+        if group:
+            symbols |= MASTERY_GROUPS[group]
+        else:
+            unknown.append(key)
+    if unknown:
+        print(f'  ⚠ ANKI_MASTERY 含未知关键词：{", ".join(unknown)}（已忽略）')
+        print(f'    可用值：{", ".join(sorted(ENV_ALIASES))}')
+    return symbols or None
 
 
 # === 主流程 ===
@@ -404,17 +456,7 @@ def main():
     source_dir = sys.argv[2] if len(sys.argv) > 2 else os.path.join('docs', '01.Java', 'JavaCore', '面试')
     output_path = sys.argv[3] if len(sys.argv) > 3 else 'anki_cards.csv'
 
-    mastery_env = os.environ.get('ANKI_MASTERY', '')
-    if mastery_env:
-        mastery_filter = set()
-        if 'warning' in mastery_env:
-            mastery_filter.add('\u26a0\ufe0f')
-        if 'failed' in mastery_env:
-            mastery_filter.add('\u274c')
-        if 'empty' in mastery_env:
-            mastery_filter.add('')
-    else:
-        mastery_filter = None
+    mastery_filter = resolve_mastery_filter(os.environ.get('ANKI_MASTERY', ''))
 
     print(f'题库索引：{index_path}')
     print(f'源文件目录：{source_dir}')

@@ -1,70 +1,70 @@
-# 模式四 · Anki 卡片生成细则
+# Mode 4 · Anki Card Generation Details
 
-> 本文档是 interview skill「模式四：Anki 卡片生成」的子模块：触发条件、执行流程、AnkiDroid 导入步骤、CHECKPOINT-C 检查点、失败分支、执行反例与 Catppuccin Mocha 配色规约。
+> This document is a submodule of the interview skill "Mode 4: Anki Export": triggers, execution flow, AnkiDroid import steps, CHECKPOINT-C, failure branches, execution counter-examples, and the Catppuccin Mocha palette spec.
 >
-> ⚠️ 路径可移植性：本文档及脚本调用一律使用 `<skill根目录>` 占位符或相对路径，执行时由 agent 按当前运行环境解析拼接；禁止在文档与命令示例中硬编码任何绝对路径。
+> ⚠️ Path portability: this document and every script invocation use the `<skill根目录>` placeholder or relative paths, resolved and joined by the agent at runtime for the current environment; never hard-code any absolute path in the docs or command examples.
 
-将面试题库中未掌握的题目导出为 AnkiDroid 可导入的卡片。
+Export unmastered questions from the question bank as AnkiDroid-importable cards.
 
-## 触发条件
+## Triggers
 
-用户出现以下任一意图时激活本能力：
+Activate this capability when the user expresses any of the following intents:
 
 - "生成 Anki" / "导出 Anki" / "anki 卡片" / "做成 anki"
 - "把没掌握的题导出"
-- 英文：generate anki / export to anki
+- English: generate anki / export to anki
 
-## 执行流程
+## Execution Flow
 
-**第一步：确定题目范围**
+**Step 1: Determine the question scope**
 
-1. 读取 `config.json` 中的 `questionBankPath`，获取题库索引文件
-2. 扫描索引表格，筛选掌握度为 ⚠️（部分掌握）或 ❌（未掌握）的题目
-3. 如用户指定特定板块（如"只要并发部分"），则进一步过滤
+1. Read `questionBankPath` from `config.json` to get the question-bank index file
+2. Scan the index table and filter questions whose mastery is 🟡 (追问即卡) or 🔴 (讲不出主线); to also export 🔵 pending-fixation items, use `ANKI_MASTERY=pending,failed,degraded`
+3. If the user names a specific section (e.g. "只要并发部分"), filter further
 
-**第二步：匹配答案**（以下提取/匹配逻辑已由 `gen_anki.py` 内置实现，无需手工执行，仅用于理解与校验脚本输出）
+**Step 2: Match answers** (the extraction/matching logic below is built into `gen_anki.py`; do not run it by hand—it only explains and verifies script output)
 
-1. 读取题库索引中链接指向的源文件（`docs/01.Java/JavaCore/面试/[JavaCore][面试]*.md`）
-2. 按 `###` 标题提取每道题的答案内容
-3. 通过题目标题精确匹配索引题目与源文件答案
-4. 记录匹配失败项，向用户报告
+1. Read the source files linked from the bank index (`docs/01.Java/JavaCore/面试/[JavaCore][面试]*.md`)
+2. Extract each question's answer content by `###` heading
+3. Match index questions to source answers by exact question title
+4. Record match failures and report them to the user
 
-**第三步：生成 CSV**
+**Step 3: Generate the CSV**
 
-运行脚本（路径执行前先拼为绝对路径，输出文件一律用 `.csv` 扩展名）：
+Run the script (resolve to an absolute path before execution; always use the `.csv` extension for output files):
 
 ```
 python <skill根目录>/script/gen_anki.py <题库索引文件> <源文档目录> <输出路径.csv>
 ```
 
-例：`python <skill根目录>/script/gen_anki.py docs/99.面试/JavaCore面试.md docs/01.Java/JavaCore/面试 anki_cards.csv`（索引文件来自 `config.json` 的 `questionBankPath`/`questionBankDir` 配置，执行前按实际环境拼接为可访问路径）。脚本自动完成筛选、答案匹配与 CSV 生成；默认筛选掌握度 ⚠️/❌，可用环境变量 `ANKI_MASTERY` 覆盖——脚本只认英文关键词：`failed`=仅 ❌、`warning`=仅 ⚠️、`empty`=仅未标记，可逗号组合（如 `failed,empty`）；PowerShell 写法：`$env:ANKI_MASTERY='failed'; python ...`（禁止直传 ❌ 符号，会导致筛选为 0 条）。
+Example: `python <skill根目录>/script/gen_anki.py docs/99.面试/JavaCore面试.md docs/01.Java/JavaCore/面试 anki_cards.csv` (the index file comes from `config.json`'s `questionBankPath`/`questionBankDir`; join it into an accessible path for the actual environment before running). The script does the filtering, answer matching, and CSV generation; it defaults to mastery 🟡/🔴, overridable with the `ANKI_MASTERY` env var—the script only recognizes English keywords: `failed`=🔴, `degraded`=🟡 (the old name `warning` is still accepted), `pending`=🔵, `mastered`=🟢, `empty`=unmarked, combinable with commas (e.g. `pending,failed`); PowerShell: `$env:ANKI_MASTERY='failed'; python ...` (never pass emoji directly—filtering yields 0 rows).
 
-输出格式要求：
+Output format requirements:
 
-| 要求         | 说明                                                                                          |
-| ------------ | --------------------------------------------------------------------------------------------- |
-| 分隔符       | Tab `\t`（不与 HTML 内容冲突）                                                                |
-| 编码         | UTF-8 with BOM（`utf-8-sig`）                                                                 |
-| 正面         | 分类徽章 + 难度色标 + 题目标题                                                                |
-| 背面         | 纯 HTML（Catppuccin Mocha 深色主题 + 左对齐）                                                 |
-| 代码块       | `<pre>` 深蓝灰背景 `#1e1e2e` + 淡黄文字 `#f9e2af` + 左侧色条 + `<br>` 保留换行                |
-| 行内代码     | `<code>` 背景 `#313244` + 粉红文字 `#f38ba8`                                                  |
-| 表格         | 斑马纹（交替行 `#262637`）+ 圆角 + 表头 `#313244` 背景                                        |
-| 引用块       | `>` 和 `::: tip` 转为彩色提示框（左侧色条 + 背景色）                                          |
-| 加粗文字     | 淡蓝色 `#89b4fa` 强调                                                                         |
-| 标题         | 紫色 `#cba6f7` + 左侧色条                                                                     |
-| 外层容器     | `<div style="text-align:left;line-height:1.6">` 强制左对齐 + 行高                             |
-| 背面模块范围 | 仅保留💎 关键结论、⚡记忆卡片、📖 核心知识（含 ::: details 案例）三个模块，其余模块一律不导出 |
+| Requirement | Description |
+| --- | --- |
+| Delimiter | Tab `\t` (no clash with HTML content) |
+| Encoding | UTF-8 with BOM (`utf-8-sig`) |
+| Front | Category badge + difficulty color marker + question title |
+| Back | Pure HTML (Catppuccin Mocha dark theme + left-aligned) |
+| Code block | `<pre>` deep blue-gray background `#1e1e2e` + pale yellow text `#f9e2af` + left color bar + `<br>` preserving line breaks |
+| Inline code | `<code>` background `#313244` + pink text `#f38ba8` |
+| Table | Zebra stripes (alternating row `#262637`) + rounded corners + header background `#313244` |
+| Blockquote | `>` and `::: tip` become colored callout boxes (left color bar + background color) |
+| Bold text | Pale blue `#89b4fa` emphasis |
+| Headings | Purple `#cba6f7` + left color bar |
+| Outer container | `<div style="text-align:left;line-height:1.6">` forces left alignment + line height |
+| Back module scope | Only 💎 关键结论, ⚡记忆卡片, 📖 核心知识 (including `::: details` cases) are kept; every other module is never exported |
 
-**第四步：输出结果**
+**Step 4: Report results**
 
-向用户报告：
+Report to the user:
 
-- 生成的卡片数量
-- 匹配失败项列表（如有）
-- AnkiDroid 导入步骤
+- Number of cards generated
+- List of match failures (if any)
+- AnkiDroid import steps
 
-## AnkiDroid 导入步骤
+## AnkiDroid Import Steps
 
 1. 将 CSV 文件传到手机
 2. AnkiDroid → 菜单 → 导入文件
@@ -73,45 +73,45 @@ python <skill根目录>/script/gen_anki.py <题库索引文件> <源文档目录
 5. 勾选 **允许 HTML**
 6. 字段映射：第 1 列 → 正面，第 2 列 → 背面
 
-## 🔴 Anki 检查点（STOP — 必须停下来执行）
+## 🔴 Anki Checkpoint (STOP — you must stop and execute)
 
-- 🔴 **CHECKPOINT-C 生成 CSV 前**：必须先输出「候选题目清单（分类/题面/难度/掌握度）+ 卡片总数 + 输出路径」，待用户确认后再运行脚本；用户明确说“直接导出/无需确认”时，本次任务内可跳过；未输出清单就生成文件 = 违反协议。清单样例行：`| 并发 | synchronized 和 ReentrantLock 的区别？ | 中等 | ❌ |`，末行输出 `共 N 张 → <输出路径.csv>`。
+- 🔴 **CHECKPOINT-C 生成 CSV 前**：必须先输出「候选题目清单（分类/题面/难度/掌握度）+ 卡片总数 + 输出路径」，待用户确认后再运行脚本；用户明确说“直接导出/无需确认”时，本次任务内可跳过；未输出清单就生成文件 = 违反协议。清单样例行：`| 并发 | synchronized 和 ReentrantLock 的区别？ | 中等 | 🔴 |`，末行输出 `共 N 张 → <输出路径.csv>`。
 
-## Anki 失败分支（任一触发即按表处理，不得静默跳过）
+## Anki Failure Branches (any trigger → handle per the table; never skip silently)
 
-| 触发条件                                 | 一线修复                                                   | 仍失败兜底                                         |
-| ---------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------- |
-| `python` 命令不存在                      | 改用 `python3` 或 `py` 重试                                | 告知用户需安装 Python 3.7+，暂停导出               |
-| config.json 缺失或 questionBankPath 为空 | 处置同模式一第零步：询问用户索引路径并写入 config.json     | 用户不提供路径则暂停导出，不得猜测或使用默认路径   |
-| 索引无任何 ⚠️/❌ 标记的题目              | 报告筛选结果为空，询问用户是否放宽条件（如指定板块或难度） | 用户不确认则不导出，禁止默认全库导出               |
-| `ANKI_MASTERY` 覆盖后筛选为 0 条         | 报告该关键词下无匹配题目，确认是否换关键词或去掉覆盖重跑   | 禁止静默产出空 CSV，用户确认前不生成文件           |
-| 题目在源文件中匹配不到答案               | 记录失败项继续生成其余卡片                                 | 完成后输出完整失败项清单，禁止编造答案内容         |
-| 脚本报错或 CSV 写入失败                  | 核对输出路径目录存在且可写，修正后重跑                     | 向用户报告脚本原始报错，暂停导出                   |
-| 索引格式异常（无六列表格）               | 处置同模式一 fallback 表：提示用户重新配置索引文件         | 保守策略失效时暂停导出，不得把非索引文件当题库处理 |
+| Trigger condition | First-line fix | Fallback if still failing |
+| --- | --- | --- |
+| `python` command not found | Retry with `python3` or `py` | Tell the user Python 3.7+ is required; pause the export |
+| config.json missing or questionBankPath empty | Handle as Mode 1 Step 0: ask the user for the index path and write it into config.json | If the user provides no path, pause the export; never guess or use a default path |
+| Index has no 🟡/🔴 marked questions | Report that filtering returned empty and ask whether to loosen the conditions (e.g. name a section, difficulty, or add `ANKI_MASTERY=pending`) | No export without user confirmation; exporting the whole bank by default is forbidden |
+| Filtering returns 0 rows after the `ANKI_MASTERY` override | Report no matches under that keyword and confirm whether to switch keywords or drop the override and rerun | Never silently produce an empty CSV; generate no file before user confirmation |
+| A question's answer cannot be found in the source file | Record the failure and keep generating the remaining cards | Output the full failure list at the end; never fabricate answer content |
+| Script error or CSV write failure | Verify the output directory exists and is writable, fix and rerun | Report the raw script error to the user and pause the export |
+| Malformed index (no six-column table) | Handle as the Mode 1 fallback table: prompt the user to reconfigure the index file | If the conservative strategy fails, pause the export; never treat a non-index file as the question bank |
 
-## Anki 执行反例（不要做）
+## Anki Execution Counter-Examples (don't)
 
-- ❌ 未输出候选题目清单就直接生成 CSV（跳过 CHECKPOINT-C）
-- ❌ 输出文件使用 `.txt` 扩展名（一律 `.csv`，内部格式不变：Tab 分隔 + UTF-8 BOM）
-- ❌ 掌握度标记缺失时未经确认把全库题目当作未掌握导出
-- ❌ 卡片背面保留三模块以外的内容，或手工修改 HTML/配色偏离 Catppuccin Mocha 规约
-- ❌ 匹配失败就丢弃题目且不在报告中列出
+- ❌ Generate the CSV without outputting the candidate question list (skipping CHECKPOINT-C)
+- ❌ Use a `.txt` extension for the output file (always `.csv`; internal format unchanged: tab-separated + UTF-8 BOM)
+- ❌ When mastery markers are missing, treat the whole bank as unmastered and export it without confirmation
+- ❌ Keep content beyond the three modules on the card back, or hand-edit HTML/palette away from the Catppuccin Mocha spec
+- ❌ Discard questions whose match failed without listing them in the report
 
-## 配色方案（Catppuccin Mocha 深色主题）
+## Palette (Catppuccin Mocha dark theme)
 
-| 元素       | 背景色    | 文字色            |
-| ---------- | --------- | ----------------- |
-| 代码块     | `#1e1e2e` | `#f9e2af`（淡黄） |
-| 行内代码   | `#313244` | `#f38ba8`（粉红） |
-| 表头       | `#313244` | `#cdd6f4`         |
-| 表格交替行 | `#262637` | `#cdd6f4`         |
-| 引用块     | `#1a1a2e` | `#a6e3a1`（淡绿） |
-| tip 提示框 | `#1a2e1a` | `#a6e3a1`         |
-| 加粗文字   | -         | `#89b4fa`（淡蓝） |
-| 标题       | -         | `#cba6f7`（淡紫） |
+| Element | Background | Text color |
+| --- | --- | --- |
+| Code block | `#1e1e2e` | `#f9e2af` (pale yellow) |
+| Inline code | `#313244` | `#f38ba8` (pink) |
+| Table header | `#313244` | `#cdd6f4` |
+| Table alternating row | `#262637` | `#cdd6f4` |
+| Blockquote | `#1a1a2e` | `#a6e3a1` (pale green) |
+| tip callout | `#1a2e1a` | `#a6e3a1` |
+| Bold text | - | `#89b4fa` (pale blue) |
+| Heading | - | `#cba6f7` (pale purple) |
 
-难度色标：简单 `#a6e3a1`（绿）| 中等 `#f9e2af`（黄）| 困难 `#f38ba8`（红）
+Difficulty color markers: 简单 `#a6e3a1` (green) | 中等 `#f9e2af` (yellow) | 困难 `#f38ba8` (red)
 
-## 参考脚本
+## Reference Script
 
-- [script/gen_anki.py](../script/gen_anki.py) — 通用 Anki 卡片生成脚本，Catppuccin Mocha 深色主题，支持自定义题库路径和输出文件
+- [script/gen_anki.py](../script/gen_anki.py) — general Anki card generation script, Catppuccin Mocha dark theme, supports custom bank paths and output files
